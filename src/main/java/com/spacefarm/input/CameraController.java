@@ -34,7 +34,7 @@ public class CameraController extends InputAdapter {
 
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
-        if (button == Buttons.RIGHT || com.badlogic.gdx.Gdx.input.isKeyPressed(Keys.SPACE)) {
+        if (button == Buttons.MIDDLE || Gdx.input.isKeyPressed(Keys.SPACE)) {
             dragging = true;
             dragStartX = screenX;
             dragStartY = screenY;
@@ -61,7 +61,7 @@ public class CameraController extends InputAdapter {
 
     @Override
     public boolean touchUp(int screenX, int screenY, int pointer, int button) {
-        if (button == Buttons.RIGHT) {
+        if (button == Buttons.MIDDLE) {
             dragging = false;
         }
         return false;

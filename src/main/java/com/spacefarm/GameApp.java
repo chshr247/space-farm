@@ -2,6 +2,7 @@ package com.spacefarm;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input.Buttons;
 import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.GL20;
@@ -21,6 +22,7 @@ import com.badlogic.gdx.utils.viewport.Viewport;
 import com.spacefarm.input.CameraController;
 import com.spacefarm.input.TilePicker;
 import com.spacefarm.input.WorldBounds;
+import com.spacefarm.render.ContextMenuOverlay;
 import com.spacefarm.render.GridOverlay;
 import com.spacefarm.world.TileCoord;
 
@@ -37,6 +39,7 @@ public class GameApp extends ApplicationAdapter {
     private OrthogonalTiledMapRenderer renderer;
     private GridOverlay gridOverlay;
     private CameraController cameraController;
+    private ContextMenuOverlay contextMenu;
 
     private Texture baseTileTexture;
     private Texture highlightTexture;
@@ -67,6 +70,7 @@ public class GameApp extends ApplicationAdapter {
         tilePicker = new TilePicker(camera, baseLayer.getTileWidth(), baseLayer.getTileHeight(),
                 baseLayer.getWidth(), baseLayer.getHeight());
         gridOverlay = new GridOverlay(baseLayer);
+        contextMenu = new ContextMenuOverlay();
 
         centerCameraOnMap();
         cameraController = new CameraController(camera, viewport, buildWorldBounds(), MIN_ZOOM, MAX_ZOOM);
@@ -77,6 +81,11 @@ public class GameApp extends ApplicationAdapter {
                 if (cameraController.touchDown(screenX, screenY, pointer, button)) {
                     return true;
                 }
+                if (button == Buttons.RIGHT) {
+                    showContextMenu(screenX, screenY);
+                    return true;
+                }
+                contextMenu.hide();
                 handleTileClick(screenX, screenY);
                 return true;
             }
@@ -115,6 +124,7 @@ public class GameApp extends ApplicationAdapter {
         renderer.render();
 
         gridOverlay.render(camera);
+        contextMenu.render(camera);
     }
 
     @Override
@@ -133,6 +143,9 @@ public class GameApp extends ApplicationAdapter {
         }
         if (highlightTexture != null) {
             highlightTexture.dispose();
+        }
+        if (contextMenu != null) {
+            contextMenu.dispose();
         }
     }
 
@@ -214,5 +227,16 @@ public class GameApp extends ApplicationAdapter {
         Texture texture = new Texture(pixmap);
         pixmap.dispose();
         return texture;
+    }
+
+    private void showContextMenu(int screenX, int screenY) {
+        TileCoord coord = tilePicker.screenToTile(screenX, screenY);
+        if (coord == null) {
+            contextMenu.hide();
+            return;
+        }
+        float worldX = coord.x() * baseLayer.getTileWidth();
+        float worldY = coord.y() * baseLayer.getTileHeight();
+        contextMenu.showAt(worldX, worldY);
     }
 }
