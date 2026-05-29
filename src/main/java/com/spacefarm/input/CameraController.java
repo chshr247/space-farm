@@ -6,12 +6,15 @@ import com.badlogic.gdx.Input.Buttons;
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.utils.TimeUtils;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
 public class CameraController extends InputAdapter {
     private static final float BASE_MOVE_SPEED = 600f;
     private static final float ZOOM_STEP = 0.15f;
     private static final float ZOOM_SMOOTHNESS = 10f;
+    private static final float SCROLL_PAN_SPEED = 50f;
+    private static final long SCROLL_MERGE_WINDOW_NANOS = 30_000_000L;
 
     private final OrthographicCamera camera;
     private final Viewport viewport;
@@ -22,6 +25,10 @@ public class CameraController extends InputAdapter {
     private float dragStartX;
     private float dragStartY;
     private float targetZoom;
+    private float lastScrollX;
+    private float lastScrollY;
+    private long lastScrollXTime;
+    private long lastScrollYTime;
 
     public CameraController(OrthographicCamera camera, Viewport viewport, WorldBounds bounds,
                             float minZoom, float maxZoom) {
@@ -69,8 +76,30 @@ public class CameraController extends InputAdapter {
 
     @Override
     public boolean scrolled(float amountX, float amountY) {
-        float maxZoomOut = getMaxZoomOut();
-        targetZoom = MathUtils.clamp(targetZoom + amountY * ZOOM_STEP, minZoom, maxZoomOut);
+        if (isZoomGesture(amountX, amountY)) {
+            float maxZoomOut = getMaxZoomOut();
+            targetZoom = MathUtils.clamp(targetZoom + amountY * ZOOM_STEP, minZoom, maxZoomOut);
+            return true;
+        }
+
+        float mergedX = mergeScrollAxis(amountX, lastScrollX, lastScrollXTime);
+        float mergedY = mergeScrollAxis(amountY, lastScrollY, lastScrollYTime);
+
+        if (amountX != 0f) {
+            lastScrollX = amountX;
+            lastScrollXTime = TimeUtils.nanoTime();
+        }
+        if (amountY != 0f) {
+            lastScrollY = amountY;
+            lastScrollYTime = TimeUtils.nanoTime();
+        }
+
+        float worldDx = -mergedX * SCROLL_PAN_SPEED * camera.zoom;
+        float worldDy = mergedY * SCROLL_PAN_SPEED * camera.zoom;
+        if (worldDx != 0f || worldDy != 0f) {
+            camera.position.add(worldDx, worldDy, 0f);
+            clamp();
+        }
         return true;
     }
 
@@ -92,8 +121,10 @@ public class CameraController extends InputAdapter {
             dy += moveSpeed;
         }
 
-        if (dx != 0f || dy != 0f) {
-            camera.position.add(dx, dy, 0f);
+        float length = (float) Math.sqrt(dx * dx + dy * dy);
+        if (length > 0f) {
+            float scale = moveSpeed / length;
+            camera.position.add(dx * scale, dy * scale, 0f);
         }
 
         float maxZoomOut = getMaxZoomOut();
@@ -131,5 +162,23 @@ public class CameraController extends InputAdapter {
         float maxZoomY = worldHeight / viewport.getWorldHeight();
         float maxZoomOut = Math.min(maxZoomX, maxZoomY);
         return Math.max(minZoom, maxZoomOut);
+    }
+
+    private boolean isZoomGesture(float amountX, float amountY) {
+        if (Gdx.input.isKeyPressed(Keys.CONTROL_LEFT) || Gdx.input.isKeyPressed(Keys.CONTROL_RIGHT)) {
+            return true;
+        }
+        return Math.abs(amountX) < 0.01f && Math.abs(amountY) >= 1f;
+    }
+
+    private float mergeScrollAxis(float current, float last, long lastTime) {
+        if (current != 0f) {
+            return current;
+        }
+        long now = TimeUtils.nanoTime();
+        if (now - lastTime <= SCROLL_MERGE_WINDOW_NANOS) {
+            return last;
+        }
+        return 0f;
     }
 }
