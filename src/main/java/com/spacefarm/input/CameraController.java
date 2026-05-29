@@ -13,8 +13,9 @@ public class CameraController extends InputAdapter {
     private static final float BASE_MOVE_SPEED = 600f;
     private static final float ZOOM_STEP = 0.15f;
     private static final float ZOOM_SMOOTHNESS = 10f;
-    private static final float SCROLL_PAN_SPEED = 50f;
+    private static final float SCROLL_PAN_SPEED = 30f;
     private static final long SCROLL_MERGE_WINDOW_NANOS = 30_000_000L;
+    private static final float MOVE_SMOOTHNESS = 12f;
 
     private final OrthographicCamera camera;
     private final Viewport viewport;
@@ -25,10 +26,18 @@ public class CameraController extends InputAdapter {
     private float dragStartX;
     private float dragStartY;
     private float targetZoom;
+    private float moveVelocityX;
+    private float moveVelocityY;
+    private float panVelocityX;
+    private float panVelocityY;
+    private float targetPanVelocityX;
+    private float targetPanVelocityY;
     private float lastScrollX;
     private float lastScrollY;
     private long lastScrollXTime;
     private long lastScrollYTime;
+    private long lastScrollTime;
+    private long lastPanTime;
 
     public CameraController(OrthographicCamera camera, Viewport viewport, WorldBounds bounds,
                             float minZoom, float maxZoom) {
@@ -57,8 +66,8 @@ public class CameraController extends InputAdapter {
         }
         float dx = screenX - dragStartX;
         float dy = screenY - dragStartY;
-        float worldDx = -dx * camera.zoom;
-        float worldDy = dy * camera.zoom;
+        float worldDx = -dx * camera.zoom * 0.5f;
+        float worldDy = dy * camera.zoom * 0.5f;
         camera.position.add(worldDx, worldDy, 0f);
         dragStartX = screenX;
         dragStartY = screenY;
@@ -76,7 +85,17 @@ public class CameraController extends InputAdapter {
 
     @Override
     public boolean scrolled(float amountX, float amountY) {
+        long now = TimeUtils.nanoTime();
+        boolean movingByKeys = Gdx.input.isKeyPressed(Keys.A) || Gdx.input.isKeyPressed(Keys.LEFT)
+                || Gdx.input.isKeyPressed(Keys.D) || Gdx.input.isKeyPressed(Keys.RIGHT)
+                || Gdx.input.isKeyPressed(Keys.S) || Gdx.input.isKeyPressed(Keys.DOWN)
+                || Gdx.input.isKeyPressed(Keys.W) || Gdx.input.isKeyPressed(Keys.UP);
+        boolean movingCamera = dragging || movingByKeys;
+        boolean blockZoom = movingCamera || now - lastPanTime <= SCROLL_MERGE_WINDOW_NANOS;
         if (isZoomGesture(amountX, amountY)) {
+            if (blockZoom) {
+                return true;
+            }
             float maxZoomOut = getMaxZoomOut();
             targetZoom = MathUtils.clamp(targetZoom + amountY * ZOOM_STEP, minZoom, maxZoomOut);
             return true;
@@ -87,24 +106,24 @@ public class CameraController extends InputAdapter {
 
         if (amountX != 0f) {
             lastScrollX = amountX;
-            lastScrollXTime = TimeUtils.nanoTime();
+            lastScrollXTime = now;
         }
         if (amountY != 0f) {
             lastScrollY = amountY;
-            lastScrollYTime = TimeUtils.nanoTime();
+            lastScrollYTime = now;
+        }
+        lastScrollTime = now;
+        if (mergedX != 0f || mergedY != 0f) {
+            lastPanTime = now;
         }
 
-        float worldDx = -mergedX * SCROLL_PAN_SPEED * camera.zoom;
-        float worldDy = mergedY * SCROLL_PAN_SPEED * camera.zoom;
-        if (worldDx != 0f || worldDy != 0f) {
-            camera.position.add(worldDx, worldDy, 0f);
-            clamp();
-        }
+        targetPanVelocityX = -mergedX * SCROLL_PAN_SPEED * camera.zoom;
+        targetPanVelocityY = mergedY * SCROLL_PAN_SPEED * camera.zoom;
         return true;
     }
 
     public void update(float deltaSeconds) {
-        float moveSpeed = BASE_MOVE_SPEED * camera.zoom * deltaSeconds;
+        float moveSpeed = BASE_MOVE_SPEED * camera.zoom;
         float dx = 0f;
         float dy = 0f;
 
@@ -122,9 +141,31 @@ public class CameraController extends InputAdapter {
         }
 
         float length = (float) Math.sqrt(dx * dx + dy * dy);
+        float desiredVelX = 0f;
+        float desiredVelY = 0f;
         if (length > 0f) {
-            float scale = moveSpeed / length;
-            camera.position.add(dx * scale, dy * scale, 0f);
+            float scale = 1f / length;
+            desiredVelX = dx * scale * moveSpeed;
+            desiredVelY = dy * scale * moveSpeed;
+        }
+
+        moveVelocityX = smooth(moveVelocityX, desiredVelX, deltaSeconds, MOVE_SMOOTHNESS);
+        moveVelocityY = smooth(moveVelocityY, desiredVelY, deltaSeconds, MOVE_SMOOTHNESS);
+
+        long now = TimeUtils.nanoTime();
+        if (now - lastScrollTime > SCROLL_MERGE_WINDOW_NANOS) {
+            targetPanVelocityX = 0f;
+            targetPanVelocityY = 0f;
+        }
+        panVelocityX = smooth(panVelocityX, targetPanVelocityX, deltaSeconds, MOVE_SMOOTHNESS);
+        panVelocityY = smooth(panVelocityY, targetPanVelocityY, deltaSeconds, MOVE_SMOOTHNESS);
+
+        if (moveVelocityX != 0f || moveVelocityY != 0f || panVelocityX != 0f || panVelocityY != 0f) {
+            camera.position.add(
+                    (moveVelocityX * deltaSeconds) + panVelocityX,
+                    (moveVelocityY * deltaSeconds) + panVelocityY,
+                    0f
+            );
         }
 
         float maxZoomOut = getMaxZoomOut();
