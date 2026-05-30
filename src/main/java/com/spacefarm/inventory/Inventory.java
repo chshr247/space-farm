@@ -113,6 +113,66 @@ public class Inventory {
     }
 
     /**
+     * Check if sickle is selected.
+     */
+    public boolean isSickleSelected() {
+        Item selected = getSelectedItem();
+        return selected != null && selected.getType() == Item.ItemType.SICKLE;
+    }
+
+    /**
+     * Check if plant food is selected.
+     */
+    public boolean isPlantFoodSelected() {
+        Item selected = getSelectedItem();
+        if (selected != null && selected.getType() == Item.ItemType.PLANT_FOOD) {
+            PlantFood food = (PlantFood) selected;
+            return food.getQuantity() > 0;
+        }
+        return false;
+    }
+
+    /**
+     * Consume plant food from selected slot.
+     * Returns true if food was consumed, false otherwise.
+     */
+    public boolean consumePlantFood() {
+        Item selected = getSelectedItem();
+        if (selected != null && selected.getType() == Item.ItemType.PLANT_FOOD) {
+            PlantFood food = (PlantFood) selected;
+            return food.consumeFood();
+        }
+        return false;
+    }
+
+    /**
+     * Add plant food to inventory (finds or creates stack).
+     * Returns true if added successfully.
+     */
+    public boolean addPlantFood(int quantity) {
+        // First try to add to existing plant food stack
+        for (int i = 0; i < slots.length; i++) {
+            Item item = slots[i];
+            if (item != null && item.getType() == Item.ItemType.PLANT_FOOD) {
+                PlantFood food = (PlantFood) item;
+                int oldQuantity = food.getQuantity();
+                food.addQuantity(quantity);
+                return true;  // Added to existing stack
+            }
+        }
+
+        // If no existing stack, find empty slot
+        for (int i = 0; i < slots.length; i++) {
+            if (slots[i] == null) {
+                slots[i] = new PlantFood(quantity);
+                return true;
+            }
+        }
+
+        return false;  // No space
+    }
+
+    /**
      * Get all slots.
      */
     public Item[] getSlots() {

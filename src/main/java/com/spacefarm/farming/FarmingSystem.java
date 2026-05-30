@@ -140,6 +140,29 @@ public class FarmingSystem {
     }
 
     /**
+     * Harvest a mature crop and remove it from the map.
+     * Returns true if successfully harvested, false if no crop or not mature.
+     */
+    public boolean harvestCrop(TileCoord coord) {
+        if (!isValidCoord(coord)) {
+            return false;
+        }
+
+        Crop crop = getCrop(coord);
+        if (crop == null) {
+            return false;
+        }
+
+        // Only harvest mature crops
+        if (crop.getGrowthStage() == FarmingConstants.GrowthStage.MATURE) {
+            removeCrop(coord);
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      * Check if the given coordinate is valid within map bounds.
      */
     private boolean isValidCoord(TileCoord coord) {
