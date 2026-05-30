@@ -126,6 +126,10 @@ public class InventoryUI {
                 return new Color(0.2f, 0.7f, 1.0f, 0.9f); // Light blue
             case SEED:
                 return new Color(0.8f, 0.6f, 0.2f, 0.9f); // Brown
+            case SICKLE:
+                return new Color(0.6f, 0.4f, 0.4f, 0.9f); // Dark red/brown
+            case PLANT_FOOD:
+                return new Color(0.9f, 0.3f, 0.2f, 0.9f); // Red/tomato
             case FERTILIZER:
                 return new Color(0.9f, 0.7f, 0.1f, 0.9f); // Orange
             default:

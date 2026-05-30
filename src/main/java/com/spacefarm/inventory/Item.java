@@ -29,6 +29,8 @@ public abstract class Item {
         WATERING_CAN,
         SEED,
         FERTILIZER,
+        SICKLE,
+        PLANT_FOOD,
         EMPTY
     }
 }

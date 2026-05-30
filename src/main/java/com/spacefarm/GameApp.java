@@ -26,10 +26,13 @@ import com.spacefarm.render.ContextMenuOverlay;
 import com.spacefarm.render.CropRenderer;
 import com.spacefarm.render.GridOverlay;
 import com.spacefarm.render.InventoryUI;
+import com.spacefarm.render.OxygenUI;
 import com.spacefarm.world.TileCoord;
 import com.spacefarm.farming.FarmingSystem;
 import com.spacefarm.inventory.Inventory;
 import com.spacefarm.inventory.Seed;
+import com.spacefarm.inventory.Sickle;
+import com.spacefarm.oxygen.OxygenManager;
 
 public class GameApp extends ApplicationAdapter {
     private static final int DEFAULT_TILE_SIZE = 32;
@@ -57,6 +60,8 @@ public class GameApp extends ApplicationAdapter {
     private CropRenderer cropRenderer;
     private Inventory inventory;
     private InventoryUI inventoryUI;
+    private OxygenManager oxygenManager;
+    private OxygenUI oxygenUI;
 
     @Override
     public void create() {
@@ -91,6 +96,13 @@ public class GameApp extends ApplicationAdapter {
 
         // Add seeds to slot 2
         inventory.addItem(1, new Seed(5));  // Index 1 = slot 2 in display
+
+        // Add sickle to slot 3
+        inventory.addItem(2, Sickle.getInstance());  // Index 2 = slot 3 in display
+
+        // Initialize oxygen system
+        oxygenManager = new OxygenManager();
+        oxygenUI = new OxygenUI(oxygenManager);
 
         centerCameraOnMap();
         cameraController = new CameraController(camera, viewport, buildWorldBounds(), MIN_ZOOM, MAX_ZOOM);
@@ -128,12 +140,43 @@ public class GameApp extends ApplicationAdapter {
             @Override
             public boolean keyDown(int keycode) {
                 // Handle inventory slot selection (keys 1-8)
-                if (keycode >= com.badlogic.gdx.Input.Keys.NUM_1 &&
+                if (keycode >= com.badlogic.gdx.Input.Keys.NUM_1 && 
                     keycode <= com.badlogic.gdx.Input.Keys.NUM_8) {
                     int slotIndex = keycode - com.badlogic.gdx.Input.Keys.NUM_1;
                     inventory.selectSlot(slotIndex);
                     return true;
                 }
+                
+                // Handle eating plant food (E key)
+                if (keycode == com.badlogic.gdx.Input.Keys.E) {
+                    if (inventory.isPlantFoodSelected()) {
+                        if (inventory.consumePlantFood()) {
+                            // Increase oxygen
+                            oxygenManager.consumeFood();
+                            
+                            // Remove plant food if empty
+                            com.spacefarm.inventory.PlantFood food = 
+                                (com.spacefarm.inventory.PlantFood) inventory.getSelectedItem();
+                            if (food != null && food.getQuantity() == 0) {
+                                // Find and remove the empty stack
+                                for (int i = 0; i < 8; i++) {
+                                    com.spacefarm.inventory.Item item = inventory.getItem(i);
+                                    if (item != null && item.getType() == 
+                                        com.spacefarm.inventory.Item.ItemType.PLANT_FOOD) {
+                                        com.spacefarm.inventory.PlantFood f = 
+                                            (com.spacefarm.inventory.PlantFood) item;
+                                        if (f.getQuantity() == 0) {
+                                            inventory.removeItem(i);
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    return true;
+                }
+                
                 return false;
             }
         });
@@ -156,6 +199,9 @@ public class GameApp extends ApplicationAdapter {
         // Update farming system
         farmingSystem.update(deltaTime);
 
+        // Update oxygen system
+        oxygenManager.update(deltaTime);
+
         camera.update();
         renderer.setView(camera);
         renderer.render();
@@ -166,6 +212,9 @@ public class GameApp extends ApplicationAdapter {
 
         // Render inventory UI (screen space)
         inventoryUI.render(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+
+        // Render oxygen UI (screen space)
+        oxygenUI.render(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
     }
 
     @Override
@@ -181,6 +230,9 @@ public class GameApp extends ApplicationAdapter {
         }
         if (inventoryUI != null) {
             inventoryUI.dispose();
+        }
+        if (oxygenUI != null) {
+            oxygenUI.dispose();
         }
         if (map != null) {
             map.dispose();
@@ -227,6 +279,14 @@ public class GameApp extends ApplicationAdapter {
                     if (seed != null && seed.getQuantity() == 0) {
                         inventory.removeItem(1);  // Remove empty seed stack
                     }
+                }
+            }
+        } else if (inventory.isSickleSelected()) {
+            // Harvest mature crop
+            if (farmingSystem.hasCrop(coord)) {
+                if (farmingSystem.harvestCrop(coord)) {
+                    // Add harvested plant food to inventory
+                    inventory.addPlantFood(1);
                 }
             }
         }
