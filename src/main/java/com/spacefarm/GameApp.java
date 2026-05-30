@@ -23,8 +23,13 @@ import com.spacefarm.input.CameraController;
 import com.spacefarm.input.TilePicker;
 import com.spacefarm.input.WorldBounds;
 import com.spacefarm.render.ContextMenuOverlay;
+import com.spacefarm.render.CropRenderer;
 import com.spacefarm.render.GridOverlay;
+import com.spacefarm.render.InventoryUI;
 import com.spacefarm.world.TileCoord;
+import com.spacefarm.farming.FarmingSystem;
+import com.spacefarm.inventory.Inventory;
+import com.spacefarm.inventory.Seed;
 
 public class GameApp extends ApplicationAdapter {
     private static final int DEFAULT_TILE_SIZE = 32;
@@ -48,6 +53,10 @@ public class GameApp extends ApplicationAdapter {
     private TilePicker tilePicker;
 
     private TileCoord lastSelected;
+    private FarmingSystem farmingSystem;
+    private CropRenderer cropRenderer;
+    private Inventory inventory;
+    private InventoryUI inventoryUI;
 
     @Override
     public void create() {
@@ -71,6 +80,17 @@ public class GameApp extends ApplicationAdapter {
                 baseLayer.getWidth(), baseLayer.getHeight());
         gridOverlay = new GridOverlay(baseLayer);
         contextMenu = new ContextMenuOverlay();
+
+        // Initialize farming system
+        farmingSystem = new FarmingSystem(baseLayer.getWidth(), baseLayer.getHeight());
+        cropRenderer = new CropRenderer(farmingSystem, baseLayer);
+
+        // Initialize inventory system
+        inventory = new Inventory();
+        inventoryUI = new InventoryUI(inventory, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+
+        // Add seeds to slot 2
+        inventory.addItem(1, new Seed(5));  // Index 1 = slot 2 in display
 
         centerCameraOnMap();
         cameraController = new CameraController(camera, viewport, buildWorldBounds(), MIN_ZOOM, MAX_ZOOM);
@@ -104,6 +124,18 @@ public class GameApp extends ApplicationAdapter {
             public boolean scrolled(float amountX, float amountY) {
                 return cameraController.scrolled(amountX, amountY);
             }
+
+            @Override
+            public boolean keyDown(int keycode) {
+                // Handle inventory slot selection (keys 1-8)
+                if (keycode >= com.badlogic.gdx.Input.Keys.NUM_1 &&
+                    keycode <= com.badlogic.gdx.Input.Keys.NUM_8) {
+                    int slotIndex = keycode - com.badlogic.gdx.Input.Keys.NUM_1;
+                    inventory.selectSlot(slotIndex);
+                    return true;
+                }
+                return false;
+            }
         });
     }
 
@@ -118,13 +150,22 @@ public class GameApp extends ApplicationAdapter {
         Gdx.gl.glClearColor(0.08f, 0.09f, 0.12f, 1.0f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        cameraController.update(Gdx.graphics.getDeltaTime());
+        float deltaTime = Gdx.graphics.getDeltaTime();
+
+        cameraController.update(deltaTime);
+        // Update farming system
+        farmingSystem.update(deltaTime);
+
         camera.update();
         renderer.setView(camera);
         renderer.render();
 
         gridOverlay.render(camera);
+        cropRenderer.render(camera);
         contextMenu.render(camera);
+
+        // Render inventory UI (screen space)
+        inventoryUI.render(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
     }
 
     @Override
@@ -134,6 +175,12 @@ public class GameApp extends ApplicationAdapter {
         }
         if (gridOverlay != null) {
             gridOverlay.dispose();
+        }
+        if (cropRenderer != null) {
+            cropRenderer.dispose();
+        }
+        if (inventoryUI != null) {
+            inventoryUI.dispose();
         }
         if (map != null) {
             map.dispose();
@@ -161,6 +208,28 @@ public class GameApp extends ApplicationAdapter {
 
         selectionLayer.setCell(coord.x(), coord.y(), createHighlightCell());
         lastSelected = coord;
+
+        // Check if watering can is selected
+        if (inventory.isWateringCanSelected()) {
+            // Water the crop if it exists
+            if (farmingSystem.hasCrop(coord)) {
+                farmingSystem.waterCrop(coord);
+            }
+        } else if (inventory.isSeedSelected()) {
+            // Plant seed only if no crop exists and seed is selected
+            if (!farmingSystem.hasCrop(coord)) {
+                if (farmingSystem.plantSeed(coord)) {
+                    // Use one seed from inventory
+                    inventory.useSeed();
+                    
+                    // Remove seeds from inventory if they run out
+                    Seed seed = (Seed) inventory.getItem(1);  // Slot 2 (index 1)
+                    if (seed != null && seed.getQuantity() == 0) {
+                        inventory.removeItem(1);  // Remove empty seed stack
+                    }
+                }
+            }
+        }
     }
 
     private TiledMap loadMapOrFallback() {
@@ -235,6 +304,8 @@ public class GameApp extends ApplicationAdapter {
             contextMenu.hide();
             return;
         }
+
+
         float worldX = coord.x() * baseLayer.getTileWidth();
         float worldY = coord.y() * baseLayer.getTileHeight();
         contextMenu.showAt(worldX, worldY);
