@@ -27,7 +27,9 @@ import com.spacefarm.render.CropRenderer;
 import com.spacefarm.render.GridOverlay;
 import com.spacefarm.render.InventoryUI;
 import com.spacefarm.render.OxygenUI;
+import com.spacefarm.render.BaseZoneRenderer;
 import com.spacefarm.world.TileCoord;
+import com.spacefarm.world.BaseZone;
 import com.spacefarm.farming.FarmingSystem;
 import com.spacefarm.inventory.Inventory;
 import com.spacefarm.inventory.Seed;
@@ -36,8 +38,8 @@ import com.spacefarm.oxygen.OxygenManager;
 
 public class GameApp extends ApplicationAdapter {
     private static final int DEFAULT_TILE_SIZE = 32;
-    private static final int DEFAULT_MAP_WIDTH = 40;
-    private static final int DEFAULT_MAP_HEIGHT = 30;
+    private static final int DEFAULT_MAP_WIDTH = 64;
+    private static final int DEFAULT_MAP_HEIGHT = 64;
     private static final float MIN_ZOOM = 0.5f;
     private static final float MAX_ZOOM = 2.5f;
 
@@ -54,6 +56,9 @@ public class GameApp extends ApplicationAdapter {
     private TiledMapTileLayer baseLayer;
     private TiledMapTileLayer selectionLayer;
     private TilePicker tilePicker;
+
+    private BaseZone baseZone;
+    private BaseZoneRenderer baseZoneRenderer;
 
     private TileCoord lastSelected;
     private FarmingSystem farmingSystem;
@@ -76,6 +81,12 @@ public class GameApp extends ApplicationAdapter {
             baseLayer = createFallbackLayer(DEFAULT_MAP_WIDTH, DEFAULT_MAP_HEIGHT, DEFAULT_TILE_SIZE, DEFAULT_TILE_SIZE);
             map.getLayers().add(baseLayer);
         }
+
+        // Initialize base zone
+        int mapCenterX = baseLayer.getWidth() / 2;
+        int mapCenterY = baseLayer.getHeight() / 2;
+        baseZone = new BaseZone(mapCenterX, mapCenterY, 64, 64);
+        baseZoneRenderer = new BaseZoneRenderer(baseZone, baseLayer, DEFAULT_TILE_SIZE);
 
         selectionLayer = new TiledMapTileLayer(baseLayer.getWidth(), baseLayer.getHeight(),
                 baseLayer.getTileWidth(), baseLayer.getTileHeight());
@@ -102,6 +113,7 @@ public class GameApp extends ApplicationAdapter {
 
         // Initialize oxygen system
         oxygenManager = new OxygenManager();
+        oxygenManager.setBaseZone(baseZone);
         oxygenUI = new OxygenUI(oxygenManager);
 
         centerCameraOnMap();
@@ -208,6 +220,7 @@ public class GameApp extends ApplicationAdapter {
 
         gridOverlay.render(camera);
         cropRenderer.render(camera);
+        baseZoneRenderer.render(camera);
         contextMenu.render(camera);
 
         // Render inventory UI (screen space)
@@ -224,6 +237,9 @@ public class GameApp extends ApplicationAdapter {
         }
         if (gridOverlay != null) {
             gridOverlay.dispose();
+        }
+        if (baseZoneRenderer != null) {
+            baseZoneRenderer.dispose();
         }
         if (cropRenderer != null) {
             cropRenderer.dispose();
@@ -253,6 +269,9 @@ public class GameApp extends ApplicationAdapter {
         if (coord == null) {
             return;
         }
+
+        // Update oxygen manager with current position
+        oxygenManager.updatePositionTile(coord);
 
         if (lastSelected != null) {
             selectionLayer.setCell(lastSelected.x(), lastSelected.y(), null);

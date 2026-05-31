@@ -1,5 +1,8 @@
 package com.spacefarm.oxygen;
 
+import com.spacefarm.world.BaseZone;
+import com.spacefarm.world.TileCoord;
+
 /**
  * Manages player oxygen level with base/outside modes.
  */
@@ -7,11 +10,14 @@ public class OxygenManager {
     private float currentOxygen;
     private float oxygenTimer;
     private boolean isAtBase;
+    private BaseZone baseZone;
+    private TileCoord lastKnownPosition;
 
     public OxygenManager() {
         this.currentOxygen = OxygenConstants.STARTING_OXYGEN;
         this.oxygenTimer = 0f;
         this.isAtBase = true;  // Start at base
+        this.baseZone = null;
     }
 
     /**
@@ -61,6 +67,23 @@ public class OxygenManager {
      */
     public void setAtBase(boolean atBase) {
         this.isAtBase = atBase;
+    }
+
+    /**
+     * Set the base zone for automatic position detection.
+     */
+    public void setBaseZone(BaseZone baseZone) {
+        this.baseZone = baseZone;
+    }
+
+    /**
+     * Update oxygen based on current tile position.
+     */
+    public void updatePositionTile(TileCoord coord) {
+        this.lastKnownPosition = coord;
+        if (baseZone != null) {
+            this.isAtBase = baseZone.isInBaseZone(coord);
+        }
     }
 
     /**
