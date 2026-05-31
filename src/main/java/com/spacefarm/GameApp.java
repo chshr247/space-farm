@@ -28,18 +28,22 @@ import com.spacefarm.render.GridOverlay;
 import com.spacefarm.render.InventoryUI;
 import com.spacefarm.render.OxygenUI;
 import com.spacefarm.render.BaseZoneRenderer;
+import com.spacefarm.render.OutdoorZoneRenderer;
 import com.spacefarm.world.TileCoord;
 import com.spacefarm.world.BaseZone;
+import com.spacefarm.world.OutdoorZone;
+import com.spacefarm.world.ScavengingLocation;
 import com.spacefarm.farming.FarmingSystem;
 import com.spacefarm.inventory.Inventory;
 import com.spacefarm.inventory.Seed;
 import com.spacefarm.inventory.Sickle;
+import com.spacefarm.inventory.Crystal;
 import com.spacefarm.oxygen.OxygenManager;
 
 public class GameApp extends ApplicationAdapter {
     private static final int DEFAULT_TILE_SIZE = 32;
-    private static final int DEFAULT_MAP_WIDTH = 64;
-    private static final int DEFAULT_MAP_HEIGHT = 64;
+    private static final int DEFAULT_MAP_WIDTH = 256;  // Було 64, тепер 256 для border
+    private static final int DEFAULT_MAP_HEIGHT = 256; // Було 64, тепер 256 для border
     private static final float MIN_ZOOM = 0.5f;
     private static final float MAX_ZOOM = 2.5f;
 
@@ -59,6 +63,8 @@ public class GameApp extends ApplicationAdapter {
 
     private BaseZone baseZone;
     private BaseZoneRenderer baseZoneRenderer;
+    private OutdoorZone outdoorZone;
+    private OutdoorZoneRenderer outdoorZoneRenderer;
 
     private TileCoord lastSelected;
     private FarmingSystem farmingSystem;
@@ -86,6 +92,12 @@ public class GameApp extends ApplicationAdapter {
         int mapCenterX = baseLayer.getWidth() / 2;
         int mapCenterY = baseLayer.getHeight() / 2;
         baseZone = new BaseZone(mapCenterX, mapCenterY, 64, 64);
+
+        // Initialize outdoor zone with map reference
+        outdoorZone = new OutdoorZone(baseZone, baseLayer.getWidth(), baseLayer.getHeight());
+        outdoorZoneRenderer = new OutdoorZoneRenderer(outdoorZone, baseLayer, map, DEFAULT_TILE_SIZE);
+
+        // Initialize base zone renderer (after outdoor to not overwrite border)
         baseZoneRenderer = new BaseZoneRenderer(baseZone, baseLayer, DEFAULT_TILE_SIZE);
 
         selectionLayer = new TiledMapTileLayer(baseLayer.getWidth(), baseLayer.getHeight(),
@@ -213,6 +225,9 @@ public class GameApp extends ApplicationAdapter {
 
         // Update oxygen system
         oxygenManager.update(deltaTime);
+        
+        // Update scavenging system
+        updateScavenging(deltaTime);
 
         camera.update();
         renderer.setView(camera);
@@ -221,6 +236,7 @@ public class GameApp extends ApplicationAdapter {
         gridOverlay.render(camera);
         cropRenderer.render(camera);
         baseZoneRenderer.render(camera);
+        outdoorZoneRenderer.render(camera);
         contextMenu.render(camera);
 
         // Render inventory UI (screen space)
@@ -240,6 +256,9 @@ public class GameApp extends ApplicationAdapter {
         }
         if (baseZoneRenderer != null) {
             baseZoneRenderer.dispose();
+        }
+        if (outdoorZoneRenderer != null) {
+            outdoorZoneRenderer.dispose();
         }
         if (cropRenderer != null) {
             cropRenderer.dispose();
@@ -279,6 +298,15 @@ public class GameApp extends ApplicationAdapter {
 
         selectionLayer.setCell(coord.x(), coord.y(), createHighlightCell());
         lastSelected = coord;
+
+        // Check if in outdoor zone - start scavenging
+        ScavengingLocation location = outdoorZone.getLocationAt(coord);
+        if (location != null) {
+            if (!location.isCleared() && !location.isScavenging() && !location.isInCooldown()) {
+                location.startScavenging();
+            }
+            return;
+        }
 
         // Check if watering can is selected
         if (inventory.isWateringCanSelected()) {
@@ -336,9 +364,16 @@ public class GameApp extends ApplicationAdapter {
     }
 
     private void centerCameraOnMap() {
-        float worldWidth = baseLayer.getWidth() * baseLayer.getTileWidth();
-        float worldHeight = baseLayer.getHeight() * baseLayer.getTileHeight();
-        camera.position.set(worldWidth / 2f, worldHeight / 2f, 0f);
+        // Center camera on the base zone center, not the map center
+        int baseX = baseZone.getBaseX();
+        int baseY = baseZone.getBaseY();
+        int baseWidth = baseZone.getBaseWidth();
+        int baseHeight = baseZone.getBaseHeight();
+
+        float baseCenterX = (baseX + baseWidth / 2f) * DEFAULT_TILE_SIZE;
+        float baseCenterY = (baseY + baseHeight / 2f) * DEFAULT_TILE_SIZE;
+
+        camera.position.set(baseCenterX, baseCenterY, 0f);
         camera.update();
     }
 
@@ -388,5 +423,21 @@ public class GameApp extends ApplicationAdapter {
         float worldX = coord.x() * baseLayer.getTileWidth();
         float worldY = coord.y() * baseLayer.getTileHeight();
         contextMenu.showAt(worldX, worldY);
+    }
+    
+    private void updateScavenging(float deltaTime) {
+        for (ScavengingLocation location : outdoorZone.getScavengingLocations()) {
+            if (location.isScavenging()) {
+                // Consume oxygen using stable accumulation (2% every 10 seconds)
+                oxygenManager.consumeOxygenDuringScavenging(deltaTime);
+
+                // Check if scavenging is complete
+                if (location.isScavengingComplete()) {
+                    location.completeScavenging();
+                    // Add crystal to inventory
+                    inventory.addItem(new Crystal());
+                }
+            }
+        }
     }
 }

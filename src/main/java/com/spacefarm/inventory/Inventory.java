@@ -173,6 +173,21 @@ public class Inventory {
     }
 
     /**
+     * Add a crystal to inventory.
+     * Returns true if added successfully.
+     */
+    public boolean addItem(Item item) {
+        // Find an empty slot
+        for (int i = 0; i < slots.length; i++) {
+            if (slots[i] == null) {
+                slots[i] = item;
+                return true;
+            }
+        }
+        return false;  // No space
+    }
+
+    /**
      * Get all slots.
      */
     public Item[] getSlots() {

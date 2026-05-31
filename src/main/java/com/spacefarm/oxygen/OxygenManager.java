@@ -12,36 +12,24 @@ public class OxygenManager {
     private boolean isAtBase;
     private BaseZone baseZone;
     private TileCoord lastKnownPosition;
+    private float scavengingTimer;  // Таймер для stableної витрати кислю
 
     public OxygenManager() {
         this.currentOxygen = OxygenConstants.STARTING_OXYGEN;
         this.oxygenTimer = 0f;
+        this.scavengingTimer = 0f;
         this.isAtBase = true;  // Start at base
         this.baseZone = null;
     }
 
     /**
      * Update oxygen level based on location and time.
+     * NOTE: Oxygen consumption happens in GameApp.updateScavenging() during scavenging activity
      */
     public void update(float deltaTime) {
-        if (!isAtBase) {
-            // Decrease oxygen outside base
-            oxygenTimer += deltaTime;
-
-            if (oxygenTimer >= OxygenConstants.OXYGEN_DECREASE_INTERVAL) {
-                currentOxygen -= OxygenConstants.OXYGEN_DECREASE_AMOUNT;
-                oxygenTimer = 0f;
-            }
-
-            // Clamp oxygen
-            if (currentOxygen < OxygenConstants.MIN_OXYGEN) {
-                currentOxygen = OxygenConstants.MIN_OXYGEN;
-            }
-        } else {
-            // At base - oxygen stays at max
-            currentOxygen = OxygenConstants.MAX_OXYGEN;
-            oxygenTimer = 0f;
-        }
+        // Oxygen only decreases during scavenging (handled in GameApp.updateScavenging)
+        // At base, oxygen stays the same
+        // Outside base but not scavenging, oxygen stays the same
     }
 
     /**
@@ -51,6 +39,36 @@ public class OxygenManager {
         currentOxygen += OxygenConstants.OXYGEN_INCREASE_FROM_FOOD;
         if (currentOxygen > OxygenConstants.MAX_OXYGEN) {
             currentOxygen = OxygenConstants.MAX_OXYGEN;
+        }
+    }
+
+    /**
+     * Consume oxygen during scavenging (accumulate time for stable consumption).
+     */
+    public void consumeOxygenDuringScavenging(float deltaTime) {
+        if (isAtBase) return;  // No consumption at base
+
+        scavengingTimer += deltaTime;
+
+        // Consume exactly 2% every 10 seconds
+        if (scavengingTimer >= OxygenConstants.OXYGEN_DECREASE_INTERVAL) {
+            currentOxygen -= OxygenConstants.OXYGEN_DECREASE_AMOUNT;
+            scavengingTimer = 0f;
+
+            // Clamp oxygen
+            if (currentOxygen < OxygenConstants.MIN_OXYGEN) {
+                currentOxygen = OxygenConstants.MIN_OXYGEN;
+            }
+        }
+    }
+
+    /**
+     * Consume oxygen directly.
+     */
+    public void consumeOxygen(float amount) {
+        currentOxygen -= amount;
+        if (currentOxygen < OxygenConstants.MIN_OXYGEN) {
+            currentOxygen = OxygenConstants.MIN_OXYGEN;
         }
     }
 

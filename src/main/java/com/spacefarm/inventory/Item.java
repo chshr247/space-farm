@@ -31,6 +31,7 @@ public abstract class Item {
         FERTILIZER,
         SICKLE,
         PLANT_FOOD,
+        CRYSTAL,
         EMPTY
     }
 }
