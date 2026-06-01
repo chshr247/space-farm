@@ -136,7 +136,11 @@ public class SeedWheelOverlay {
 
         // Draw wheel background circle
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        shapeRenderer.setColor(0x222222 / 255f, 0x222222 / 255f, 0x222222 / 255f, 0.8f);
+        int bg = SeedWheelConstants.WHEEL_BACKGROUND_COLOR;
+        float br = ((bg >> 16) & 0xFF) / 255f;
+        float bgc = ((bg >> 8) & 0xFF) / 255f;
+        float bb = (bg & 0xFF) / 255f;
+        shapeRenderer.setColor(br, bgc, bb, 0.8f);
         shapeRenderer.circle(WHEEL_CENTER_X, WHEEL_CENTER_Y, WHEEL_RADIUS + 10f);
         shapeRenderer.end();
 
