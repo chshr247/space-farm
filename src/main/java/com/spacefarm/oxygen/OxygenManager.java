@@ -1,5 +1,8 @@
 package com.spacefarm.oxygen;
 
+import com.spacefarm.world.BaseZone;
+import com.spacefarm.world.TileCoord;
+
 /**
  * Manages player oxygen level with base/outside modes.
  */
@@ -7,35 +10,26 @@ public class OxygenManager {
     private float currentOxygen;
     private float oxygenTimer;
     private boolean isAtBase;
+    private BaseZone baseZone;
+    private TileCoord lastKnownPosition;
+    private float scavengingTimer;  // Таймер для stableної витрати кислю
 
     public OxygenManager() {
         this.currentOxygen = OxygenConstants.STARTING_OXYGEN;
         this.oxygenTimer = 0f;
+        this.scavengingTimer = 0f;
         this.isAtBase = true;  // Start at base
+        this.baseZone = null;
     }
 
     /**
      * Update oxygen level based on location and time.
+     * NOTE: Oxygen consumption happens in GameApp.updateScavenging() during scavenging activity
      */
     public void update(float deltaTime) {
-        if (!isAtBase) {
-            // Decrease oxygen outside base
-            oxygenTimer += deltaTime;
-
-            if (oxygenTimer >= OxygenConstants.OXYGEN_DECREASE_INTERVAL) {
-                currentOxygen -= OxygenConstants.OXYGEN_DECREASE_AMOUNT;
-                oxygenTimer = 0f;
-            }
-
-            // Clamp oxygen
-            if (currentOxygen < OxygenConstants.MIN_OXYGEN) {
-                currentOxygen = OxygenConstants.MIN_OXYGEN;
-            }
-        } else {
-            // At base - oxygen stays at max
-            currentOxygen = OxygenConstants.MAX_OXYGEN;
-            oxygenTimer = 0f;
-        }
+        // Oxygen only decreases during scavenging (handled in GameApp.updateScavenging)
+        // At base, oxygen stays the same
+        // Outside base but not scavenging, oxygen stays the same
     }
 
     /**
@@ -45,6 +39,35 @@ public class OxygenManager {
         currentOxygen += OxygenConstants.OXYGEN_INCREASE_FROM_FOOD;
         if (currentOxygen > OxygenConstants.MAX_OXYGEN) {
             currentOxygen = OxygenConstants.MAX_OXYGEN;
+        }
+    }
+
+    /**
+     * Consume oxygen during scavenging (accumulate time for stable consumption).
+     */
+    public void consumeOxygenDuringScavenging(float deltaTime) {
+        scavengingTimer += deltaTime;
+
+        // Consume exactly 2% every 10 seconds
+        if (scavengingTimer >= OxygenConstants.OXYGEN_DECREASE_INTERVAL) {
+            currentOxygen -= OxygenConstants.OXYGEN_DECREASE_AMOUNT;
+            scavengingTimer = 0f;
+            scavengingTimer = 0f;
+
+            // Clamp oxygen
+            if (currentOxygen < OxygenConstants.MIN_OXYGEN) {
+                currentOxygen = OxygenConstants.MIN_OXYGEN;
+            }
+        }
+    }
+
+    /**
+     * Consume oxygen directly.
+     */
+    public void consumeOxygen(float amount) {
+        currentOxygen -= amount;
+        if (currentOxygen < OxygenConstants.MIN_OXYGEN) {
+            currentOxygen = OxygenConstants.MIN_OXYGEN;
         }
     }
 
@@ -61,6 +84,23 @@ public class OxygenManager {
      */
     public void setAtBase(boolean atBase) {
         this.isAtBase = atBase;
+    }
+
+    /**
+     * Set the base zone for automatic position detection.
+     */
+    public void setBaseZone(BaseZone baseZone) {
+        this.baseZone = baseZone;
+    }
+
+    /**
+     * Update oxygen based on current tile position.
+     */
+    public void updatePositionTile(TileCoord coord) {
+        this.lastKnownPosition = coord;
+        if (baseZone != null) {
+            this.isAtBase = baseZone.isInBaseZone(coord);
+        }
     }
 
     /**
@@ -90,5 +130,11 @@ public class OxygenManager {
     public boolean isCritical() {
         return currentOxygen < 20f;
     }
-}
 
+    /**
+     * Check if oxygen is at 0%.
+     */
+    public boolean isOxygenDepleted() {
+        return currentOxygen <= 0f;
+    }
+}

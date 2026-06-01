@@ -132,6 +132,8 @@ public class InventoryUI {
                 return new Color(0.9f, 0.3f, 0.2f, 0.9f); // Red/tomato
             case FERTILIZER:
                 return new Color(0.9f, 0.7f, 0.1f, 0.9f); // Orange
+            case CRYSTAL:
+                return new Color(0.4f, 0.8f, 1.0f, 0.95f); // Bright cyan
             default:
                 return new Color(0.5f, 0.5f, 0.5f, 0.5f); // Gray
         }

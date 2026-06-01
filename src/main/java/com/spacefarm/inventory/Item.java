@@ -28,9 +28,12 @@ public abstract class Item {
     public enum ItemType {
         WATERING_CAN,
         SEED,
+        RARE_SEED,
+        LEGENDARY_SEED,
         FERTILIZER,
         SICKLE,
         PLANT_FOOD,
+        CRYSTAL,
         EMPTY
     }
 }
