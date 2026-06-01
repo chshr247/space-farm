@@ -54,16 +54,22 @@ public class ScavengingLocation {
     public boolean isInCooldown() {
         if (lastClearedTime == 0) return false;
         long elapsedTime = System.currentTimeMillis() - lastClearedTime;
-        return elapsedTime < OutdoorConstants.SCAVENGING_COOLDOWN_MILLIS;
+        long cooldownMillis = (locationType == LocationType.SEED_WHEEL)
+            ? SeedWheelConstants.SPIN_COOLDOWN_MILLIS
+            : OutdoorConstants.SCAVENGING_COOLDOWN_MILLIS;
+        return elapsedTime < cooldownMillis;
     }
-    
+
     /**
      * Get remaining cooldown time in milliseconds.
      */
     public long getRemainingCooldownTime() {
         if (lastClearedTime == 0) return 0;
         long elapsedTime = System.currentTimeMillis() - lastClearedTime;
-        long remaining = OutdoorConstants.SCAVENGING_COOLDOWN_MILLIS - elapsedTime;
+        long cooldownMillis = (locationType == LocationType.SEED_WHEEL)
+            ? SeedWheelConstants.SPIN_COOLDOWN_MILLIS
+            : OutdoorConstants.SCAVENGING_COOLDOWN_MILLIS;
+        long remaining = cooldownMillis - elapsedTime;
         return Math.max(0, remaining);
     }
     
