@@ -33,9 +33,10 @@ public class OutdoorZone {
     }
     
     /**
-     * Initialize 5 scavenging locations scattered around the border.
+     * Initialize 6 scavenging locations scattered around the border.
      */
     private void initializeLocations() {
+        // Regular scavenging locations
         int width = OutdoorConstants.OUTDOOR_LOCATION_WIDTH;
         int height = OutdoorConstants.OUTDOOR_LOCATION_HEIGHT;
         
@@ -61,6 +62,19 @@ public class OutdoorZone {
             ScavengingLocation location = new ScavengingLocation(x, y, width, height, color);
             locations.add(location);
         }
+        
+        // Add seed wheel location at bottom-right corner
+        int seedWheelWidth = SeedWheelConstants.SEED_WHEEL_WIDTH;
+        int seedWheelHeight = SeedWheelConstants.SEED_WHEEL_HEIGHT;
+        int seedWheelX = borderX + borderWidth - seedWheelWidth - 5;
+        int seedWheelY = borderY + borderHeight - seedWheelHeight - 5;
+        int seedWheelColor = 0x8b7355;  // Brown color for seed wheel area
+        
+        ScavengingLocation seedWheelLocation = new ScavengingLocation(
+            seedWheelX, seedWheelY, seedWheelWidth, seedWheelHeight, 
+            seedWheelColor, ScavengingLocation.LocationType.SEED_WHEEL
+        );
+        locations.add(seedWheelLocation);
     }
     
     /**

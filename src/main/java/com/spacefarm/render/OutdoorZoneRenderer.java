@@ -47,17 +47,18 @@ public class OutdoorZoneRenderer {
         int g = (borderColor >> 8) & 0xFF;
         int b = borderColor & 0xFF;
         borderTileTexture = createSolidTexture(tileSize,tileSize,r,g,b,255);
-        locationTextures = new Texture[OutdoorConstants.NUM_LOCATIONS];
-        droneTextures = new Texture[OutdoorConstants.NUM_LOCATIONS];
+        int locationCount = outdoorZone.getLocations().size();
+        locationTextures = new Texture[locationCount];
+        droneTextures = new Texture[locationCount];
         int locWidth = OutdoorConstants.OUTDOOR_LOCATION_WIDTH * tileSize;
         int locHeight = OutdoorConstants.OUTDOOR_LOCATION_HEIGHT * tileSize;
-        for(int i = 0;i < OutdoorConstants.NUM_LOCATIONS;i++) {
-            int color = OutdoorConstants.LOCATION_COLORS[i];
+        for(int i = 0;i < locationCount;i++) {
+            int color = outdoorZone.getLocations().get(i).getColor();
             int lr = (color >> 16) & 0xFF;
             int lg = (color >> 8) & 0xFF;
             int lb = color & 0xFF;
             locationTextures[i] = createSolidTexture(tileSize,tileSize,lr,lg,lb,255);
-            droneTextures[i] = createCrystalDroneTexture(locWidth,locHeight,i);
+            droneTextures[i] = createCrystalDroneTexture(locWidth,locHeight);
         }
     }
 
@@ -81,7 +82,7 @@ public class OutdoorZoneRenderer {
         }
     }
 
-    private Texture createCrystalDroneTexture(int width, int height, int locationIndex) {
+    private Texture createCrystalDroneTexture(int width, int height) {
         Pixmap pixmap = new Pixmap(width,height,Pixmap.Format.RGBA8888);
         pixmap.setColor(0,0,0,0);
         pixmap.fill();
@@ -102,13 +103,15 @@ public class OutdoorZoneRenderer {
     }
 
     private void applyOutdoorZoneTiles() {
-        int tileSize = baseLayer.getTileWidth();
         for(ScavengingLocation location : outdoorZone.getLocations()) {
             int startX = location.getTopLeft().x();
             int startY = location.getTopLeft().y();
             int width = location.getWidth();
             int height = location.getHeight();
             int colorIndex = outdoorZone.getLocations().indexOf(location);
+            if (colorIndex < 0 || colorIndex >= locationTextures.length) {
+                continue;
+            }
             Texture locationTexture = locationTextures[colorIndex];
             for(int x = startX;x < startX + width;x++) {
                 for(int y = startY;y < startY + height;y++) {
@@ -136,7 +139,8 @@ public class OutdoorZoneRenderer {
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
         int tileSize = baseLayer.getTileWidth();
-        for(int i = 0;i < outdoorZone.getLocations().size();i++) {
+        int locationCount = Math.min(outdoorZone.getLocations().size(), droneTextures.length);
+        for(int i = 0;i < locationCount;i++) {
             ScavengingLocation location = outdoorZone.getLocations().get(i);
             float locStartX = location.getTopLeft().x() * tileSize;
             float locStartY = location.getTopLeft().y() * tileSize;

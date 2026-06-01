@@ -30,16 +30,23 @@ import com.spacefarm.render.InventoryUI;
 import com.spacefarm.render.OxygenUI;
 import com.spacefarm.render.BaseZoneRenderer;
 import com.spacefarm.render.OutdoorZoneRenderer;
+import com.spacefarm.render.SeedWheelOverlay;
 import com.spacefarm.world.TileCoord;
 import com.spacefarm.world.BaseZone;
 import com.spacefarm.world.OutdoorZone;
 import com.spacefarm.world.ScavengingLocation;
+import com.spacefarm.world.SeedWheelConstants;
 import com.spacefarm.farming.FarmingSystem;
 import com.spacefarm.inventory.Inventory;
+import com.spacefarm.inventory.Item;
 import com.spacefarm.inventory.Seed;
+import com.spacefarm.inventory.RareSeed;
+import com.spacefarm.inventory.LegendarySeed;
+import com.spacefarm.inventory.PlantFood;
 import com.spacefarm.inventory.Sickle;
 import com.spacefarm.inventory.Crystal;
 import com.spacefarm.oxygen.OxygenManager;
+import com.spacefarm.oxygen.OxygenConstants;
 
 public class GameApp extends ApplicationAdapter {
     private static final int DEFAULT_TILE_SIZE = 32;
@@ -76,6 +83,9 @@ public class GameApp extends ApplicationAdapter {
     private OxygenUI oxygenUI;
     private GameOverOverlay gameOverOverlay;
     private boolean isGameOver;
+    private SeedWheelOverlay seedWheelOverlay;
+    private ScavengingLocation currentSeedWheelLocation;  // Track which location the wheel is spinning for
+    private long lastSeedWheelSpinTime = 0;
 
     @Override
     public void create() {
@@ -135,6 +145,10 @@ public class GameApp extends ApplicationAdapter {
         gameOverOverlay = new GameOverOverlay();
         isGameOver = false;
 
+        // Initialize seed wheel overlay
+        seedWheelOverlay = new SeedWheelOverlay();
+        currentSeedWheelLocation = null;
+
         centerCameraOnMap();
         cameraController = new CameraController(camera, viewport, buildWorldBounds(), MIN_ZOOM, MAX_ZOOM);
 
@@ -144,6 +158,21 @@ public class GameApp extends ApplicationAdapter {
                 if (isGameOver) {
                     return false;  // Ignore clicks when game is over
                 }
+
+                // Handle seed wheel button click
+                if (seedWheelOverlay.isVisible()) {
+                    if (button == Buttons.LEFT) {
+                        // Check if button is hit
+                        float adjustedY = Gdx.graphics.getHeight() - screenY;  // Invert Y for UI coordinates
+                        if (seedWheelOverlay.isButtonHit(screenX, adjustedY)) {
+                            seedWheelOverlay.startSpin();
+                            lastSeedWheelSpinTime = System.currentTimeMillis();
+                            return true;
+                        }
+                    }
+                    return false;  // Don't process other interactions while wheel is visible
+                }
+
                 if (cameraController.touchDown(screenX, screenY, pointer, button)) {
                     return true;
                 }
@@ -181,29 +210,64 @@ public class GameApp extends ApplicationAdapter {
                     return true;
                 }
                 
-                // Handle eating plant food (E key)
+                // Handle eating plant food or seeds (E key)
                 if (keycode == com.badlogic.gdx.Input.Keys.E) {
-                    if (inventory.isPlantFoodSelected()) {
-                        if (inventory.consumePlantFood()) {
-                            // Increase oxygen
-                            oxygenManager.consumeFood();
-                            
-                            // Remove plant food if empty
-                            com.spacefarm.inventory.PlantFood food = 
-                                (com.spacefarm.inventory.PlantFood) inventory.getSelectedItem();
-                            if (food != null && food.getQuantity() == 0) {
-                                // Find and remove the empty stack
-                                for (int i = 0; i < 8; i++) {
-                                    com.spacefarm.inventory.Item item = inventory.getItem(i);
-                                    if (item != null && item.getType() == 
-                                        com.spacefarm.inventory.Item.ItemType.PLANT_FOOD) {
-                                        com.spacefarm.inventory.PlantFood f = 
-                                            (com.spacefarm.inventory.PlantFood) item;
-                                        if (f.getQuantity() == 0) {
-                                            inventory.removeItem(i);
-                                            break;
+                    Item selected = inventory.getSelectedItem();
+
+                    if (selected != null) {
+                        // Handle plant food
+                        if (selected.getType() == Item.ItemType.PLANT_FOOD) {
+                            if (inventory.consumePlantFood()) {
+                                // Increase oxygen
+                                oxygenManager.consumeFood();
+
+                                // Remove plant food if empty
+                                PlantFood food =
+                                    (PlantFood) inventory.getSelectedItem();
+                                if (food != null && food.getQuantity() == 0) {
+                                    // Find and remove the empty stack
+                                    for (int i = 0; i < 8; i++) {
+                                        Item item = inventory.getItem(i);
+                                        if (item != null && item.getType() ==
+                                            Item.ItemType.PLANT_FOOD) {
+                                            PlantFood f =
+                                                (PlantFood) item;
+                                            if (f.getQuantity() == 0) {
+                                                inventory.removeItem(i);
+                                                break;
+                                            }
                                         }
                                     }
+                                }
+                            }
+                        }
+                        // Handle rare seed
+                        else if (selected.getType() == Item.ItemType.RARE_SEED) {
+                            RareSeed rareSeed = (RareSeed) selected;
+                            if (rareSeed.useSeed()) {
+                                // Restore 20% oxygen
+                                float oxygenToAdd = OxygenConstants.MAX_OXYGEN *
+                                    (SeedWheelConstants.RARE_SEED_OXYGEN_RESTORE / 100f);
+                                oxygenManager.setOxygen(oxygenManager.getOxygen() + oxygenToAdd);
+
+                                // Remove if empty
+                                if (rareSeed.getQuantity() == 0) {
+                                    inventory.removeItem(inventory.getSelectedSlot());
+                                }
+                            }
+                        }
+                        // Handle legendary seed
+                        else if (selected.getType() == Item.ItemType.LEGENDARY_SEED) {
+                            LegendarySeed legendarySeed = (LegendarySeed) selected;
+                            if (legendarySeed.useSeed()) {
+                                // Restore 50% oxygen
+                                float oxygenToAdd = OxygenConstants.MAX_OXYGEN *
+                                    (SeedWheelConstants.LEGENDARY_SEED_OXYGEN_RESTORE / 100f);
+                                oxygenManager.setOxygen(oxygenManager.getOxygen() + oxygenToAdd);
+
+                                // Remove if empty
+                                if (legendarySeed.getQuantity() == 0) {
+                                    inventory.removeItem(inventory.getSelectedSlot());
                                 }
                             }
                         }
@@ -234,6 +298,24 @@ public class GameApp extends ApplicationAdapter {
             isGameOver = true;
         }
 
+        // Update seed wheel UI
+        seedWheelOverlay.update(deltaTime);
+
+        // Handle seed wheel result
+        if (seedWheelOverlay.hasResult()) {
+            int resultType = seedWheelOverlay.getResultAndReset();
+            handleSeedWheelResult(resultType);
+
+            // Mark location as cleared and set cooldown
+            if (currentSeedWheelLocation != null) {
+                currentSeedWheelLocation.completeScavenging();
+                currentSeedWheelLocation = null;
+
+                // Close wheel UI after a short delay
+                seedWheelOverlay.setVisible(false);
+            }
+        }
+
         // Only update game if not game over
         if (!isGameOver) {
             cameraController.update(deltaTime);
@@ -262,6 +344,9 @@ public class GameApp extends ApplicationAdapter {
 
         // Render oxygen UI (screen space)
         oxygenUI.render(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+
+        // Render seed wheel overlay if visible
+        seedWheelOverlay.render(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 
         // Render game over overlay if game is over
         if (isGameOver) {
@@ -295,6 +380,9 @@ public class GameApp extends ApplicationAdapter {
         if (gameOverOverlay != null) {
             gameOverOverlay.dispose();
         }
+        if (seedWheelOverlay != null) {
+            seedWheelOverlay.dispose();
+        }
         if (map != null) {
             map.dispose();
         }
@@ -325,11 +413,20 @@ public class GameApp extends ApplicationAdapter {
         selectionLayer.setCell(coord.x(), coord.y(), createHighlightCell());
         lastSelected = coord;
 
-        // Check if in outdoor zone - start scavenging
+        // Check if in outdoor zone - handle based on location type
         ScavengingLocation location = outdoorZone.getLocationAt(coord);
         if (location != null) {
-            if (!location.isCleared() && !location.isScavenging() && !location.isInCooldown()) {
-                location.startScavenging();
+            if (location.getLocationType() == ScavengingLocation.LocationType.SEED_WHEEL) {
+                // Show seed wheel UI
+                if (!location.isInCooldown()) {
+                    seedWheelOverlay.setVisible(true);
+                    currentSeedWheelLocation = location;
+                }
+            } else {
+                // Regular crystal scavenging
+                if (!location.isCleared() && !location.isScavenging() && !location.isInCooldown()) {
+                    location.startScavenging();
+                }
             }
             return;
         }
@@ -348,9 +445,24 @@ public class GameApp extends ApplicationAdapter {
                     inventory.useSeed();
                     
                     // Remove seeds from inventory if they run out
-                    Seed seed = (Seed) inventory.getItem(1);  // Slot 2 (index 1)
-                    if (seed != null && seed.getQuantity() == 0) {
-                        inventory.removeItem(1);  // Remove empty seed stack
+                    Item selectedItem = inventory.getSelectedItem();
+                    if (selectedItem != null) {
+                        if (selectedItem.getType() == Item.ItemType.SEED) {
+                            Seed seed = (Seed) selectedItem;
+                            if (seed.getQuantity() == 0) {
+                                inventory.removeItem(inventory.getSelectedSlot());
+                            }
+                        } else if (selectedItem.getType() == Item.ItemType.RARE_SEED) {
+                            RareSeed seed = (RareSeed) selectedItem;
+                            if (seed.getQuantity() == 0) {
+                                inventory.removeItem(inventory.getSelectedSlot());
+                            }
+                        } else if (selectedItem.getType() == Item.ItemType.LEGENDARY_SEED) {
+                            LegendarySeed seed = (LegendarySeed) selectedItem;
+                            if (seed.getQuantity() == 0) {
+                                inventory.removeItem(inventory.getSelectedSlot());
+                            }
+                        }
                     }
                 }
             }
@@ -451,6 +563,21 @@ public class GameApp extends ApplicationAdapter {
         contextMenu.showAt(worldX, worldY);
     }
     
+    private void handleSeedWheelResult(int resultType) {
+        // resultType: 0 = common, 1 = rare, 2 = legendary
+
+        if (resultType == 0) {
+            // Common seeds
+            inventory.addItem(new Seed(SeedWheelConstants.COMMON_SEED_REWARD));
+        } else if (resultType == 1) {
+            // Rare seeds
+            inventory.addItem(new RareSeed(SeedWheelConstants.RARE_SEED_REWARD));
+        } else if (resultType == 2) {
+            // Legendary seeds
+            inventory.addItem(new LegendarySeed(SeedWheelConstants.LEGENDARY_SEED_REWARD));
+        }
+    }
+
     private void updateScavenging(float deltaTime) {
         for (ScavengingLocation location : outdoorZone.getScavengingLocations()) {
             if (location.isScavenging()) {

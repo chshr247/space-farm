@@ -4,6 +4,11 @@ package com.spacefarm.world;
  * Represents a scavenging location in the outdoor zone.
  */
 public class ScavengingLocation {
+    public enum LocationType {
+        CRYSTAL,      // Regular scavenging location - drops crystals
+        SEED_WHEEL    // Seed wheel - fortune wheel with different seed types
+    }
+
     private TileCoord topLeft;
     private int width;
     private int height;
@@ -12,12 +17,19 @@ public class ScavengingLocation {
     private long scavengingStartTime;
     private boolean isScavenging;
     private long lastClearedTime;
-    
+    private LocationType locationType;
+
+    // Constructors
     public ScavengingLocation(int x, int y, int width, int height, int color) {
+        this(x, y, width, height, color, LocationType.CRYSTAL);
+    }
+
+    public ScavengingLocation(int x, int y, int width, int height, int color, LocationType locationType) {
         this.topLeft = new TileCoord(x, y);
         this.width = width;
         this.height = height;
         this.color = color;
+        this.locationType = locationType;
         this.isCleared = false;
         this.isScavenging = false;
         this.scavengingStartTime = 0;
@@ -104,5 +116,6 @@ public class ScavengingLocation {
     public boolean isCleared() { return isCleared; }
     public boolean isScavenging() { return isScavenging; }
     public long getScavengingStartTime() { return scavengingStartTime; }
+    public LocationType getLocationType() { return locationType; }
 }
 

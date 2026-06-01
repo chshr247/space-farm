@@ -88,26 +88,44 @@ public class Inventory {
     }
 
     /**
-     * Check if the selected item is seeds.
+     * Check if the selected item is any type of seeds.
      */
     public boolean isSeedSelected() {
         Item selected = getSelectedItem();
-        if (selected != null && selected.getType() == Item.ItemType.SEED) {
-            Seed seed = (Seed) selected;
-            return seed.getQuantity() > 0;  // Only return true if seeds are available
+        if (selected != null) {
+            Item.ItemType type = selected.getType();
+            if (type == Item.ItemType.SEED) {
+                Seed seed = (Seed) selected;
+                return seed.getQuantity() > 0;  // Only return true if seeds are available
+            } else if (type == Item.ItemType.RARE_SEED) {
+                RareSeed seed = (RareSeed) selected;
+                return seed.getQuantity() > 0;
+            } else if (type == Item.ItemType.LEGENDARY_SEED) {
+                LegendarySeed seed = (LegendarySeed) selected;
+                return seed.getQuantity() > 0;
+            }
         }
         return false;
     }
 
     /**
-     * Use a seed from the selected slot if it's seeds.
+     * Use a seed from the selected slot if it's any type of seeds.
      * Returns true if a seed was used, false otherwise.
      */
     public boolean useSeed() {
         Item selected = getSelectedItem();
-        if (selected != null && selected.getType() == Item.ItemType.SEED) {
-            Seed seed = (Seed) selected;
-            return seed.useSeed();
+        if (selected != null) {
+            Item.ItemType type = selected.getType();
+            if (type == Item.ItemType.SEED) {
+                Seed seed = (Seed) selected;
+                return seed.useSeed();
+            } else if (type == Item.ItemType.RARE_SEED) {
+                RareSeed seed = (RareSeed) selected;
+                return seed.useSeed();
+            } else if (type == Item.ItemType.LEGENDARY_SEED) {
+                LegendarySeed seed = (LegendarySeed) selected;
+                return seed.useSeed();
+            }
         }
         return false;
     }
