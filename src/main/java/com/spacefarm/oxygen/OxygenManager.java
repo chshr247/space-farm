@@ -131,5 +131,11 @@ public class OxygenManager {
     public boolean isCritical() {
         return currentOxygen < 20f;
     }
-}
 
+    /**
+     * Check if oxygen is at 0%.
+     */
+    public boolean isOxygenDepleted() {
+        return currentOxygen <= 0f;
+    }
+}

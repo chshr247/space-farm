@@ -24,6 +24,7 @@ import com.spacefarm.input.TilePicker;
 import com.spacefarm.input.WorldBounds;
 import com.spacefarm.render.ContextMenuOverlay;
 import com.spacefarm.render.CropRenderer;
+import com.spacefarm.render.GameOverOverlay;
 import com.spacefarm.render.GridOverlay;
 import com.spacefarm.render.InventoryUI;
 import com.spacefarm.render.OxygenUI;
@@ -73,6 +74,8 @@ public class GameApp extends ApplicationAdapter {
     private InventoryUI inventoryUI;
     private OxygenManager oxygenManager;
     private OxygenUI oxygenUI;
+    private GameOverOverlay gameOverOverlay;
+    private boolean isGameOver;
 
     @Override
     public void create() {
@@ -127,6 +130,10 @@ public class GameApp extends ApplicationAdapter {
         oxygenManager = new OxygenManager();
         oxygenManager.setBaseZone(baseZone);
         oxygenUI = new OxygenUI(oxygenManager);
+        
+        // Initialize game over overlay
+        gameOverOverlay = new GameOverOverlay();
+        isGameOver = false;
 
         centerCameraOnMap();
         cameraController = new CameraController(camera, viewport, buildWorldBounds(), MIN_ZOOM, MAX_ZOOM);
@@ -134,6 +141,9 @@ public class GameApp extends ApplicationAdapter {
         Gdx.input.setInputProcessor(new InputAdapter() {
             @Override
             public boolean touchDown(int screenX, int screenY, int pointer, int button) {
+                if (isGameOver) {
+                    return false;  // Ignore clicks when game is over
+                }
                 if (cameraController.touchDown(screenX, screenY, pointer, button)) {
                     return true;
                 }
@@ -219,15 +229,23 @@ public class GameApp extends ApplicationAdapter {
 
         float deltaTime = Gdx.graphics.getDeltaTime();
 
-        cameraController.update(deltaTime);
-        // Update farming system
-        farmingSystem.update(deltaTime);
+        // Check if oxygen is depleted
+        if (oxygenManager.isOxygenDepleted() && !isGameOver) {
+            isGameOver = true;
+        }
 
-        // Update oxygen system
-        oxygenManager.update(deltaTime);
-        
-        // Update scavenging system
-        updateScavenging(deltaTime);
+        // Only update game if not game over
+        if (!isGameOver) {
+            cameraController.update(deltaTime);
+            // Update farming system
+            farmingSystem.update(deltaTime);
+
+            // Update oxygen system
+            oxygenManager.update(deltaTime);
+            
+            // Update scavenging system
+            updateScavenging(deltaTime);
+        }
 
         camera.update();
         renderer.setView(camera);
@@ -244,6 +262,11 @@ public class GameApp extends ApplicationAdapter {
 
         // Render oxygen UI (screen space)
         oxygenUI.render(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+
+        // Render game over overlay if game is over
+        if (isGameOver) {
+            gameOverOverlay.render(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+        }
     }
 
     @Override
@@ -268,6 +291,9 @@ public class GameApp extends ApplicationAdapter {
         }
         if (oxygenUI != null) {
             oxygenUI.dispose();
+        }
+        if (gameOverOverlay != null) {
+            gameOverOverlay.dispose();
         }
         if (map != null) {
             map.dispose();
