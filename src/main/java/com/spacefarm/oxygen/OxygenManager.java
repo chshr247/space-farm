@@ -46,13 +46,12 @@ public class OxygenManager {
      * Consume oxygen during scavenging (accumulate time for stable consumption).
      */
     public void consumeOxygenDuringScavenging(float deltaTime) {
-        if (isAtBase) return;  // No consumption at base
-
         scavengingTimer += deltaTime;
 
         // Consume exactly 2% every 10 seconds
         if (scavengingTimer >= OxygenConstants.OXYGEN_DECREASE_INTERVAL) {
             currentOxygen -= OxygenConstants.OXYGEN_DECREASE_AMOUNT;
+            scavengingTimer = 0f;
             scavengingTimer = 0f;
 
             // Clamp oxygen
