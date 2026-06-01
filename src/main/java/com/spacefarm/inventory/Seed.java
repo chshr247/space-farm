@@ -5,7 +5,7 @@ package com.spacefarm.inventory;
  */
 public class Seed extends Item {
     private int quantity;
-    private static final int MAX_QUANTITY = 5;
+    private static final int MAX_QUANTITY = 20;
 
     public Seed(int initialQuantity) {
         super("Насіння", "Насіння для посадження (" + initialQuantity + ")");

@@ -5,7 +5,7 @@ package com.spacefarm.inventory;
  */
 public class RareSeed extends Item {
     private int quantity;
-    private static final int MAX_QUANTITY = 5;
+    private static final int MAX_QUANTITY = 10;
     public static final float OXYGEN_RESTORE_PERCENT = 20f;
 
     public RareSeed(int initialQuantity) {

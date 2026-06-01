@@ -428,7 +428,6 @@ public class GameApp extends ApplicationAdapter {
                     location.startScavenging();
                 }
             }
-            }
             return;
         }
 
