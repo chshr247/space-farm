@@ -77,7 +77,8 @@ public class ScavengingLocation {
      * Start scavenging this location.
      */
     public void startScavenging() {
-        if (!isCleared && !isScavenging && !isInCooldown()) {
+        if (!isScavenging && !isInCooldown()) {
+            isCleared = false;
             isScavenging = true;
             scavengingStartTime = System.currentTimeMillis();
         }
