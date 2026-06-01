@@ -88,22 +88,19 @@ public class SeedWheelOverlay {
      * Determine the result based on current wheel rotation.
      */
     private void determineResult() {
-        float normalizedRotation = wheelRotation % 360f;
+        // Determine which sector is under the pointer (pointer is at the top = 90°)
+        float rotation = ((wheelRotation % 360f) + 360f) % 360f;
+        float pointerAngleOnWheel = (90f - rotation + 360f) % 360f;
 
-        // Zones (each takes up a portion of the circle):
-        // 0-60°: Common (60%)
-        // 60-90°: Rare (30%)
-        // 90-100°: Legendary (10%)
-        // Then it repeats
+        float commonDegrees = 360f * (SeedWheelConstants.COMMON_SEED_CHANCE / 100f);
+        float rareDegrees = 360f * (SeedWheelConstants.RARE_SEED_CHANCE / 100f);
 
-        float zoneRotation = normalizedRotation % 100f;
-
-        if (zoneRotation < 60f) {
-            resultSeedType = 0;  // Common
-        } else if (zoneRotation < 90f) {
-            resultSeedType = 1;  // Rare
+        if (pointerAngleOnWheel < commonDegrees) {
+            resultSeedType = 0; // Common
+        } else if (pointerAngleOnWheel < commonDegrees + rareDegrees) {
+            resultSeedType = 1; // Rare
         } else {
-            resultSeedType = 2;  // Legendary
+            resultSeedType = 2; // Legendary
         }
     }
 
