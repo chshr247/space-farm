@@ -424,9 +424,10 @@ public class GameApp extends ApplicationAdapter {
                 }
             } else {
                 // Regular crystal scavenging
-                if (!location.isCleared() && !location.isScavenging() && !location.isInCooldown()) {
+                if (!location.isScavenging() && !location.isInCooldown()) {
                     location.startScavenging();
                 }
+            }
             }
             return;
         }
