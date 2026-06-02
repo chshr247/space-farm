@@ -6,7 +6,7 @@ package com.spacefarm.inventory;
 public class WateringCan extends Item {
     private static final WateringCan INSTANCE = new WateringCan();
 
-    private WateringCan() {
+    protected WateringCan() {
         super("Лійка", "Інструмент для поливання рослин");
     }
 
