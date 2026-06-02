@@ -55,6 +55,12 @@ public class GameInteractionService {
             return false;
         }
 
+        if (button == Buttons.LEFT) {
+            if (session.getInventoryUI().handleTouchDown(screenX, screenY)) {
+                return true;
+            }
+        }
+
         if (session.getSeedWheelOverlay().isVisible()) {
             if (button == Buttons.LEFT) {
                 float adjustedY = Gdx.graphics.getHeight() - screenY;
@@ -74,6 +80,40 @@ public class GameInteractionService {
         session.getContextMenu().hide();
         handleTileClick(screenX, screenY);
         return true;
+    }
+
+    public boolean handleTouchDragged(int screenX, int screenY) {
+        if (session.isGameOver()) {
+            return false;
+        }
+        return session.getInventoryUI().handleTouchDragged(screenX, screenY);
+    }
+
+    public boolean handleTouchUp(int screenX, int screenY, int button) {
+        if (session.isGameOver()) {
+            return false;
+        }
+        if (button == Buttons.LEFT) {
+            int draggedSlot = session.getInventoryUI().getDraggedSlotIndex();
+            if (draggedSlot != -1) {
+                int targetSlot = session.getInventoryUI().getTargetSlot(screenX, screenY);
+                session.getInventoryUI().handleTouchUp(screenX, screenY);
+
+                if (targetSlot == -1) {
+                    // Dropped outside inventory, apply to tile
+                    int prevSelected = session.getInventory().getSelectedSlot();
+                    session.getInventory().selectSlot(draggedSlot);
+                    handleTileClick(screenX, screenY);
+                    
+                    // We check if the item still exists (e.g. seeds could be consumed) before restoring selection, 
+                    // though selectSlot is safe even if slot is empty.
+                    session.getInventory().selectSlot(prevSelected);
+                }
+                return true;
+            }
+            return session.getInventoryUI().handleTouchUp(screenX, screenY);
+        }
+        return false;
     }
 
     public boolean handleKeyDown(int keycode) {

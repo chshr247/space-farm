@@ -4,7 +4,8 @@ package com.spacefarm.inventory;
  * Manages the player's inventory with 8 slots.
  */
 public class Inventory {
-    private static final int INVENTORY_SIZE = 8;
+    private static final int INVENTORY_SIZE = 24;
+    private static final int ROW_SIZE = 8;
     private final Item[] slots;
     private int selectedSlot;
 
@@ -70,6 +71,17 @@ public class Inventory {
             return item;
         }
         return null;
+    }
+
+    /**
+     * Swap items between two slots.
+     */
+    public void swapItems(int slot1, int slot2) {
+        if (slot1 >= 0 && slot1 < INVENTORY_SIZE && slot2 >= 0 && slot2 < INVENTORY_SIZE) {
+            Item temp = slots[slot1];
+            slots[slot1] = slots[slot2];
+            slots[slot2] = temp;
+        }
     }
 
     /**
