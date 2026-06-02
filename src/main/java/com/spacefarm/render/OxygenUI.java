@@ -24,7 +24,7 @@ public class OxygenUI {
         this.oxygenManager = oxygenManager;
         this.shapeRenderer = new ShapeRenderer();
         this.batch = new SpriteBatch();
-        this.font = new BitmapFont();
+        this.font = FontUtils.createFont("fonts/ArialBold.ttf", 20);
         this.font.setColor(Color.WHITE);
     }
 

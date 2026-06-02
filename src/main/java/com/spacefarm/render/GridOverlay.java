@@ -1,5 +1,7 @@
 package com.spacefarm.render;
 
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
@@ -18,9 +20,11 @@ public class GridOverlay {
         int width = layer.getWidth();
         int height = layer.getHeight();
 
+        Gdx.gl.glEnable(GL20.GL_BLEND);
+        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
         renderer.setProjectionMatrix(camera.combined);
         renderer.begin(ShapeRenderer.ShapeType.Line);
-        renderer.setColor(1f, 1f, 1f, 0.15f);
+        renderer.setColor(1f, 1f, 1f, 0.05f);
 
         for (int x = 0; x <= width; x++) {
             float worldX = x * tileWidth;
@@ -32,6 +36,7 @@ public class GridOverlay {
         }
 
         renderer.end();
+        Gdx.gl.glDisable(GL20.GL_BLEND);
     }
 
     public void dispose() {

@@ -21,14 +21,12 @@ public class GameOverOverlay {
         this.batch = new SpriteBatch();
 
         // Create title font (large)
-        this.titleFont = new BitmapFont();
+        this.titleFont = FontUtils.createFont("fonts/ArialBold.ttf", 48);
         this.titleFont.setColor(Color.WHITE);
-        this.titleFont.getData().setScale(3f);
 
         // Create text font (normal)
-        this.textFont = new BitmapFont();
+        this.textFont = FontUtils.createFont("fonts/ArialBold.ttf", 24);
         this.textFont.setColor(Color.WHITE);
-        this.textFont.getData().setScale(1.5f);
     }
 
     /**

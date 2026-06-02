@@ -39,13 +39,11 @@ public class SeedWheelOverlay {
         this.shapeRenderer = new ShapeRenderer();
         this.batch = new SpriteBatch();
 
-        this.titleFont = new BitmapFont();
+        this.titleFont = FontUtils.createFont("fonts/ArialBold.ttf", 36);
         this.titleFont.setColor(Color.WHITE);
-        this.titleFont.getData().setScale(2f);
 
-        this.font = new BitmapFont();
+        this.font = FontUtils.createFont("fonts/ArialBold.ttf", 22);
         this.font.setColor(Color.WHITE);
-        this.font.getData().setScale(1.2f);
     }
 
     /**

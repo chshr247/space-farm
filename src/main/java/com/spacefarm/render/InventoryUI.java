@@ -3,6 +3,7 @@ package com.spacefarm.render;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Matrix4;
@@ -20,6 +21,7 @@ public class InventoryUI {
     private final SpriteBatch batch;
     private final BitmapFont font;
     private final OrthographicCamera screenCamera;
+    private final GlyphLayout layout = new GlyphLayout();
 
     private static final float SLOT_SIZE = 48f;
     private static final float SLOT_SPACING = 4f;
@@ -29,12 +31,12 @@ public class InventoryUI {
         this.inventory = inventory;
         this.shapeRenderer = new ShapeRenderer();
         this.batch = new SpriteBatch();
-        this.font = new BitmapFont();
+        this.font = FontUtils.createFont("fonts/ArialBold.ttf", 18);
         this.font.setColor(Color.WHITE);
         
-        // Create a camera for screen-space rendering
+        // Create a camera for screen-space rendering (Y-up)
         this.screenCamera = new OrthographicCamera();
-        this.screenCamera.setToOrtho(true, screenWidth, screenHeight);
+        this.screenCamera.setToOrtho(false, screenWidth, screenHeight);
         this.screenCamera.update();
     }
 
@@ -43,13 +45,13 @@ public class InventoryUI {
      */
     public void render(int screenWidth, int screenHeight) {
         // Update camera in case screen size changed
-        screenCamera.setToOrtho(true, screenWidth, screenHeight);
+        screenCamera.setToOrtho(false, screenWidth, screenHeight);
         screenCamera.update();
 
         // Calculate position: centered at BOTTOM
         float totalWidth = inventory.getSize() * (SLOT_SIZE + SLOT_SPACING);
         float startX = (screenWidth - totalWidth) / 2f;
-        float startY = screenHeight - SLOT_SIZE - BOTTOM_PADDING;  // Bottom
+        float startY = BOTTOM_PADDING;
 
         shapeRenderer.setProjectionMatrix(screenCamera.combined);
         batch.setProjectionMatrix(screenCamera.combined);
@@ -68,9 +70,10 @@ public class InventoryUI {
         Item selectedItem = inventory.getSelectedItem();
         if (selectedItem != null) {
             batch.begin();
-            float textX = screenWidth / 2f - 60f;
-            float textY = startY - 15f;  // Above the inventory
             String displayText = selectedItem.getDescription();
+            layout.setText(font, displayText);
+            float textX = (screenWidth - layout.width) / 2f;
+            float textY = startY + SLOT_SIZE + 25f;  // Above the inventory
             font.draw(batch, displayText, textX, textY);
             batch.end();
         }
