@@ -106,7 +106,7 @@ public class OxygenManager {
     /**
      * Get current oxygen level (0-100).
      */
-    public float getOxygen() {
+    public Object getOxygen() {
         return currentOxygen;
     }
 

@@ -4,6 +4,7 @@ import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Buttons;
 import com.badlogic.gdx.InputAdapter;
+import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
@@ -17,20 +18,16 @@ import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.badlogic.gdx.maps.tiled.tiles.StaticTiledMapTile;
+import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.spacefarm.input.CameraController;
 import com.spacefarm.input.TilePicker;
 import com.spacefarm.input.WorldBounds;
-import com.spacefarm.render.ContextMenuOverlay;
-import com.spacefarm.render.CropRenderer;
-import com.spacefarm.render.GameOverOverlay;
-import com.spacefarm.render.GridOverlay;
-import com.spacefarm.render.InventoryUI;
-import com.spacefarm.render.OxygenUI;
-import com.spacefarm.render.BaseZoneRenderer;
-import com.spacefarm.render.OutdoorZoneRenderer;
-import com.spacefarm.render.SeedWheelOverlay;
+import com.spacefarm.render.*;
 import com.spacefarm.world.TileCoord;
 import com.spacefarm.world.BaseZone;
 import com.spacefarm.world.OutdoorZone;
@@ -47,6 +44,7 @@ import com.spacefarm.inventory.Sickle;
 import com.spacefarm.inventory.Crystal;
 import com.spacefarm.oxygen.OxygenManager;
 import com.spacefarm.oxygen.OxygenConstants;
+import com.spacefarm.render.TreeBoxUI;
 
 public class GameApp extends ApplicationAdapter {
     private static final int DEFAULT_TILE_SIZE = 32;
@@ -86,9 +84,12 @@ public class GameApp extends ApplicationAdapter {
     private SeedWheelOverlay seedWheelOverlay;
     private ScavengingLocation currentSeedWheelLocation;  // Track which location the wheel is spinning for
     private long lastSeedWheelSpinTime = 0;
+    private TreeBoxUI treeBoxUI;
 
     @Override
     public void create() {
+        treeBoxUI = new TreeBoxUI();
+
         camera = new OrthographicCamera();
         viewport = new FitViewport(1280, 720, camera);
 
@@ -155,6 +156,9 @@ public class GameApp extends ApplicationAdapter {
         Gdx.input.setInputProcessor(new InputAdapter() {
             @Override
             public boolean touchDown(int screenX, int screenY, int pointer, int button) {
+                float uiY = Gdx.graphics.getHeight() - screenY;
+                if (treeBoxUI.handleClick(screenX, uiY)) return true;
+
                 if (isGameOver) {
                     return false;  // Ignore clicks when game is over
                 }
@@ -248,7 +252,7 @@ public class GameApp extends ApplicationAdapter {
                                 // Restore 20% oxygen
                                 float oxygenToAdd = OxygenConstants.MAX_OXYGEN *
                                     (SeedWheelConstants.RARE_SEED_OXYGEN_RESTORE / 100f);
-                                oxygenManager.setOxygen(oxygenManager.getOxygen() + oxygenToAdd);
+                                oxygenManager.setOxygen((float) oxygenManager.getOxygen() + oxygenToAdd);
 
                                 // Remove if empty
                                 if (rareSeed.getQuantity() == 0) {
@@ -263,7 +267,7 @@ public class GameApp extends ApplicationAdapter {
                                 // Restore 50% oxygen
                                 float oxygenToAdd = OxygenConstants.MAX_OXYGEN *
                                     (SeedWheelConstants.LEGENDARY_SEED_OXYGEN_RESTORE / 100f);
-                                oxygenManager.setOxygen(oxygenManager.getOxygen() + oxygenToAdd);
+                                oxygenManager.setOxygen((float)oxygenManager.getOxygen() + oxygenToAdd);
 
                                 // Remove if empty
                                 if (legendarySeed.getQuantity() == 0) {
@@ -352,10 +356,14 @@ public class GameApp extends ApplicationAdapter {
         if (isGameOver) {
             gameOverOverlay.render(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         }
+
+        treeBoxUI.render(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
     }
 
     @Override
     public void dispose() {
+        if (treeBoxUI != null) treeBoxUI.dispose();
+
         if (renderer != null) {
             renderer.dispose();
         }
@@ -399,7 +407,10 @@ public class GameApp extends ApplicationAdapter {
 
     private void handleTileClick(int screenX, int screenY) {
         TileCoord coord = tilePicker.screenToTile(screenX, screenY);
-        if (coord == null) {
+        if (coord == null)   return;
+
+        if (baseZone.isTreeArea(coord)) {
+            treeBoxUI.show();
             return;
         }
 

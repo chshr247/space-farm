@@ -1,10 +1,11 @@
 package com.spacefarm.input;
 
+import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.math.Vector3;
 import com.spacefarm.world.TileCoord;
 
-public class TilePicker {
+public class TilePicker extends InputAdapter {
     private final OrthographicCamera camera;
     private final int tileWidth;
     private final int tileHeight;
