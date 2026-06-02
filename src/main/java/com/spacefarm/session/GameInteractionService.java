@@ -55,6 +55,12 @@ public class GameInteractionService {
             return false;
         }
 
+        if (button == Buttons.LEFT) {
+            if (session.getInventoryUI().handleTouchDown(screenX, screenY)) {
+                return true;
+            }
+        }
+
         if (session.getSeedWheelOverlay().isVisible()) {
             if (button == Buttons.LEFT) {
                 float adjustedY = Gdx.graphics.getHeight() - screenY;

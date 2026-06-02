@@ -14,7 +14,6 @@ public class GameSceneRenderer {
     private final CropRenderer cropRenderer;
     private final BaseZoneRenderer baseZoneRenderer;
     private final OutdoorZoneRenderer outdoorZoneRenderer;
-    private final InventoryUI inventoryUI;
     private final OxygenUI oxygenUI;
 
     public GameSceneRenderer(GameSession gameSession) {
@@ -29,7 +28,6 @@ public class GameSceneRenderer {
         this.cropRenderer = new CropRenderer(gameSession.getFarmingSystem(), baseLayer);
         this.outdoorZoneRenderer = new OutdoorZoneRenderer(gameSession.getOutdoorZone(), baseLayer, map, tileSize);
         this.baseZoneRenderer = new BaseZoneRenderer(gameSession.getBaseZone(), baseLayer, tileSize);
-        this.inventoryUI = new InventoryUI(gameSession.getInventory(), Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         this.oxygenUI = new OxygenUI(gameSession.getOxygenManager());
     }
 
@@ -43,7 +41,7 @@ public class GameSceneRenderer {
         outdoorZoneRenderer.render(camera);
         gameSession.getContextMenu().render(camera);
 
-        inventoryUI.render(screenWidth, screenHeight);
+        gameSession.getInventoryUI().render(screenWidth, screenHeight);
         oxygenUI.render(screenWidth, screenHeight);
         gameSession.getSeedWheelOverlay().render(screenWidth, screenHeight);
 
@@ -58,7 +56,6 @@ public class GameSceneRenderer {
         baseZoneRenderer.dispose();
         outdoorZoneRenderer.dispose();
         cropRenderer.dispose();
-        inventoryUI.dispose();
         oxygenUI.dispose();
     }
 }

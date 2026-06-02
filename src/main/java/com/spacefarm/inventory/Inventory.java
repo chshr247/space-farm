@@ -4,7 +4,8 @@ package com.spacefarm.inventory;
  * Manages the player's inventory with 8 slots.
  */
 public class Inventory {
-    private static final int INVENTORY_SIZE = 8;
+    private static final int INVENTORY_SIZE = 24;
+    private static final int ROW_SIZE = 8;
     private final Item[] slots;
     private int selectedSlot;
 

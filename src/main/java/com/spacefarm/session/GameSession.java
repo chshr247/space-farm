@@ -21,6 +21,7 @@ import com.spacefarm.inventory.Sickle;
 import com.spacefarm.oxygen.OxygenManager;
 import com.spacefarm.render.ContextMenuOverlay;
 import com.spacefarm.render.GameOverOverlay;
+import com.spacefarm.render.InventoryUI;
 import com.spacefarm.render.SeedWheelOverlay;
 import com.spacefarm.world.BaseZone;
 import com.spacefarm.world.OutdoorZone;
@@ -38,6 +39,7 @@ public class GameSession {
     private FarmingSystem farmingSystem;
     private Inventory inventory;
     private OxygenManager oxygenManager;
+    private InventoryUI inventoryUI;
     private ContextMenuOverlay contextMenu;
     private GameOverOverlay gameOverOverlay;
     private SeedWheelOverlay seedWheelOverlay;
@@ -77,6 +79,7 @@ public class GameSession {
         oxygenManager = new OxygenManager();
         oxygenManager.setBaseZone(baseZone);
 
+        inventoryUI = new InventoryUI(inventory, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         contextMenu = new ContextMenuOverlay();
         gameOverOverlay = new GameOverOverlay();
         seedWheelOverlay = new SeedWheelOverlay();
@@ -87,6 +90,7 @@ public class GameSession {
     }
 
     public void update(float deltaTime) {
+        inventoryUI.update(deltaTime);
         interactionService.update(deltaTime);
     }
 
@@ -107,6 +111,9 @@ public class GameSession {
         }
         if (highlightTexture != null) {
             highlightTexture.dispose();
+        }
+        if (inventoryUI != null) {
+            inventoryUI.dispose();
         }
         if (contextMenu != null) {
             contextMenu.dispose();
@@ -145,6 +152,10 @@ public class GameSession {
 
     public OxygenManager getOxygenManager() {
         return oxygenManager;
+    }
+
+    public InventoryUI getInventoryUI() {
+        return inventoryUI;
     }
 
     public ContextMenuOverlay getContextMenu() {
