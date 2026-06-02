@@ -119,10 +119,18 @@ public class FarmingSystem {
     }
 
     /**
-     * Clear all crops from the map.
+     * Get all crops.
      */
-    public void clear() {
-        crops.clear();
+    public Map<String, Crop> getCrops() {
+        return crops;
+    }
+
+    /**
+     * Set all crops.
+     */
+    public void setCrops(Map<String, Crop> crops) {
+        this.crops.clear();
+        this.crops.putAll(crops);
     }
 
     /**
