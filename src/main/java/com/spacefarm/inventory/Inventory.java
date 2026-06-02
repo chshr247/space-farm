@@ -74,6 +74,17 @@ public class Inventory {
     }
 
     /**
+     * Swap items between two slots.
+     */
+    public void swapItems(int slot1, int slot2) {
+        if (slot1 >= 0 && slot1 < INVENTORY_SIZE && slot2 >= 0 && slot2 < INVENTORY_SIZE) {
+            Item temp = slots[slot1];
+            slots[slot1] = slots[slot2];
+            slots[slot2] = temp;
+        }
+    }
+
+    /**
      * Get the size of inventory.
      */
     public int getSize() {

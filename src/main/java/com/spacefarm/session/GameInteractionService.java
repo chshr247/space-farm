@@ -82,6 +82,23 @@ public class GameInteractionService {
         return true;
     }
 
+    public boolean handleTouchDragged(int screenX, int screenY) {
+        if (session.isGameOver()) {
+            return false;
+        }
+        return session.getInventoryUI().handleTouchDragged(screenX, screenY);
+    }
+
+    public boolean handleTouchUp(int screenX, int screenY, int button) {
+        if (session.isGameOver()) {
+            return false;
+        }
+        if (button == Buttons.LEFT) {
+            return session.getInventoryUI().handleTouchUp(screenX, screenY);
+        }
+        return false;
+    }
+
     public boolean handleKeyDown(int keycode) {
         if (keycode >= Keys.NUM_1 && keycode <= Keys.NUM_8) {
             int slotIndex = keycode - Keys.NUM_1;

@@ -37,6 +37,10 @@ public class InventoryUI {
     private float buttonX;
     private float buttonY;
 
+    private int draggedSlotIndex = -1;
+    private float dragX = 0f;
+    private float dragY = 0f;
+
     public InventoryUI(Inventory inventory, int screenWidth, int screenHeight) {
         this.inventory = inventory;
         this.shapeRenderer = new ShapeRenderer();
@@ -111,6 +115,22 @@ public class InventoryUI {
         }
         Gdx.gl.glDisable(GL20.GL_BLEND);
 
+        // Render dragged item
+        if (draggedSlotIndex != -1) {
+            Item draggedItem = inventory.getItem(draggedSlotIndex);
+            if (draggedItem != null) {
+                Gdx.gl.glEnable(GL20.GL_BLEND);
+                shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+                Color itemColor = getItemColor(draggedItem);
+                shapeRenderer.setColor(itemColor.r, itemColor.g, itemColor.b, itemColor.a);
+                float padding = 8f;
+                float size = SLOT_SIZE - padding * 2;
+                shapeRenderer.rect(dragX - size / 2f, dragY - size / 2f, size, size);
+                shapeRenderer.end();
+                Gdx.gl.glDisable(GL20.GL_BLEND);
+            }
+        }
+
         // Draw currently selected item name
         Item selectedItem = inventory.getSelectedItem();
         if (selectedItem != null) {
@@ -168,7 +188,14 @@ public class InventoryUI {
                 for (int col = 0; col < ROW_SIZE; col++) {
                     float slotX = startX + col * (SLOT_SIZE + SLOT_SPACING);
                     if (worldX >= slotX && worldX <= slotX + SLOT_SIZE) {
-                        inventory.selectSlot((int) (row * ROW_SIZE + col));
+                        int slotIndex = (int) (row * ROW_SIZE + col);
+                        inventory.selectSlot(slotIndex);
+
+                        if (inventory.getItem(slotIndex) != null) {
+                            draggedSlotIndex = slotIndex;
+                            dragX = worldX;
+                            dragY = worldY;
+                        }
                         return true;
                     }
                 }
@@ -176,6 +203,53 @@ public class InventoryUI {
         }
 
         return false;
+    }
+
+    public boolean handleTouchDragged(float screenX, float screenY) {
+        if (draggedSlotIndex != -1) {
+            dragX = screenX;
+            dragY = graphics.getHeight() - screenY;
+            return true;
+        }
+        return false;
+    }
+
+    public boolean handleTouchUp(float screenX, float screenY) {
+        if (draggedSlotIndex == -1) {
+            return false;
+        }
+
+        float worldX = screenX;
+        float worldY = graphics.getHeight() - screenY;
+
+        float totalWidth = ROW_SIZE * (SLOT_SIZE + SLOT_SPACING);
+        float startX = (graphics.getWidth() - totalWidth) / 2f;
+        float toolbarY = BOTTOM_PADDING + currentExpansionY;
+
+        int targetSlotIndex = -1;
+        for (int row = 0; row < 3; row++) {
+            float rowY = toolbarY - row * (SLOT_SIZE + SLOT_SPACING);
+            float rowAlpha = (row == 0) ? 1f : Math.min(1f, currentExpansionY / (2 * (SLOT_SIZE + SLOT_SPACING)));
+
+            if (rowAlpha > 0.5f && worldY >= rowY && worldY <= rowY + SLOT_SIZE) {
+                for (int col = 0; col < ROW_SIZE; col++) {
+                    float slotX = startX + col * (SLOT_SIZE + SLOT_SPACING);
+                    if (worldX >= slotX && worldX <= slotX + SLOT_SIZE) {
+                        targetSlotIndex = (int) (row * ROW_SIZE + col);
+                        break;
+                    }
+                }
+            }
+            if (targetSlotIndex != -1) break;
+        }
+
+        if (targetSlotIndex != -1 && targetSlotIndex != draggedSlotIndex) {
+            inventory.swapItems(draggedSlotIndex, targetSlotIndex);
+            inventory.selectSlot(targetSlotIndex);
+        }
+
+        draggedSlotIndex = -1;
+        return true;
     }
 
     private void renderSlot(float x, float y, int slotIndex, boolean isSelected, float alpha) {
@@ -213,7 +287,8 @@ public class InventoryUI {
             Gdx.gl.glEnable(GL20.GL_BLEND);
             shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
             Color itemColor = getItemColor(item);
-            shapeRenderer.setColor(itemColor.r, itemColor.g, itemColor.b, itemColor.a * alpha);
+            float itemAlpha = (slotIndex == draggedSlotIndex) ? 0.3f * alpha : itemColor.a * alpha;
+            shapeRenderer.setColor(itemColor.r, itemColor.g, itemColor.b, itemAlpha);
             float padding = 8f;
             shapeRenderer.rect(x + padding, y + padding, SLOT_SIZE - padding * 2, SLOT_SIZE - padding * 2);
             shapeRenderer.end();

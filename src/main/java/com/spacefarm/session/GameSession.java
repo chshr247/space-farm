@@ -98,6 +98,14 @@ public class GameSession {
         return interactionService.handleTouchDown(screenX, screenY, button);
     }
 
+    public boolean handleTouchDragged(int screenX, int screenY) {
+        return interactionService.handleTouchDragged(screenX, screenY);
+    }
+
+    public boolean handleTouchUp(int screenX, int screenY, int button) {
+        return interactionService.handleTouchUp(screenX, screenY, button);
+    }
+
     public boolean handleKeyDown(int keycode) {
         return interactionService.handleKeyDown(keycode);
     }
