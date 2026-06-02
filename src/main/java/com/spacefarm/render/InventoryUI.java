@@ -214,11 +214,11 @@ public class InventoryUI {
         return false;
     }
 
-    public boolean handleTouchUp(float screenX, float screenY) {
-        if (draggedSlotIndex == -1) {
-            return false;
-        }
+    public int getDraggedSlotIndex() {
+        return draggedSlotIndex;
+    }
 
+    public int getTargetSlot(float screenX, float screenY) {
         float worldX = screenX;
         float worldY = graphics.getHeight() - screenY;
 
@@ -226,7 +226,6 @@ public class InventoryUI {
         float startX = (graphics.getWidth() - totalWidth) / 2f;
         float toolbarY = BOTTOM_PADDING + currentExpansionY;
 
-        int targetSlotIndex = -1;
         for (int row = 0; row < 3; row++) {
             float rowY = toolbarY - row * (SLOT_SIZE + SLOT_SPACING);
             float rowAlpha = (row == 0) ? 1f : Math.min(1f, currentExpansionY / (2 * (SLOT_SIZE + SLOT_SPACING)));
@@ -235,13 +234,20 @@ public class InventoryUI {
                 for (int col = 0; col < ROW_SIZE; col++) {
                     float slotX = startX + col * (SLOT_SIZE + SLOT_SPACING);
                     if (worldX >= slotX && worldX <= slotX + SLOT_SIZE) {
-                        targetSlotIndex = (int) (row * ROW_SIZE + col);
-                        break;
+                        return (int) (row * ROW_SIZE + col);
                     }
                 }
             }
-            if (targetSlotIndex != -1) break;
         }
+        return -1;
+    }
+
+    public boolean handleTouchUp(float screenX, float screenY) {
+        if (draggedSlotIndex == -1) {
+            return false;
+        }
+
+        int targetSlotIndex = getTargetSlot(screenX, screenY);
 
         if (targetSlotIndex != -1 && targetSlotIndex != draggedSlotIndex) {
             inventory.swapItems(draggedSlotIndex, targetSlotIndex);

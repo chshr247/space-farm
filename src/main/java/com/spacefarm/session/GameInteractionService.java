@@ -94,6 +94,23 @@ public class GameInteractionService {
             return false;
         }
         if (button == Buttons.LEFT) {
+            int draggedSlot = session.getInventoryUI().getDraggedSlotIndex();
+            if (draggedSlot != -1) {
+                int targetSlot = session.getInventoryUI().getTargetSlot(screenX, screenY);
+                session.getInventoryUI().handleTouchUp(screenX, screenY);
+
+                if (targetSlot == -1) {
+                    // Dropped outside inventory, apply to tile
+                    int prevSelected = session.getInventory().getSelectedSlot();
+                    session.getInventory().selectSlot(draggedSlot);
+                    handleTileClick(screenX, screenY);
+                    
+                    // We check if the item still exists (e.g. seeds could be consumed) before restoring selection, 
+                    // though selectSlot is safe even if slot is empty.
+                    session.getInventory().selectSlot(prevSelected);
+                }
+                return true;
+            }
             return session.getInventoryUI().handleTouchUp(screenX, screenY);
         }
         return false;
