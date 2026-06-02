@@ -26,9 +26,9 @@ import com.spacefarm.world.BaseZone;
 import com.spacefarm.world.OutdoorZone;
 
 public class GameSession {
-    private static final int DEFAULT_TILE_SIZE = 32;
-    private static final int DEFAULT_MAP_WIDTH = 256;
-    private static final int DEFAULT_MAP_HEIGHT = 256;
+    private static final int DEFAULT_TILE_SIZE = 64;
+    private static final int DEFAULT_MAP_WIDTH = 128;
+    private static final int DEFAULT_MAP_HEIGHT = 128;
 
     private TiledMap map;
     private TiledMapTileLayer baseLayer;
@@ -58,7 +58,7 @@ public class GameSession {
 
         int mapCenterX = baseLayer.getWidth() / 2;
         int mapCenterY = baseLayer.getHeight() / 2;
-        baseZone = new BaseZone(mapCenterX, mapCenterY, 64, 64);
+        baseZone = new BaseZone(mapCenterX, mapCenterY, 32, 32);
 
         outdoorZone = new OutdoorZone(baseZone, baseLayer.getWidth(), baseLayer.getHeight());
 
@@ -248,5 +248,3 @@ public class GameSession {
         return texture;
     }
 }
-
-
