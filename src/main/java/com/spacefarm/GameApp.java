@@ -14,6 +14,7 @@ import com.spacefarm.session.GameSession;
 public class GameApp extends ApplicationAdapter {
     private static final float MIN_ZOOM = 0.5f;
     private static final float MAX_ZOOM = 2.5f;
+    private static final float DEFAULT_ZOOM = 3.5f;
 
     private OrthographicCamera camera;
     private Viewport viewport;
@@ -24,6 +25,7 @@ public class GameApp extends ApplicationAdapter {
     @Override
     public void create() {
         camera = new OrthographicCamera();
+        camera.zoom = DEFAULT_ZOOM;
         viewport = new FitViewport(1280, 720, camera);
 
         session = new GameSession();
@@ -38,7 +40,7 @@ public class GameApp extends ApplicationAdapter {
 
     @Override
     public void resize(int width, int height) {
-        viewport.update(width, height, true);
+        viewport.update(width, height, false);
         cameraController.clamp();
     }
 
