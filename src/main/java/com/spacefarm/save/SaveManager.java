@@ -2,38 +2,46 @@ package com.spacefarm.save;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
-import com.badlogic.gdx.utils.Json;
+import com.google.gson.*;
+import com.spacefarm.DifficultyLevel;
 import com.spacefarm.inventory.*;
 import com.spacefarm.session.GameSession;
 import com.spacefarm.world.ScavengingLocation;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /**
- * Manages saving and loading the game state using JSON.
+ * Manages saving and loading the game state using GSON.
  */
 public class SaveManager {
     private static final String SAVE_FILE = "savegame.json";
-    private final Json json;
+    private final Gson gson;
 
     public SaveManager() {
-        json = new Json();
-        // Setup polymorphism for items
-        json.setTypeName("itemClass");
-        json.addClassTag("watering_can", WateringCan.class);
-        json.addClassTag("seed", Seed.class);
-        json.addClassTag("rare_seed", RareSeed.class);
-        json.addClassTag("legendary_seed", LegendarySeed.class);
-        json.addClassTag("sickle", Sickle.class);
-        json.addClassTag("plant_food", PlantFood.class);
-        json.addClassTag("crystal", Crystal.class);
+        this.gson = new GsonBuilder()
+                .registerTypeAdapter(Item.class, new ItemAdapter())
+                .setPrettyPrinting()
+                .create();
     }
 
     /**
      * Save the current game session.
      */
     public void save(GameSession session) {
+        SaveState state;
+        if (session.isGameOver()) {
+            state = createDefaultState(session.getDifficulty());
+        } else {
+            state = captureState(session);
+        }
+        String jsonText = gson.toJson(state);
+        Gdx.files.local(SAVE_FILE).writeString(jsonText, false);
+    }
+
+    private SaveState captureState(GameSession session) {
         SaveState state = new SaveState();
 
         // 1. Inventory
@@ -61,10 +69,40 @@ public class SaveManager {
             state.locations.add(locData);
         }
 
-        state.gameOver = session.isGameOver();
+        // 5. Wallet
+        state.wallet = new SaveState.WalletData();
+        state.wallet.balance = session.getWallet().getBalance();
 
-        String jsonText = json.prettyPrint(state);
-        Gdx.files.local(SAVE_FILE).writeString(jsonText, false);
+        state.gameOver = session.isGameOver();
+        return state;
+    }
+
+    private SaveState createDefaultState(DifficultyLevel difficulty) {
+        SaveState state = new SaveState();
+
+        state.inventory = new SaveState.InventoryData();
+        state.inventory.slots = new Item[24]; // Match Inventory.INVENTORY_SIZE
+        state.inventory.slots[0] = WateringCan.getInstance();
+        state.inventory.slots[1] = new Seed(5);
+        state.inventory.slots[2] = Sickle.getInstance();
+        state.inventory.selectedSlot = 0;
+
+        state.oxygen = new SaveState.OxygenData();
+        state.oxygen.currentOxygen = 100f;
+        state.oxygen.isAtBase = true;
+
+        state.farming = new SaveState.FarmingData();
+        state.farming.crops = new HashMap<>();
+
+        state.locations = new ArrayList<>();
+        // OutdoorZone will re-initialize locations if list is empty or doesn't match
+        // But we save an empty list to indicate fresh start for locations.
+
+        state.wallet = new SaveState.WalletData();
+        state.wallet.balance = difficulty.startingMoney;
+
+        state.gameOver = false;
+        return state;
     }
 
     /**
@@ -78,25 +116,38 @@ public class SaveManager {
         }
 
         try {
-            SaveState state = json.fromJson(SaveState.class, file.readString());
+            SaveState state = gson.fromJson(file.readString(), SaveState.class);
 
             // 1. Inventory
-            session.getInventory().setSlots(state.inventory.slots);
-            session.getInventory().selectSlot(state.inventory.selectedSlot);
+            if (state.inventory != null) {
+                session.getInventory().setSlots(state.inventory.slots);
+                session.getInventory().selectSlot(state.inventory.selectedSlot);
+            }
 
             // 2. Oxygen
-            session.getOxygenManager().setOxygen(state.oxygen.currentOxygen);
-            session.getOxygenManager().setAtBase(state.oxygen.isAtBase);
+            if (state.oxygen != null) {
+                session.getOxygenManager().setOxygen(state.oxygen.currentOxygen);
+                session.getOxygenManager().setAtBase(state.oxygen.isAtBase);
+            }
 
             // 3. Farming
-            session.getFarmingSystem().setCrops(state.farming.crops);
+            if (state.farming != null && state.farming.crops != null) {
+                session.getFarmingSystem().setCrops(state.farming.crops);
+            }
 
             // 4. Locations
-            List<ScavengingLocation> locations = session.getOutdoorZone().getLocations();
-            for (int i = 0; i < Math.min(locations.size(), state.locations.size()); i++) {
-                ScavengingLocation loc = locations.get(i);
-                SaveState.LocationData locData = state.locations.get(i);
-                loc.loadState(locData.isCleared, locData.lastClearedTime, locData.isScavenging, locData.scavengingStartTime);
+            if (state.locations != null) {
+                List<ScavengingLocation> locations = session.getOutdoorZone().getLocations();
+                for (int i = 0; i < Math.min(locations.size(), state.locations.size()); i++) {
+                    ScavengingLocation loc = locations.get(i);
+                    SaveState.LocationData locData = state.locations.get(i);
+                    loc.loadState(locData.isCleared, locData.lastClearedTime, locData.isScavenging, locData.scavengingStartTime);
+                }
+            }
+
+            // 5. Wallet
+            if (state.wallet != null) {
+                session.getWallet().setBalance(state.wallet.balance);
             }
 
             session.setGameOver(state.gameOver);
@@ -109,5 +160,41 @@ public class SaveManager {
 
     public boolean hasSaveFile() {
         return Gdx.files.local(SAVE_FILE).exists();
+    }
+
+    /**
+     * Custom adapter for polymorphic Item serialization/deserialization.
+     */
+    private static class ItemAdapter implements JsonSerializer<Item>, JsonDeserializer<Item> {
+        @Override
+        public JsonElement serialize(Item src, Type typeOfSrc, JsonSerializationContext context) {
+            if (src == null) return JsonNull.INSTANCE;
+            JsonObject result = context.serialize(src).getAsJsonObject();
+            result.addProperty("itemType", src.getType().name());
+            return result;
+        }
+
+        @Override
+        public Item deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+            if (json == null || json.isJsonNull()) return null;
+            JsonObject jsonObject = json.getAsJsonObject();
+            JsonElement typeElement = jsonObject.get("itemType");
+            if (typeElement == null) return null;
+
+            String typeStr = typeElement.getAsString();
+            Item.ItemType type = Item.ItemType.valueOf(typeStr);
+
+            switch (type) {
+                case WATERING_CAN: return WateringCan.getInstance();
+                case SEED: return context.deserialize(json, Seed.class);
+                case RARE_SEED: return context.deserialize(json, RareSeed.class);
+                case LEGENDARY_SEED: return context.deserialize(json, LegendarySeed.class);
+                case SICKLE: return Sickle.getInstance();
+                case PLANT_FOOD: return context.deserialize(json, PlantFood.class);
+                case CRYSTAL: return context.deserialize(json, Crystal.class);
+                case EMPTY: return null;
+                default: throw new JsonParseException("Unknown item type: " + type);
+            }
+        }
     }
 }

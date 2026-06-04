@@ -13,11 +13,16 @@ public class SaveState {
     public OxygenData oxygen;
     public FarmingData farming;
     public List<LocationData> locations;
+    public WalletData wallet;
     public boolean gameOver;
 
     public static class InventoryData {
         public Item[] slots;
         public int selectedSlot;
+    }
+
+    public static class WalletData {
+        public float balance;
     }
 
     public static class OxygenData {
