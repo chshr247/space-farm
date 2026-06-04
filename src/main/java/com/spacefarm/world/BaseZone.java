@@ -1,6 +1,7 @@
 package com.spacefarm.world;
 
 import java.util.*;
+import com.spacefarm.world.BaseZoneConstants;
 
 /**
  * Represents the base/habitat zone with special areas for buildings and structures.
@@ -40,11 +41,10 @@ public class BaseZone {
         this.treeCenter = new TileCoord(centerX - treeWidth / 2, centerY - treeHeight / 2);
 
         // Garden beds in one corner (top-left area)
-        // 5 beds, each small plot
         this.gardenBeds = new ArrayList<>();
         int gardenStartX = baseX + 3;
         int gardenStartY = baseY + baseHeight - 8;
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < BaseZoneConstants.STARTING_GARDEN_BEDS; i++) {
             int bedX = gardenStartX + (i % 2) * 4;
             int bedY = gardenStartY - (i / 2) * 4;
             gardenBeds.add(new TileCoord(bedX, bedY));
@@ -55,6 +55,21 @@ public class BaseZone {
         int droneX = baseX + baseWidth - droneZoneSize - 3;
         int droneY = baseY + 3;
         this.droneZoneCenter = new TileCoord(droneX, droneY);
+    }
+            /*Adds one new garden bed (called when player buys upgrade).
+            * Returns true if successful, false if MAX_GARDEN_BEDS limit is reached.
+            */
+    public boolean addGardenBed() {
+        if (gardenBeds.size() >= BaseZoneConstants.MAX_GARDEN_BEDS) {
+            return false; // Досягнуто максимум
+        }
+        int gardenStartX = baseX + 3;
+        int gardenStartY = baseY + baseHeight - 8;
+        int i = gardenBeds.size();
+        int bedX = gardenStartX + (i % 2) * 4;
+        int bedY = gardenStartY - (i / 2) * 4;
+        gardenBeds.add(new TileCoord(bedX, bedY));
+        return true;
     }
 
     /**
@@ -128,5 +143,6 @@ public class BaseZone {
     public List<TileCoord> getGardenBeds() { return new ArrayList<>(gardenBeds); }
     public TileCoord getDroneZoneCenter() { return droneZoneCenter; }
     public int getDroneZoneSize() { return droneZoneSize; }
+    public int getGardenBedCount() { return gardenBeds.size();}
 }
 

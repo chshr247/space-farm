@@ -25,6 +25,11 @@ import com.spacefarm.render.InventoryUI;
 import com.spacefarm.render.SeedWheelOverlay;
 import com.spacefarm.world.BaseZone;
 import com.spacefarm.world.OutdoorZone;
+import com.spacefarm.DifficultyLevel;
+import com.spacefarm.economy.Wallet;
+import com.spacefarm.world.BaseZoneConstants;
+import com.spacefarm.oxygen.OxygenConstants;
+import com.spacefarm.world.OutdoorConstants;
 
 public class GameSession {
     private static final int DEFAULT_TILE_SIZE = 64;
@@ -48,6 +53,20 @@ public class GameSession {
     private boolean gameOver;
     private Texture baseTileTexture;
     private Texture highlightTexture;
+    private Wallet wallet;
+    private DifficultyLevel difficulty = DifficultyLevel.NORMAL; // default до вибору в меню
+
+    /**
+     * Call this from the menu BEFORE create().
+     * Sets all difficulty-dependent values so create() picks them up correctly.
+     */
+    public void applyDifficulty(DifficultyLevel difficultyLevel) {
+        this.difficulty = difficultyLevel;
+
+        OxygenConstants.OXYGEN_DECREASE_AMOUNT  = difficultyLevel.oxygenDecreaseAmount;
+        OutdoorConstants.OXYGEN_DECREASE_AMOUNT = difficultyLevel.oxygenDecreaseAmount;
+        BaseZoneConstants.STARTING_GARDEN_BEDS = difficultyLevel.startingGardenBeds;
+    }
 
     public void create(OrthographicCamera camera) {
         map = loadMapOrFallback();
@@ -77,6 +96,7 @@ public class GameSession {
         inventory.addItem(2, Sickle.getInstance());
 
         oxygenManager = new OxygenManager();
+        wallet = new Wallet(difficulty.startingMoney);
         oxygenManager.setBaseZone(baseZone);
 
         inventoryUI = new InventoryUI(inventory, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
@@ -133,6 +153,7 @@ public class GameSession {
             seedWheelOverlay.dispose();
         }
     }
+    public Wallet getWallet() { return wallet; }
 
     public TiledMap getMap() {
         return map;

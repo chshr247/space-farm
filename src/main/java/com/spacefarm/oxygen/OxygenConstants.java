@@ -7,7 +7,7 @@ public class OxygenConstants {
     // Oxygen decrease rates (outside base)
     public static float OXYGEN_DECREASE_PER_SECOND = 0.2f;  // 2% per 10 seconds = 0.2% per second
     public static float OXYGEN_DECREASE_INTERVAL = 10f;      // Check every 10 seconds
-    public static float OXYGEN_DECREASE_AMOUNT = 2f;         // Decrease by 2% per interval
+    public static float OXYGEN_DECREASE_AMOUNT = 4f;         // Decrease by 4% per interval
 
     // Oxygen increase from food
     public static float OXYGEN_INCREASE_FROM_FOOD = 10f;     // 10% per plant food
