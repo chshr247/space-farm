@@ -114,6 +114,7 @@ public class GameSession {
 
     public void update(float deltaTime) {
         inventoryUI.update(deltaTime);
+        droneConsoleOverlay.update(deltaTime);
         interactionService.update(deltaTime);
     }
 
