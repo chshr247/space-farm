@@ -6,7 +6,7 @@ package com.spacefarm.inventory;
 public class Sickle extends Item {
     private static final Sickle INSTANCE = new Sickle();
 
-    private Sickle() {
+    protected Sickle() {
         super("Коса", "Інструмент для збору врожаю");
     }
 

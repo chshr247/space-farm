@@ -9,6 +9,7 @@ import com.badlogic.gdx.utils.viewport.Viewport;
 import com.spacefarm.input.CameraController;
 import com.spacefarm.input.GameInputRouter;
 import com.spacefarm.render.GameSceneRenderer;
+import com.spacefarm.save.SaveManager;
 import com.spacefarm.session.GameSession;
 
 public class GameApp extends ApplicationAdapter {
@@ -21,6 +22,9 @@ public class GameApp extends ApplicationAdapter {
     private GameSession session;
     private CameraController cameraController;
     private GameSceneRenderer sceneRenderer;
+    private SaveManager saveManager;
+    private float autosaveTimer = 0f;
+    private static final float AUTOSAVE_INTERVAL = 60f;
 
     @Override
     public void create() {
@@ -30,6 +34,11 @@ public class GameApp extends ApplicationAdapter {
 
         session = new GameSession();
         session.create(camera);
+        
+        saveManager = new SaveManager();
+        if (saveManager.hasSaveFile()) {
+            saveManager.load(session);
+        }
 
         cameraController = new CameraController(camera, viewport, session.getWorldBounds(), MIN_ZOOM, MAX_ZOOM);
         GameInputRouter inputRouter = new GameInputRouter(cameraController, session);
@@ -52,6 +61,16 @@ public class GameApp extends ApplicationAdapter {
         float deltaTime = Gdx.graphics.getDeltaTime();
         session.update(deltaTime);
 
+        // Update autosave timer
+        autosaveTimer += deltaTime;
+        if (autosaveTimer >= AUTOSAVE_INTERVAL) {
+            if (saveManager != null && session != null) {
+                saveManager.save(session);
+                Gdx.app.log("GameApp", "Periodic autosave complete");
+            }
+            autosaveTimer = 0f;
+        }
+
         if (!session.isGameOver()) {
             cameraController.update(deltaTime);
         }
@@ -61,7 +80,17 @@ public class GameApp extends ApplicationAdapter {
     }
 
     @Override
+    public void pause() {
+        if (saveManager != null && session != null) {
+            saveManager.save(session);
+        }
+    }
+
+    @Override
     public void dispose() {
+        if (saveManager != null && session != null) {
+            saveManager.save(session);
+        }
         if (sceneRenderer != null) {
             sceneRenderer.dispose();
         }
