@@ -186,6 +186,10 @@ public class GameInteractionService {
                 session.getFarmingSystem().waterCrop(coord);
             }
         } else if (session.getInventory().isSeedSelected()) {
+            if (!session.getBaseZone().isGardenBed(coord)) {
+                // Посадка дозволена лише на грядках бази
+                return;
+            }
             if (!session.getFarmingSystem().hasCrop(coord) && session.getFarmingSystem().plantSeed(coord)) {
                 session.getInventory().useSeed();
                 removeSelectedStackIfEmpty();
