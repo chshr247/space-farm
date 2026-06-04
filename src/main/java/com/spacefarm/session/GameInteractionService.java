@@ -56,9 +56,19 @@ public class GameInteractionService {
         }
 
         if (button == Buttons.LEFT) {
+            // Check inventory first so we can start dragging items while console is open
             if (session.getInventoryUI().handleTouchDown(screenX, screenY)) {
                 return true;
             }
+        }
+
+        if (session.getDroneConsoleOverlay().isVisible()) {
+            if (session.getDroneConsoleOverlay().handleTouchDown(screenX, screenY)) {
+                return true;
+            }
+            // If we clicked outside the console (and not on inventory), close it
+            session.getDroneConsoleOverlay().setVisible(false);
+            return true;
         }
 
         if (session.getSeedWheelOverlay().isVisible()) {
@@ -100,13 +110,21 @@ public class GameInteractionService {
                 session.getInventoryUI().handleTouchUp(screenX, screenY);
 
                 if (targetSlot == -1) {
-                    // Dropped outside inventory, apply to tile
+                    // Dropped outside inventory
+                    if (session.getDroneConsoleOverlay().isOverTradeSlot(screenX, screenY)) {
+                        Item item = session.getInventory().getItem(draggedSlot);
+                        if (item != null && item.getType() == Item.ItemType.CRYSTAL) {
+                            session.getDroneConsoleOverlay().addCrystal();
+                            session.getInventory().removeItem(draggedSlot);
+                            return true;
+                        }
+                    }
+
+                    // Apply to tile if not console
                     int prevSelected = session.getInventory().getSelectedSlot();
                     session.getInventory().selectSlot(draggedSlot);
                     handleTileClick(screenX, screenY);
                     
-                    // We check if the item still exists (e.g. seeds could be consumed) before restoring selection, 
-                    // though selectSlot is safe even if slot is empty.
                     session.getInventory().selectSlot(prevSelected);
                 }
                 return true;
@@ -160,6 +178,11 @@ public class GameInteractionService {
         }
 
         session.getOxygenManager().updatePositionTile(coord);
+
+        if (session.getBaseZone().isDroneZone(coord)) {
+            session.getDroneConsoleOverlay().setVisible(true);
+            return;
+        }
 
         if (lastSelected != null) {
             session.getSelectionLayer().setCell(lastSelected.x(), lastSelected.y(), null);
@@ -261,4 +284,3 @@ public class GameInteractionService {
         }
     }
 }
-
