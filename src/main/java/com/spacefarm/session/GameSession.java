@@ -134,6 +134,10 @@ public class GameSession {
         return interactionService.handleKeyDown(keycode);
     }
 
+    public boolean handleScrolled(float amountX, float amountY) {
+        return interactionService.handleScrolled(amountX, amountY);
+    }
+
     public void dispose() {
         if (map != null) {
             map.dispose();

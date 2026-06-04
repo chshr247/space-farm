@@ -171,6 +171,14 @@ public class GameInteractionService {
         return false;
     }
 
+    public boolean handleScrolled(float amountX, float amountY) {
+        if (session.isGameOver()) return false;
+        if (session.getDroneConsoleOverlay().isVisible()) {
+            return session.getDroneConsoleOverlay().handleScrolled(amountY);
+        }
+        return false;
+    }
+
     private void handleTileClick(int screenX, int screenY) {
         TileCoord coord = session.getTilePicker().screenToTile(screenX, screenY);
         if (coord == null) {
