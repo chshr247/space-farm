@@ -8,6 +8,7 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.utils.Align;
 import com.spacefarm.inventory.Crystal;
 import com.spacefarm.inventory.Item;
 import com.spacefarm.session.GameSession;
@@ -17,10 +18,6 @@ import java.util.List;
 
 import static com.badlogic.gdx.Gdx.graphics;
 
-/**
- * UI for interacting with the Drone (Selling crystals and Upgrades).
- * Features smooth animations and scrollable upgrades.
- */
 public class DroneConsoleOverlay {
     private final GameSession session;
     private final ShapeRenderer shapeRenderer;
@@ -32,9 +29,8 @@ public class DroneConsoleOverlay {
     private final GlyphLayout layout = new GlyphLayout();
 
     private boolean visible = false;
-    private int activeTab = 0; // 0 = Sell, 1 = Upgrades
+    private int activeTab = 0;
 
-    // Animation states
     private enum DroneState { IDLE, FLYING_AWAY, RETURNING }
     private DroneState droneState = DroneState.IDLE;
     private float animationTimer = 0f;
@@ -50,12 +46,10 @@ public class DroneConsoleOverlay {
     private static final float SLOT_SIZE = 64f;
     private static final int CRYSTAL_PRICE = 50;
 
-    // Scrolling
     private float scrollY = 0;
     private float maxScrollY = 0;
     private static final float LIST_VIEWPORT_HEIGHT = 300f;
 
-    // Upgrades
     private static class UpgradeItem {
         String id;
         String name;
@@ -88,7 +82,7 @@ public class DroneConsoleOverlay {
         this.font = FontUtils.createFont("fonts/ArialBold.ttf", 20);
         this.smallFont = FontUtils.createFont("fonts/ArialBold.ttf", 14);
         this.titleFont = FontUtils.createFont("fonts/ArialBold.ttf", 28);
-        
+
         this.screenCamera = new OrthographicCamera();
         this.screenCamera.setToOrtho(false, graphics.getWidth(), graphics.getHeight());
 
@@ -112,7 +106,7 @@ public class DroneConsoleOverlay {
     }
 
     private void calculateMaxScroll() {
-        float totalH = 30 + (treeUpgrades.size() * 55) + 40 + (baseUpgrades.size() * 55);
+        float totalH = 30 + (treeUpgrades.size() * 75) + 40 + (baseUpgrades.size() * 75);
         maxScrollY = Math.max(0, totalH - LIST_VIEWPORT_HEIGHT);
     }
 
@@ -210,7 +204,7 @@ public class DroneConsoleOverlay {
             batch.begin();
             titleFont.setColor(1, 0.85f, 0, scale);
             titleFont.draw(batch, "DRONE CONSOLE", x + 20, y + drawHeight - 15);
-            
+
             font.setColor(1, 1, 1, scale);
             String balanceText = String.format("Balance: $%.1f", session.getWallet().getBalance());
             layout.setText(font, balanceText);
@@ -292,71 +286,80 @@ public class DroneConsoleOverlay {
         font.setColor(activeTab == 1 ? Color.WHITE : Color.GRAY);
         font.draw(batch, "UPGRADES", x + 3*(width*scale)/4 - 55, y + (height*scale) - 62);
 
-        float listX = x + 30;
-        float startY = y + 70;
-        float currentY = startY + (height*scale) - 130 - 70 + scrollY;
-        float clipMinY = y + 20;
-        float clipMaxY = y + (height*scale) - 100;
+        int clipX = (int)(x + 10);
+        int clipY = (int)(y + 20);
+        int clipW = (int)(width*scale - 30);
+        int clipH = (int)(height*scale - 120);
 
-        // Tree Category
-        if (currentY - 20 < clipMaxY && currentY + 10 > clipMinY) {
-            font.setColor(Color.LIME);
-            font.draw(batch, "--- TREE MODULES ---", listX, currentY);
-        }
+        batch.end();
+
+        Gdx.gl.glEnable(GL20.GL_SCISSOR_TEST);
+        Gdx.gl.glScissor(clipX, clipY, clipW, clipH);
+
+        batch.begin();
+
+        float listX = x + 30;
+        float currentY = y + (height*scale) - 130 - 70 + scrollY + 70;
+
+        font.setColor(Color.LIME);
+        font.draw(batch, "--- TREE MODULES ---", listX, currentY);
         currentY -= 35;
         for (UpgradeItem upg : treeUpgrades) {
-            if (currentY - 40 < clipMaxY && currentY + 10 > clipMinY) renderUpgradeItem(upg, listX, currentY);
-            currentY -= 55;
+            renderUpgradeItem(upg, listX, currentY);
+            currentY -= 75;
         }
 
-        // Base Category
         currentY -= 15;
-        if (currentY - 20 < clipMaxY && currentY + 10 > clipMinY) {
-            font.setColor(Color.CYAN);
-            font.draw(batch, "--- BASE IMPROVEMENTS ---", listX, currentY);
-        }
+        font.setColor(Color.CYAN);
+        font.draw(batch, "--- BASE IMPROVEMENTS ---", listX, currentY);
         currentY -= 35;
         for (UpgradeItem upg : baseUpgrades) {
-            if (currentY - 40 < clipMaxY && currentY + 10 > clipMinY) renderUpgradeItem(upg, listX, currentY);
-            currentY -= 55;
+            renderUpgradeItem(upg, listX, currentY);
+            currentY -= 75;
         }
 
-        // Scrollbar track
         batch.end();
+        Gdx.gl.glDisable(GL20.GL_SCISSOR_TEST);
+
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(0.15f, 0.15f, 0.15f, 1f);
-        shapeRenderer.rect(x + width - 15, y + 20, 10, LIST_VIEWPORT_HEIGHT);
-        // Thumb
+        shapeRenderer.rect(x + width*scale - 15, y + 20, 10, LIST_VIEWPORT_HEIGHT);
         if (maxScrollY > 0) {
             shapeRenderer.setColor(Color.GRAY);
             float thumbH = Math.max(20, (LIST_VIEWPORT_HEIGHT / (maxScrollY + LIST_VIEWPORT_HEIGHT)) * LIST_VIEWPORT_HEIGHT);
             float thumbPos = (scrollY / maxScrollY) * (LIST_VIEWPORT_HEIGHT - thumbH);
-            shapeRenderer.rect(x + width - 15, y + 20 + LIST_VIEWPORT_HEIGHT - thumbH - thumbPos, 10, thumbH);
+            shapeRenderer.rect(x + width*scale - 15, y + 20 + LIST_VIEWPORT_HEIGHT - thumbH - thumbPos, 10, thumbH);
         }
         shapeRenderer.end();
+
         batch.begin();
     }
 
     private void renderUpgradeItem(UpgradeItem upg, float ix, float iy) {
+        float textWidth = width*scale - 150;
         font.setColor(Color.WHITE);
-        String text = upg.name + (upg.isMaxed() ? "" : " - $" + (int)upg.cost);
-        font.draw(batch, text, ix, iy);
+        String titleText = upg.name + (upg.isMaxed() ? "" : " - $" + (int)upg.cost);
+        layout.setText(font, titleText, Color.WHITE, textWidth, Align.left, true);
+        font.draw(batch, layout, ix, iy);
+
+        float descY = iy - layout.height - 8;
         smallFont.setColor(Color.LIGHT_GRAY);
-        smallFont.draw(batch, upg.description, ix + 10, iy - 22);
+        layout.setText(smallFont, upg.description, Color.LIGHT_GRAY, textWidth - 10, Align.left, true);
+        smallFont.draw(batch, layout, ix + 10, descY);
 
         batch.end();
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         if (upg.isMaxed()) shapeRenderer.setColor(0.25f, 0.25f, 0.25f, 1f);
         else if (session.getWallet().getBalance() >= upg.cost) shapeRenderer.setColor(0.2f, 0.6f, 0.2f, 1f);
         else shapeRenderer.setColor(0.6f, 0.2f, 0.2f, 1f);
-        
-        float btnX = x + width - 110;
-        float btnY = iy - 28;
+
+        float btnX = x + width*scale - 110;
+        float btnY = iy - 45;
         float btnW = 80;
         float btnH = 32;
         shapeRenderer.rect(btnX, btnY, btnW, btnH);
         shapeRenderer.end();
-        
+
         batch.begin();
         String btnText = upg.isMaxed() ? "OWNED" : "BUY";
         layout.setText(smallFont, btnText);
@@ -369,48 +372,46 @@ public class DroneConsoleOverlay {
         float worldX = screenX;
         float worldY = graphics.getHeight() - screenY;
 
-        if (worldX < x || worldX > x + width || worldY < y || worldY > y + height) return false;
+        if (worldX < x || worldX > x + width*scale || worldY < y || worldY > y + height*scale) return false;
 
-        if (worldY >= y + height - 90 && worldY <= y + height - 50) {
-            if (worldX >= x && worldX < x + width/2) activeTab = 0;
-            else if (worldX >= x + width/2 && worldX <= x + width) activeTab = 1;
+        if (worldY >= y + height*scale - 90 && worldY <= y + height*scale - 50) {
+            if (worldX >= x && worldX < x + width*scale/2) activeTab = 0;
+            else if (worldX >= x + width*scale/2 && worldX <= x + width*scale) activeTab = 1;
             return true;
         }
 
         if (activeTab == 0) {
-            if (tradeSlotCount > 0 && worldX >= x + width/2 - 60 && worldX <= x + width/2 + 60 &&
-                worldY >= y + 50 && worldY <= y + 90) {
+            if (tradeSlotCount > 0 && worldX >= x + width*scale/2 - 60 && worldX <= x + width*scale/2 + 60 &&
+                    worldY >= y + 50 && worldY <= y + 90) {
                 sellItem();
                 return true;
             }
         } else {
             handleUpgradeClicks(worldX, worldY);
         }
-        return true; 
+        return true;
     }
 
     private void handleUpgradeClicks(float wx, float wy) {
-        if (wy < y + 20 || wy > y + height - 100) return;
+        if (wy < y + 20 || wy > y + height*scale - 100) return;
 
-        float listX = x + 30;
-        float startY = y + 70;
-        float currentY = startY + (height*scale) - 130 - 70 + scrollY;
-        
-        currentY -= 35; // Tree Header
+        float currentY = y + (height*scale) - 130 - 70 + scrollY + 70;
+
+        currentY -= 35;
         for (UpgradeItem upg : treeUpgrades) {
             if (isBuyButtonClicked(wx, wy, currentY)) { buyUpgrade(upg); return; }
-            currentY -= 55;
+            currentY -= 75;
         }
-        currentY -= 15 + 35; // Base Header
+        currentY -= 15 + 35;
         for (UpgradeItem upg : baseUpgrades) {
             if (isBuyButtonClicked(wx, wy, currentY)) { buyUpgrade(upg); return; }
-            currentY -= 55;
+            currentY -= 75;
         }
     }
 
     private boolean isBuyButtonClicked(float wx, float wy, float itemY) {
-        return wx >= x + width - 110 && wx <= x + width - 30 &&
-               wy >= itemY - 28 && wy <= itemY + 4;
+        return wx >= x + width*scale - 110 && wx <= x + width*scale - 30 &&
+                wy >= itemY - 45 && wy <= itemY - 13;
     }
 
     private void buyUpgrade(UpgradeItem upg) {
@@ -440,10 +441,10 @@ public class DroneConsoleOverlay {
         if (!visible || activeTab != 0 || droneState != DroneState.IDLE) return false;
         float worldX = screenX;
         float worldY = graphics.getHeight() - screenY;
-        float slotX = x + width/2 - SLOT_SIZE/2;
-        float slotY = y + height/2;
+        float slotX = x + width*scale/2 - SLOT_SIZE/2;
+        float slotY = y + height*scale/2;
         return worldX >= slotX && worldX <= slotX + SLOT_SIZE &&
-               worldY >= slotY && worldY <= slotY + SLOT_SIZE;
+                worldY >= slotY && worldY <= slotY + SLOT_SIZE;
     }
 
     public void addCrystal() {
