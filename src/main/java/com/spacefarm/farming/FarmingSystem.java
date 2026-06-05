@@ -19,44 +19,38 @@ public class FarmingSystem {
         this.mapHeight = mapHeight;
     }
 
-    /**
-     * Update all crops.
-     */
     public void update(float deltaTime) {
-        // Update all crops and remove dead ones
         crops.values().forEach(crop -> crop.update(deltaTime));
         crops.entrySet().removeIf(entry -> entry.getValue().isDead());
     }
 
     /**
      * Plant a seed at the given tile coordinate.
-     * Returns true if successful, false if a crop already exists at that location.
+     * ТЕПЕР ПРИЙМАЄ CropType
      */
-    public boolean plantSeed(TileCoord coord) {
+    public boolean plantSeed(TileCoord coord, FarmingConstants.CropType type) {
         if (!isValidCoord(coord)) {
             return false;
         }
 
         String key = getCropKey(coord);
         if (crops.containsKey(key)) {
-            return false; // Crop already exists
+            return false;
         }
 
-        crops.put(key, new Crop());
+        // Передаємо тип у нову рослину
+        crops.put(key, new Crop(type));
         return true;
     }
 
     /**
      * Plant a seed at the given coordinates (x, y).
+     * ТЕПЕР ПРИЙМАЄ CropType
      */
-    public boolean plantSeed(int x, int y) {
-        return plantSeed(new TileCoord(x, y));
+    public boolean plantSeed(int x, int y, FarmingConstants.CropType type) {
+        return plantSeed(new TileCoord(x, y), type);
     }
 
-    /**
-     * Water a crop at the given tile coordinate.
-     * Returns true if successful, false if no crop exists.
-     */
     public boolean waterCrop(TileCoord coord) {
         if (!isValidCoord(coord)) {
             return false;
@@ -72,9 +66,6 @@ public class FarmingSystem {
         return true;
     }
 
-    /**
-     * Get the crop at the given tile coordinate.
-     */
     public Crop getCrop(TileCoord coord) {
         if (!isValidCoord(coord)) {
             return null;
@@ -82,17 +73,10 @@ public class FarmingSystem {
         return crops.get(getCropKey(coord));
     }
 
-    /**
-     * Get the crop at the given coordinates (x, y).
-     */
     public Crop getCrop(int x, int y) {
         return getCrop(new TileCoord(x, y));
     }
 
-    /**
-     * Remove a crop at the given tile coordinate.
-     * Returns true if successful, false if no crop exists.
-     */
     public boolean removeCrop(TileCoord coord) {
         if (!isValidCoord(coord)) {
             return false;
@@ -101,9 +85,6 @@ public class FarmingSystem {
         return crops.remove(getCropKey(coord)) != null;
     }
 
-    /**
-     * Check if a tile has a crop.
-     */
     public boolean hasCrop(TileCoord coord) {
         if (!isValidCoord(coord)) {
             return false;
@@ -111,13 +92,12 @@ public class FarmingSystem {
         return crops.containsKey(getCropKey(coord));
     }
 
-    /**
-     * Check if a tile has a crop at the given coordinates (x, y).
-     */
     public boolean hasCrop(int x, int y) {
         return hasCrop(new TileCoord(x, y));
     }
 
+    public void clear() {
+        crops.clear();
     /**
      * Get all crops.
      */
@@ -133,24 +113,14 @@ public class FarmingSystem {
         this.crops.putAll(crops);
     }
 
-    /**
-     * Get the number of crops on the map.
-     */
     public int getCropCount() {
         return crops.size();
     }
 
-    /**
-     * Get a string key for storing crops in the map.
-     */
     private String getCropKey(TileCoord coord) {
         return coord.x() + "," + coord.y();
     }
 
-    /**
-     * Harvest a mature crop and remove it from the map.
-     * Returns true if successfully harvested, false if no crop or not mature.
-     */
     public boolean harvestCrop(TileCoord coord) {
         if (!isValidCoord(coord)) {
             return false;
@@ -161,7 +131,6 @@ public class FarmingSystem {
             return false;
         }
 
-        // Only harvest mature crops
         if (crop.getGrowthStage() == FarmingConstants.GrowthStage.MATURE) {
             removeCrop(coord);
             return true;
@@ -170,12 +139,16 @@ public class FarmingSystem {
         return false;
     }
 
-    /**
-     * Check if the given coordinate is valid within map bounds.
-     */
     private boolean isValidCoord(TileCoord coord) {
         return coord != null && coord.x() >= 0 && coord.x() < mapWidth &&
                 coord.y() >= 0 && coord.y() < mapHeight;
     }
-}
 
+    public int getMapWidth() {
+        return mapWidth;
+    }
+
+    public int getMapHeight() {
+        return mapHeight;
+    }
+}

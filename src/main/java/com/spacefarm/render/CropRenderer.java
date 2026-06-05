@@ -5,11 +5,14 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.spacefarm.farming.Crop;
 import com.spacefarm.farming.FarmingConstants;
+import com.spacefarm.farming.FarmingConstants.GrowthStage;
 import com.spacefarm.farming.FarmingSystem;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Renders crops and their growth stages.
@@ -18,16 +21,37 @@ public class CropRenderer {
     private final FarmingSystem farmingSystem;
     private final TiledMapTileLayer baseLayer;
     private final SpriteBatch batch;
-    private final Texture[] cropTextures;
+    private final Map<FarmingConstants.CropType, Texture[]> cropTexturesMap;
     private final Texture waterIndicatorTexture;
 
     public CropRenderer(FarmingSystem farmingSystem, TiledMapTileLayer baseLayer) {
         this.farmingSystem = farmingSystem;
         this.baseLayer = baseLayer;
         this.batch = new SpriteBatch();
-        this.cropTextures = new Texture[4];
+        this.cropTexturesMap = new HashMap<>();
         this.waterIndicatorTexture = createWaterIndicatorTexture();
-        createCropTextures();
+
+        // Завантажуємо дефолтні текстури
+        cropTexturesMap.put(FarmingConstants.CropType.DEFAULT, loadTextures("sprite/plants/stage1.png", "sprite/plants/stage2.png", "sprite/plants/stage3.png"));
+
+        // Завантажуємо епічні текстури (заміни назви файлів на свої)
+        cropTexturesMap.put(FarmingConstants.CropType.EPIC, loadTextures("sprite/plants/epic_stage1.png", "sprite/plants/epic_stage2.png", "sprite/plants/epic_stage2.png"));
+
+        // Завантажуємо легендарні текстури (заміни назви файлів на свої)
+        cropTexturesMap.put(FarmingConstants.CropType.LEGENDARY, loadTextures("sprite/plants/leg_stage1.png", "sprite/plants/leg_stage2.png", "sprite/plants/leg_stage3.png"));
+    }
+
+    private Texture[] loadTextures(String stage1, String stage2, String stage3) {
+        Texture[] textures = new Texture[4];
+        Texture seed = new Texture(stage1);
+        Texture sprout = new Texture(stage2);
+        Texture mature = new Texture(stage3);
+
+        textures[GrowthStage.SEED.ordinal()]   = seed;
+        textures[GrowthStage.SPROUT.ordinal()] = sprout;
+        textures[GrowthStage.YOUNG.ordinal()]  = mature;
+        textures[GrowthStage.MATURE.ordinal()] = mature;
+        return textures;
     }
 
     /**
@@ -42,8 +66,13 @@ public class CropRenderer {
         float tileWidth = baseLayer.getTileWidth();
         float tileHeight = baseLayer.getTileHeight();
 
-        for (int x = 0; x < mapWidth; x++) {
-            for (int y = 0; y < mapHeight; y++) {
+        // 1. Головний цикл тепер по Y, і він йде у зворотному напрямку:
+        // від найдальшого ряду (mapHeight - 1) до найближчого (0)
+        for (int y = mapHeight - 1; y >= 0; y--) {
+
+            // 2. Внутрішній цикл по X йде як зазвичай зліва направо
+            for (int x = 0; x < mapWidth; x++) {
+
                 Crop crop = farmingSystem.getCrop(x, y);
                 if (crop != null) {
                     float worldX = x * tileWidth;
@@ -57,14 +86,20 @@ public class CropRenderer {
     }
 
     private void renderCrop(Crop crop, float worldX, float worldY, float tileWidth, float tileHeight) {
-        // Render crop sprite based on growth stage
         int stageIndex = crop.getGrowthStage().ordinal();
-        Texture cropTexture = cropTextures[Math.min(stageIndex, 3)];
+
+        // Отримуємо правильний масив текстур залежно від типу рослини
+        Texture[] texturesForType = cropTexturesMap.get(crop.getType());
+        Texture cropTexture = texturesForType[Math.min(stageIndex, 3)];
+
+        float textureWidth = cropTexture.getWidth();
+        float textureHeight = cropTexture.getHeight();
+        float drawWidth = tileWidth;
+        float drawHeight = tileWidth * (textureHeight / textureWidth);
 
         batch.setColor(1f, 1f, 1f, 1f);
-        batch.draw(cropTexture, worldX, worldY, tileWidth, tileHeight);
+        batch.draw(cropTexture, worldX, worldY, drawWidth, drawHeight);
 
-        // Render water indicator
         renderWaterIndicator(crop, worldX, worldY, tileWidth, tileHeight);
     }
 
@@ -75,7 +110,7 @@ public class CropRenderer {
         Color indicatorColor;
         switch (waterState) {
             case WELL_WATERED:
-                indicatorColor = new Color(0.2f, 0.7f, 0.2f, 0.8f); // Green
+                indicatorColor = new Color(0.2f, 0.7f, 0.2f, 0.4f); // Green
                 break;
             case NORMAL:
                 indicatorColor = new Color(0.3f, 0.6f, 0.9f, 0.6f);  // Blue
@@ -92,54 +127,10 @@ public class CropRenderer {
 
         batch.setColor(indicatorColor);
 
-        // Draw a bar on the bottom of the tile showing water level
         float barHeight = tileHeight * 0.15f;
         float barWidth = tileWidth * waterProgress;
 
         batch.draw(waterIndicatorTexture, worldX, worldY, barWidth, barHeight);
-    }
-
-    /**
-     * Create textures for each growth stage.
-     */
-    private void createCropTextures() {
-        // Stage 0: Seed (small brown dot)
-        cropTextures[0] = createStageTexture(8, 8, 0.6f, 0.4f, 0.2f);
-
-        // Stage 1: Sprout (small green)
-        cropTextures[1] = createStageTexture(16, 16, 0.2f, 0.8f, 0.2f);
-
-        // Stage 2: Young (medium green)
-        cropTextures[2] = createStageTexture(24, 24, 0.3f, 0.9f, 0.2f);
-
-        // Stage 3: Mature (large green)
-        cropTextures[3] = createStageTexture(28, 28, 0.2f, 0.7f, 0.1f);
-    }
-
-    private Texture createStageTexture(int width, int height, float r, float g, float b) {
-        Pixmap pixmap = new Pixmap(width, height, Pixmap.Format.RGBA8888);
-        pixmap.setColor(r, g, b, 1f);
-
-        // Draw a simple circle/ellipse for the plant
-        int centerX = width / 2;
-        int centerY = height / 2;
-        int radiusX = width / 3;
-        int radiusY = height / 3;
-
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
-                int dx = x - centerX;
-                int dy = y - centerY;
-                // Simple ellipse equation
-                if ((dx * dx) / (radiusX * radiusX) + (dy * dy) / (radiusY * radiusY) <= 1) {
-                    pixmap.drawPixel(x, y);
-                }
-            }
-        }
-
-        Texture texture = new Texture(pixmap);
-        pixmap.dispose();
-        return texture;
     }
 
     private Texture createWaterIndicatorTexture() {
@@ -155,16 +146,16 @@ public class CropRenderer {
      * Dispose of all textures.
      */
     public void dispose() {
-        for (Texture texture : cropTextures) {
-            if (texture != null) {
-                texture.dispose();
-            }
+        // Очищаємо всі текстури з Map
+        for (Texture[] textures : cropTexturesMap.values()) {
+            if (textures[0] != null) textures[0].dispose();
+            if (textures[1] != null) textures[1].dispose();
+            if (textures[2] != null) textures[2].dispose();
         }
+
         if (waterIndicatorTexture != null) {
             waterIndicatorTexture.dispose();
         }
         batch.dispose();
     }
 }
-
-
