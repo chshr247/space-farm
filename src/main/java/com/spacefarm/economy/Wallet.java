@@ -12,6 +12,10 @@ public class Wallet {
         return balance;
     }
 
+    public void setBalance(float balance) {
+        this.balance = balance;
+    }
+
     /** Adds money to the wallet (earned from harvest, scavenging, etc.). */
     public void earn(float amount) {
         if (amount > 0) {

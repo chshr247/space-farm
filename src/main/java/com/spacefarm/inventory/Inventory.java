@@ -6,7 +6,7 @@ package com.spacefarm.inventory;
 public class Inventory {
     private static final int INVENTORY_SIZE = 24;
     private static final int ROW_SIZE = 8;
-    private final Item[] slots;
+    private Item[] slots;
     private int selectedSlot;
 
     public Inventory() {
@@ -15,6 +15,15 @@ public class Inventory {
 
         // Initialize with a watering can in the first slot
         slots[0] = WateringCan.getInstance();
+    }
+
+    /**
+     * Set all slots.
+     */
+    public void setSlots(Item[] newSlots) {
+        if (newSlots != null && newSlots.length == INVENTORY_SIZE) {
+            this.slots = newSlots;
+        }
     }
 
     /**

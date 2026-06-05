@@ -155,6 +155,10 @@ public class GameSession {
     }
     public Wallet getWallet() { return wallet; }
 
+    public DifficultyLevel getDifficulty() {
+        return difficulty;
+    }
+
     public TiledMap getMap() {
         return map;
     }

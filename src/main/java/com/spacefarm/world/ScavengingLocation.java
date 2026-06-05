@@ -115,6 +115,16 @@ public class ScavengingLocation {
         return Math.min(100f, (elapsedTime * 100f) / OutdoorConstants.SCAVENGING_DURATION_MILLIS);
     }
     
+    /**
+     * Load state from data.
+     */
+    public void loadState(boolean isCleared, long lastClearedTime, boolean isScavenging, long scavengingStartTime) {
+        this.isCleared = isCleared;
+        this.lastClearedTime = lastClearedTime;
+        this.isScavenging = isScavenging;
+        this.scavengingStartTime = scavengingStartTime;
+    }
+    
     // Getters
     public TileCoord getTopLeft() { return topLeft; }
     public int getWidth() { return width; }
@@ -123,6 +133,7 @@ public class ScavengingLocation {
     public boolean isCleared() { return isCleared; }
     public boolean isScavenging() { return isScavenging; }
     public long getScavengingStartTime() { return scavengingStartTime; }
+    public long getLastClearedTime() { return lastClearedTime; }
     public LocationType getLocationType() { return locationType; }
 }
 
