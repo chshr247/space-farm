@@ -2,17 +2,21 @@ package com.spacefarm.farming;
 
 import com.spacefarm.farming.FarmingConstants.GrowthStage;
 import com.spacefarm.farming.FarmingConstants.WaterState;
+import com.spacefarm.farming.FarmingConstants.CropType;
 
 /**
  * Represents a single crop on a tile.
  */
 public class Crop {
+    private final CropType type; // Зберігаємо тип рослини
     private GrowthStage growthStage;
     private float growthTimer;
     private float timeSinceWatered;
     private WaterState waterState;
 
-    public Crop() {
+    // Конструктор тепер вимагає вказати тип при створенні
+    public Crop(CropType type) {
+        this.type = type;
         this.growthStage = GrowthStage.SEED;
         this.growthTimer = 0f;
         this.timeSinceWatered = 0f;
@@ -23,10 +27,7 @@ public class Crop {
      * Update the crop's growth and water state.
      */
     public void update(float deltaTime) {
-        // Update growth stage
         updateGrowthStage(deltaTime);
-
-        // Update water state
         updateWaterState(deltaTime);
     }
 
@@ -42,7 +43,6 @@ public class Crop {
     private void updateWaterState(float deltaTime) {
         timeSinceWatered += deltaTime;
 
-        // Update water state based on time since watering
         if (timeSinceWatered <= FarmingConstants.WATERING_DURATION) {
             waterState = WaterState.WELL_WATERED;
         } else if (timeSinceWatered <= FarmingConstants.WATERING_DURATION * 1.5f) {
@@ -63,7 +63,7 @@ public class Crop {
             case YOUNG:
                 return FarmingConstants.STAGE_3_DURATION;
             case MATURE:
-                return -1f; // Mature plants don't progress further
+                return -1f;
             default:
                 return -1f;
         }
@@ -87,29 +87,19 @@ public class Crop {
         growthTimer = 0f;
     }
 
-    /**
-     * Water the crop, resetting the water timer.
-     */
     public void water() {
         timeSinceWatered = 0f;
         waterState = WaterState.WELL_WATERED;
     }
 
-    /**
-     * Get the current growth progress (0.0 to 1.0) within the current stage.
-     */
     public float getGrowthProgress() {
         float stageDuration = getStageDuration(growthStage);
         if (stageDuration <= 0) {
-            return 1.0f; // Mature stage
+            return 1.0f;
         }
         return Math.min(1.0f, growthTimer / stageDuration);
     }
 
-    /**
-     * Get the current water progress (0.0 to 1.0).
-     * 0.0 = dying, 1.0 = well watered
-     */
     public float getWaterProgress() {
         float timeSinceDrying = Math.max(0, timeSinceWatered - FarmingConstants.WATERING_DURATION);
         float dryingTime = FarmingConstants.DRYING_DURATION - FarmingConstants.WATERING_DURATION;
@@ -119,7 +109,12 @@ public class Crop {
         return Math.max(0.0f, 1.0f - (timeSinceDrying / dryingTime));
     }
 
-    // Getters
+    // --- ГЕТЕРИ ---
+
+    public CropType getType() {
+        return type;
+    }
+
     public GrowthStage getGrowthStage() {
         return growthStage;
     }
@@ -140,5 +135,3 @@ public class Crop {
         return waterState == WaterState.DYING && timeSinceWatered > FarmingConstants.DRYING_DURATION * 1.5f;
     }
 }
-
-

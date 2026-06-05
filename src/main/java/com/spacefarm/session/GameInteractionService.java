@@ -13,6 +13,7 @@ import com.spacefarm.oxygen.OxygenConstants;
 import com.spacefarm.world.ScavengingLocation;
 import com.spacefarm.world.SeedWheelConstants;
 import com.spacefarm.world.TileCoord;
+import com.spacefarm.farming.FarmingConstants;
 
 public class GameInteractionService {
     private final GameSession session;
@@ -27,7 +28,8 @@ public class GameInteractionService {
         session.getSeedWheelOverlay().update(deltaTime);
 
         if (session.getSeedWheelOverlay().hasResult()) {
-            int resultType = session.getSeedWheelOverlay().getResultAndReset();
+            // Змінено int на FarmingConstants.CropType
+            FarmingConstants.CropType resultType = session.getSeedWheelOverlay().getResultAndReset();
             handleSeedWheelResult(resultType);
 
             if (currentSeedWheelLocation != null) {
@@ -221,7 +223,24 @@ public class GameInteractionService {
                 // Посадка дозволена лише на грядках бази
                 return;
             }
-            if (!session.getFarmingSystem().hasCrop(coord) && session.getFarmingSystem().plantSeed(coord)) {
+
+            // 1. Отримуємо вибраний предмет (насіння) з інвентаря
+            Item selectedSeed = session.getInventory().getSelectedItem();
+
+            // 2. За замовчуванням ставимо звичайний тип
+            FarmingConstants.CropType cropType = FarmingConstants.CropType.DEFAULT;
+
+            // 3. Змінюємо тип, якщо це рідкісне або легендарне насіння
+            if (selectedSeed != null) {
+                if (selectedSeed.getType() == Item.ItemType.RARE_SEED) {
+                    cropType = FarmingConstants.CropType.EPIC;
+                } else if (selectedSeed.getType() == Item.ItemType.LEGENDARY_SEED) {
+                    cropType = FarmingConstants.CropType.LEGENDARY;
+                }
+            }
+
+            // 4. Передаємо визначений cropType у метод plantSeed
+            if (!session.getFarmingSystem().hasCrop(coord) && session.getFarmingSystem().plantSeed(coord, cropType)) {
                 session.getInventory().useSeed();
                 removeSelectedStackIfEmpty();
             }
@@ -244,12 +263,12 @@ public class GameInteractionService {
         session.getContextMenu().showAt(worldX, worldY);
     }
 
-    private void handleSeedWheelResult(int resultType) {
-        if (resultType == 0) {
+    private void handleSeedWheelResult(FarmingConstants.CropType resultType) {
+        if (resultType == FarmingConstants.CropType.DEFAULT) {
             session.getInventory().addItem(new Seed(SeedWheelConstants.COMMON_SEED_REWARD));
-        } else if (resultType == 1) {
+        } else if (resultType == FarmingConstants.CropType.EPIC) {
             session.getInventory().addItem(new RareSeed(SeedWheelConstants.RARE_SEED_REWARD));
-        } else if (resultType == 2) {
+        } else if (resultType == FarmingConstants.CropType.LEGENDARY) {
             session.getInventory().addItem(new LegendarySeed(SeedWheelConstants.LEGENDARY_SEED_REWARD));
         }
     }

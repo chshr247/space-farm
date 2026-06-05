@@ -1,5 +1,6 @@
 package com.spacefarm.render;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
@@ -47,7 +48,26 @@ public class BaseZoneRenderer {
         treeTileTexture = createSolidTexture(tileSize, tileSize, 25, 100, 25, 255); // Darker green
 
         // Garden bed tile (lighter green)
-        gardenTileTexture = createSolidTexture(tileSize, tileSize, 107, 142, 35, 255); // Yellow-green
+        Pixmap originalPixmap = new Pixmap(Gdx.files.internal("sprite/plants/garden.png"));
+
+// Створюємо новий порожній Pixmap потрібного розміру мапи (наприклад, 64x64)
+        Pixmap scaledPixmap = new Pixmap(tileSize, tileSize, originalPixmap.getFormat());
+
+// Вмикаємо фільтрацію NearestNeighbour, щоб піксель-арт залишався чітким і не "милив"
+        scaledPixmap.setFilter(Pixmap.Filter.NearestNeighbour);
+
+// Масштабуємо (розтягуємо) оригінальне зображення на новий Pixmap
+        scaledPixmap.drawPixmap(originalPixmap,
+                0, 0, originalPixmap.getWidth(), originalPixmap.getHeight(),
+                0, 0, scaledPixmap.getWidth(), scaledPixmap.getHeight()
+        );
+
+// Створюємо фінальну текстуру з розтягнутого зображення
+        gardenTileTexture = new Texture(scaledPixmap);
+
+// Очищуємо пам'ять від тимчасових Pixmap
+        originalPixmap.dispose();
+        scaledPixmap.dispose();
 
         // Drone zone tile (grayish for metal/tech)
         droneTileTexture = createSolidTexture(tileSize, tileSize, 70, 70, 80, 255); // Slate gray
