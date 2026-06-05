@@ -1,0 +1,93 @@
+{
+  "inventory": {
+    "slots": [
+      {
+        "name": "Лійка",
+        "description": "Інструмент для поливання рослин",
+        "itemType": "WATERING_CAN"
+      },
+      {
+        "quantity": 5,
+        "name": "Насіння",
+        "description": "Насіння для посадження (5)",
+        "itemType": "SEED"
+      },
+      {
+        "name": "Коса",
+        "description": "Інструмент для збору врожаю",
+        "itemType": "SICKLE"
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "selectedSlot": 0
+  },
+  "oxygen": {
+    "currentOxygen": 100.0,
+    "isAtBase": true
+  },
+  "farming": {
+    "crops": {}
+  },
+  "locations": [
+    {
+      "isCleared": false,
+      "lastClearedTime": 0,
+      "isScavenging": false,
+      "scavengingStartTime": 0
+    },
+    {
+      "isCleared": false,
+      "lastClearedTime": 0,
+      "isScavenging": false,
+      "scavengingStartTime": 0
+    },
+    {
+      "isCleared": false,
+      "lastClearedTime": 0,
+      "isScavenging": false,
+      "scavengingStartTime": 0
+    },
+    {
+      "isCleared": false,
+      "lastClearedTime": 0,
+      "isScavenging": false,
+      "scavengingStartTime": 0
+    },
+    {
+      "isCleared": false,
+      "lastClearedTime": 0,
+      "isScavenging": false,
+      "scavengingStartTime": 0
+    },
+    {
+      "isCleared": false,
+      "lastClearedTime": 0,
+      "isScavenging": false,
+      "scavengingStartTime": 0
+    }
+  ],
+  "wallet": {
+    "balance": 1000.0
+  },
+  "gameOver": false
+}
