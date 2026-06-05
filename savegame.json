@@ -7,7 +7,7 @@
         "itemType": "WATERING_CAN"
       },
       {
-        "quantity": 5,
+        "quantity": 4,
         "name": "Насіння",
         "description": "Насіння для посадження (5)",
         "itemType": "SEED"
@@ -17,7 +17,12 @@
         "description": "Інструмент для збору врожаю",
         "itemType": "SICKLE"
       },
-      null,
+      {
+        "quantity": 20,
+        "name": "Насіння",
+        "description": "Насіння для посадження (20)",
+        "itemType": "SEED"
+      },
       null,
       null,
       null,
@@ -39,11 +44,11 @@
       null,
       null
     ],
-    "selectedSlot": 0
+    "selectedSlot": 1
   },
   "oxygen": {
-    "currentOxygen": 100.0,
-    "isAtBase": true
+    "currentOxygen": 8.0,
+    "isAtBase": false
   },
   "farming": {
     "crops": {}
@@ -52,36 +57,36 @@
     {
       "isCleared": false,
       "lastClearedTime": 0,
-      "isScavenging": false,
-      "scavengingStartTime": 0
+      "isScavenging": true,
+      "scavengingStartTime": 1780703403352
     },
     {
       "isCleared": false,
       "lastClearedTime": 0,
-      "isScavenging": false,
-      "scavengingStartTime": 0
+      "isScavenging": true,
+      "scavengingStartTime": 1780703408436
     },
     {
       "isCleared": false,
       "lastClearedTime": 0,
-      "isScavenging": false,
-      "scavengingStartTime": 0
+      "isScavenging": true,
+      "scavengingStartTime": 1780703405686
     },
     {
       "isCleared": false,
       "lastClearedTime": 0,
-      "isScavenging": false,
-      "scavengingStartTime": 0
+      "isScavenging": true,
+      "scavengingStartTime": 1780703409386
     },
     {
       "isCleared": false,
       "lastClearedTime": 0,
-      "isScavenging": false,
-      "scavengingStartTime": 0
+      "isScavenging": true,
+      "scavengingStartTime": 1780703404136
     },
     {
-      "isCleared": false,
-      "lastClearedTime": 0,
+      "isCleared": true,
+      "lastClearedTime": 1780703419590,
       "isScavenging": false,
       "scavengingStartTime": 0
     }
