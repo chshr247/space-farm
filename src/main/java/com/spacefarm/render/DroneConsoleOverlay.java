@@ -97,12 +97,7 @@ public class DroneConsoleOverlay {
         treeUpgrades.add(new UpgradeItem("tree_rare", "Rare Bloom", "Rare seed chance +10%", 750, 1));
         treeUpgrades.add(new UpgradeItem("tree_final", "Tree of Life", "Max oxygen +50%", 1500, 1));
 
-        baseUpgrades.add(new UpgradeItem("base_bed", "Garden Bed #1", "Adds 1 garden bed", 150, 1));
-        baseUpgrades.add(new UpgradeItem("base_bed_2", "Garden Bed #2", "Adds 1 garden bed", 300, 1));
-        baseUpgrades.add(new UpgradeItem("base_oxygen", "Oxygen Sealer", "Slower oxygen loss", 400, 1));
-        baseUpgrades.add(new UpgradeItem("base_scavenge", "Drone Scanner", "Faster scavenging", 600, 1));
-        baseUpgrades.add(new UpgradeItem("base_inv", "Backpack Mod", "Larger inventory", 800, 1));
-        baseUpgrades.add(new UpgradeItem("base_shield", "Crystal Shield", "Crops never die", 2000, 1));
+        baseUpgrades.add(new UpgradeItem("base_inv", "Backpack Mod", "Larger inventory", 800, 2));
     }
 
     private void calculateMaxScroll() {
@@ -418,6 +413,11 @@ public class DroneConsoleOverlay {
         if (!upg.isMaxed() && session.getWallet().getBalance() >= upg.cost) {
             session.getWallet().spend(upg.cost);
             upg.level++;
+            
+            if ("base_inv".equals(upg.id)) {
+                session.getInventory().expandInventory();
+            }
+            
             Gdx.app.log("DroneConsole", "Purchased: " + upg.name);
         }
     }

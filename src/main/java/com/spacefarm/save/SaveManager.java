@@ -81,7 +81,8 @@ public class SaveManager {
         SaveState state = new SaveState();
 
         state.inventory = new SaveState.InventoryData();
-        state.inventory.slots = new Item[24]; // Match Inventory.INVENTORY_SIZE
+        // The default GameSession/Inventory is initialized with 8 slots, so we must reflect this
+        state.inventory.slots = new Item[8]; 
         state.inventory.slots[0] = WateringCan.getInstance();
         state.inventory.slots[1] = new Seed(5);
         state.inventory.slots[2] = Sickle.getInstance();
@@ -117,6 +118,9 @@ public class SaveManager {
 
         try {
             SaveState state = gson.fromJson(file.readString(), SaveState.class);
+            if (state == null) {
+                return false;
+            }
 
             // 1. Inventory
             if (state.inventory != null) {
