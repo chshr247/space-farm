@@ -34,7 +34,19 @@ public class DroneConsoleOverlay {
     private enum DroneState { IDLE, FLYING_AWAY, RETURNING }
     private DroneState droneState = DroneState.IDLE;
     private float animationTimer = 0f;
-    private static final float FLIGHT_DURATION = 5.0f;
+    private static final float BASE_FLIGHT_DURATION = 5.0f;
+    
+    private int getUpgradeLevel(String id) {
+        for (UpgradeItem upg : treeUpgrades) if (upg.id.equals(id)) return upg.level;
+        for (UpgradeItem upg : baseUpgrades) if (upg.id.equals(id)) return upg.level;
+        return 0;
+    }
+    
+    private float getFlightDuration() {
+        int speedLevel = getUpgradeLevel("base_speed");
+        return Math.max(1.0f, BASE_FLIGHT_DURATION - speedLevel * 1.0f);
+    }
+    
     private float pendingBalanceUpdate = 0f;
     private float scale = 0f;
 
@@ -98,6 +110,7 @@ public class DroneConsoleOverlay {
         treeUpgrades.add(new UpgradeItem("tree_final", "Tree of Life", "Max oxygen +50%", 1500, 1));
 
         baseUpgrades.add(new UpgradeItem("base_inv", "Backpack Mod", "Larger inventory", 800, 2));
+        baseUpgrades.add(new UpgradeItem("base_speed", "Turbo Thrusters", "Faster delivery time", 400, 3));
     }
 
     private void calculateMaxScroll() {
@@ -136,7 +149,7 @@ public class DroneConsoleOverlay {
 
         if (droneState != DroneState.IDLE) {
             animationTimer += deltaTime;
-            float progress = animationTimer / FLIGHT_DURATION;
+            float progress = animationTimer / getFlightDuration();
             float worldWidth = session.getBaseLayer().getWidth() * session.getBaseLayer().getTileWidth();
             float worldHeight = session.getBaseLayer().getHeight() * session.getBaseLayer().getTileHeight();
             float startX = session.getBaseZone().getDroneZoneCenter().x() * session.getBaseLayer().getTileWidth();
@@ -152,7 +165,7 @@ public class DroneConsoleOverlay {
                 session.getBaseZone().setDroneOffsets((1f - progress) * totalDistX, (1f - progress) * totalDistY);
             }
 
-            if (animationTimer >= FLIGHT_DURATION) {
+            if (animationTimer >= getFlightDuration()) {
                 animationTimer = 0;
                 if (droneState == DroneState.FLYING_AWAY) {
                     droneState = DroneState.RETURNING;
@@ -267,7 +280,7 @@ public class DroneConsoleOverlay {
             float barW = (width*scale) - 160;
             shapeRenderer.rect(x + 80, y + (height*scale)/2 - 10, barW, 12);
             shapeRenderer.setColor(Color.GOLD);
-            float progress = animationTimer / FLIGHT_DURATION;
+            float progress = animationTimer / getFlightDuration();
             if (droneState == DroneState.RETURNING) progress = 1f - progress;
             shapeRenderer.rect(x + 80, y + (height*scale)/2 - 10, barW * progress, 12);
             shapeRenderer.end();
