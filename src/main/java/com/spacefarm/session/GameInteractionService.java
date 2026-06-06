@@ -56,6 +56,8 @@ public class GameInteractionService {
         if (session.isGameOver()) {
             return false;
         }
+        float uiY = Gdx.graphics.getHeight() - screenY;
+        if (session.getTreeBoxUI().handleClick(screenX, uiY)) return true;
 
         if (button == Buttons.LEFT) {
             // Check inventory first so we can start dragging items while console is open
@@ -200,6 +202,11 @@ public class GameInteractionService {
 
         session.getSelectionLayer().setCell(coord.x(), coord.y(), session.createHighlightCell());
         lastSelected = coord;
+
+        if (session.getBaseZone().isTreeArea(coord)) {
+            session.getTreeBoxUI().show();
+            return;
+        }
 
         ScavengingLocation location = session.getOutdoorZone().getLocationAt(coord);
         if (location != null) {

@@ -128,7 +128,7 @@ public class OxygenManager {
      * Check if oxygen is critically low (below 20%).
      */
     public boolean isCritical() {
-        return currentOxygen < 20f;
+        return currentOxygen <= 20f;
     }
 
     /**
