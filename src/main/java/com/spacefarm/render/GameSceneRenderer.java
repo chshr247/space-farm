@@ -48,6 +48,7 @@ public class GameSceneRenderer {
         if (gameSession.isGameOver()) {
             gameSession.getGameOverOverlay().render(screenWidth, screenHeight);
         }
+        gameSession.getTreeBoxUI().render(screenWidth, screenHeight);
     }
 
     public void dispose() {
@@ -58,5 +59,6 @@ public class GameSceneRenderer {
         cropRenderer.dispose();
         oxygenUI.dispose();
     }
+
 }
 

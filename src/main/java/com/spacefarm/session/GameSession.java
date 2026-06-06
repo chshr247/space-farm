@@ -19,10 +19,7 @@ import com.spacefarm.inventory.Inventory;
 import com.spacefarm.inventory.Seed;
 import com.spacefarm.inventory.Sickle;
 import com.spacefarm.oxygen.OxygenManager;
-import com.spacefarm.render.ContextMenuOverlay;
-import com.spacefarm.render.GameOverOverlay;
-import com.spacefarm.render.InventoryUI;
-import com.spacefarm.render.SeedWheelOverlay;
+import com.spacefarm.render.*;
 import com.spacefarm.world.BaseZone;
 import com.spacefarm.world.OutdoorZone;
 import com.spacefarm.DifficultyLevel;
@@ -55,6 +52,7 @@ public class GameSession {
     private Texture highlightTexture;
     private Wallet wallet;
     private DifficultyLevel difficulty = DifficultyLevel.NORMAL; // default до вибору в меню
+    private TreeBoxUI treeBoxUI;
 
     /**
      * Call this from the menu BEFORE create().
@@ -94,6 +92,8 @@ public class GameSession {
         inventory = new Inventory();
         inventory.addItem(1, new Seed(5));
         inventory.addItem(2, Sickle.getInstance());
+
+        treeBoxUI = new TreeBoxUI();
 
         oxygenManager = new OxygenManager();
         wallet = new Wallet(difficulty.startingMoney);
@@ -152,6 +152,7 @@ public class GameSession {
         if (seedWheelOverlay != null) {
             seedWheelOverlay.dispose();
         }
+        if (treeBoxUI != null) treeBoxUI.dispose();
     }
     public Wallet getWallet() { return wallet; }
 
@@ -190,6 +191,8 @@ public class GameSession {
     public InventoryUI getInventoryUI() {
         return inventoryUI;
     }
+
+    public TreeBoxUI getTreeBoxUI() { return treeBoxUI; }
 
     public ContextMenuOverlay getContextMenu() {
         return contextMenu;
