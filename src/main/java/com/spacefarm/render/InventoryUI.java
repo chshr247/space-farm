@@ -21,6 +21,7 @@ public class InventoryUI {
     private final ShapeRenderer shapeRenderer;
     private final SpriteBatch batch;
     private final BitmapFont font;
+    private final BitmapFont smallFont;
     private final OrthographicCamera screenCamera;
     private final GlyphLayout layout = new GlyphLayout();
 
@@ -30,6 +31,13 @@ public class InventoryUI {
     private static final float ROW_SIZE = 8;
     private static final float TOGGLE_BUTTON_SIZE = 40f;
     private static final float ANIMATION_SPEED = 6f;
+
+    // Teal colour palette
+    private static final float[] C_TEAL      = {0.12f, 0.75f, 0.58f, 1.00f};
+    private static final float[] C_TEAL_DIM  = {0.06f, 0.38f, 0.28f, 0.80f};
+    private static final float[] C_BG        = {0.06f, 0.08f, 0.10f, 0.88f};
+    private static final float[] C_BG_SEL    = {0.08f, 0.20f, 0.18f, 0.92f};
+    private static final float[] C_BORDER    = {0.18f, 0.45f, 0.35f, 0.90f};
 
     private boolean isExpanded = false;
     private float targetExpansionY = 0f;
@@ -41,12 +49,15 @@ public class InventoryUI {
     private float dragX = 0f;
     private float dragY = 0f;
 
+    private int hoveredSlotIndex = -1;
+
     public InventoryUI(Inventory inventory, int screenWidth, int screenHeight) {
         this.inventory = inventory;
         this.shapeRenderer = new ShapeRenderer();
         this.batch = new SpriteBatch();
         this.font = FontUtils.createFont("fonts/ArialBold.ttf", 18);
         this.font.setColor(Color.WHITE);
+        this.smallFont = FontUtils.createFont("fonts/ArialBold.ttf", 13);
 
         // Create a camera for screen-space rendering (Y-up)
         this.screenCamera = new OrthographicCamera();
@@ -58,7 +69,8 @@ public class InventoryUI {
      * Update animations.
      */
     public void update(float deltaTime) {
-        targetExpansionY = isExpanded ? (2 * (SLOT_SIZE + SLOT_SPACING)) : 0f;
+        int totalRows = inventory.getSize() / (int)ROW_SIZE;
+        targetExpansionY = isExpanded ? (Math.max(0, totalRows - 1) * (SLOT_SIZE + SLOT_SPACING)) : 0f;
         float alpha = 1f - (float) Math.exp(-ANIMATION_SPEED * deltaTime);
         currentExpansionY += (targetExpansionY - currentExpansionY) * alpha;
     }
@@ -81,7 +93,8 @@ public class InventoryUI {
 
         // Animation: Row 0 (toolbar) moves up, Row 1 and 2 appear below it
         float toolbarY = baseBottomY + currentExpansionY;
-        float maxExpansion = 2 * (SLOT_SIZE + SLOT_SPACING);
+        int totalRows = inventory.getSize() / (int)ROW_SIZE;
+        float maxExpansion = Math.max(0.001f, (totalRows - 1) * (SLOT_SIZE + SLOT_SPACING));
         float progress = Math.max(0f, Math.min(1f, currentExpansionY / maxExpansion));
 
         // Ensure strictly 0 alpha when fully collapsed to avoid ghosting
@@ -93,12 +106,14 @@ public class InventoryUI {
         // Draw toggle button (moves with toolbar)
         buttonX = startX - TOGGLE_BUTTON_SIZE - 10f;
         buttonY = toolbarY + (SLOT_SIZE - TOGGLE_BUTTON_SIZE) / 2f;
-        renderToggleButton(buttonX, buttonY);
+        if (totalRows > 1) {
+            renderToggleButton(buttonX, buttonY);
+        }
 
         // Draw rows
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
 
-        for (int row = 0; row < 3; row++) {
+        for (int row = 0; row < totalRows; row++) {
             float rowY = toolbarY - row * (SLOT_SIZE + SLOT_SPACING);
             float rowAlpha = (row == 0) ? 1f : extraRowsAlpha;
 
@@ -131,47 +146,77 @@ public class InventoryUI {
             }
         }
 
-        // Draw currently selected item name
+        // Draw item name — for selected OR hovered slot
+        Item hoveredItem = (hoveredSlotIndex != -1) ? inventory.getItem(hoveredSlotIndex) : null;
         Item selectedItem = inventory.getSelectedItem();
-        if (selectedItem != null) {
-            batch.begin();
-            batch.setColor(1f, 1f, 1f, 1f); // Always opaque
-            String displayText = selectedItem.getDescription();
+        Item displayItem = (hoveredItem != null) ? hoveredItem : selectedItem;
+        if (displayItem != null) {
+            String displayText = displayItem.getDescription();
             layout.setText(font, displayText);
-            float textX = (screenWidth - layout.width) / 2f;
-            float textY = toolbarY + SLOT_SIZE + 25f;  // Above the toolbar
-            font.setColor(1f, 1f, 1f, 1f);
-            font.draw(batch, displayText, textX, textY);
+
+            float nameY   = toolbarY + SLOT_SIZE + 32f;
+            float panelW  = layout.width + 28f;
+            float panelH  = 26f;
+            float panelX  = (screenWidth - panelW) / 2f;
+            float panelYb = nameY - layout.height - 6f;
+
+            // dark background
+            Gdx.gl.glEnable(GL20.GL_BLEND);
+            shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+            shapeRenderer.setColor(C_BG[0], C_BG[1], C_BG[2], 0.85f);
+            shapeRenderer.rect(panelX, panelYb, panelW, panelH);
+            shapeRenderer.end();
+
+            // teal border
+            shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+            shapeRenderer.setColor(C_TEAL[0], C_TEAL[1], C_TEAL[2], 0.60f);
+            shapeRenderer.rect(panelX, panelYb, panelW, panelH);
+            shapeRenderer.end();
+            Gdx.gl.glDisable(GL20.GL_BLEND);
+
+            // text
+            batch.begin();
+            font.setColor(C_TEAL[0], C_TEAL[1], C_TEAL[2], 1f);
+            font.draw(batch, displayText, (screenWidth - layout.width) / 2f, nameY);
             batch.end();
         }
     }
 
     private void renderToggleButton(float x, float y) {
+        Gdx.gl.glEnable(GL20.GL_BLEND);
+
+        // background
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        shapeRenderer.setColor(0.3f, 0.3f, 0.3f, 0.9f);
+        shapeRenderer.setColor(C_BG[0], C_BG[1], C_BG[2], 0.90f);
         shapeRenderer.rect(x, y, TOGGLE_BUTTON_SIZE, TOGGLE_BUTTON_SIZE);
         shapeRenderer.end();
 
+        // border + icon
         shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-        shapeRenderer.setColor(0.8f, 0.8f, 0.8f, 1.0f);
+        shapeRenderer.setColor(C_TEAL_DIM[0], C_TEAL_DIM[1], C_TEAL_DIM[2], 1f);
         shapeRenderer.rect(x, y, TOGGLE_BUTTON_SIZE, TOGGLE_BUTTON_SIZE);
 
         float midX = x + TOGGLE_BUTTON_SIZE / 2f;
         float midY = y + TOGGLE_BUTTON_SIZE / 2f;
         float s = TOGGLE_BUTTON_SIZE / 4f;
+        shapeRenderer.setColor(C_TEAL[0], C_TEAL[1], C_TEAL[2], 1f);
         shapeRenderer.line(midX - s, midY, midX + s, midY);
         if (!isExpanded) {
             shapeRenderer.line(midX, midY - s, midX, midY + s);
         }
         shapeRenderer.end();
+
+        Gdx.gl.glDisable(GL20.GL_BLEND);
     }
 
     public boolean handleTouchDown(float screenX, float screenY) {
         float worldX = screenX;
         float worldY = graphics.getHeight() - screenY;
 
-        if (worldX >= buttonX && worldX <= buttonX + TOGGLE_BUTTON_SIZE &&
-            worldY >= buttonY && worldY <= buttonY + TOGGLE_BUTTON_SIZE) {
+        int totalRows = inventory.getSize() / (int)ROW_SIZE;
+
+        if (totalRows > 1 && worldX >= buttonX && worldX <= buttonX + TOGGLE_BUTTON_SIZE &&
+                worldY >= buttonY && worldY <= buttonY + TOGGLE_BUTTON_SIZE) {
             isExpanded = !isExpanded;
             return true;
         }
@@ -179,10 +224,11 @@ public class InventoryUI {
         float totalWidth = ROW_SIZE * (SLOT_SIZE + SLOT_SPACING);
         float startX = (graphics.getWidth() - totalWidth) / 2f;
         float toolbarY = BOTTOM_PADDING + currentExpansionY;
+        float maxExpansion = Math.max(0.001f, (totalRows - 1) * (SLOT_SIZE + SLOT_SPACING));
 
-        for (int row = 0; row < 3; row++) {
+        for (int row = 0; row < totalRows; row++) {
             float rowY = toolbarY - row * (SLOT_SIZE + SLOT_SPACING);
-            float rowAlpha = (row == 0) ? 1f : Math.min(1f, currentExpansionY / (2 * (SLOT_SIZE + SLOT_SPACING)));
+            float rowAlpha = (row == 0) ? 1f : Math.min(1f, currentExpansionY / maxExpansion);
 
             if (rowAlpha > 0.5f && worldY >= rowY && worldY <= rowY + SLOT_SIZE) {
                 for (int col = 0; col < ROW_SIZE; col++) {
@@ -205,6 +251,28 @@ public class InventoryUI {
         return false;
     }
 
+    public void handleMouseMoved(float screenX, float screenY) {
+        float worldY = graphics.getHeight() - screenY;
+        int totalRows = inventory.getSize() / (int)ROW_SIZE;
+        float totalWidth = ROW_SIZE * (SLOT_SIZE + SLOT_SPACING);
+        float startX = (graphics.getWidth() - totalWidth) / 2f;
+        float toolbarY = BOTTOM_PADDING + currentExpansionY;
+
+        hoveredSlotIndex = -1;
+        for (int row = 0; row < totalRows; row++) {
+            float rowY = toolbarY - row * (SLOT_SIZE + SLOT_SPACING);
+            if (worldY >= rowY && worldY <= rowY + SLOT_SIZE) {
+                for (int col = 0; col < ROW_SIZE; col++) {
+                    float slotX = startX + col * (SLOT_SIZE + SLOT_SPACING);
+                    if (screenX >= slotX && screenX <= slotX + SLOT_SIZE) {
+                        hoveredSlotIndex = (int)(row * ROW_SIZE + col);
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
     public boolean handleTouchDragged(float screenX, float screenY) {
         if (draggedSlotIndex != -1) {
             dragX = screenX;
@@ -222,13 +290,15 @@ public class InventoryUI {
         float worldX = screenX;
         float worldY = graphics.getHeight() - screenY;
 
+        int totalRows = inventory.getSize() / (int)ROW_SIZE;
         float totalWidth = ROW_SIZE * (SLOT_SIZE + SLOT_SPACING);
         float startX = (graphics.getWidth() - totalWidth) / 2f;
         float toolbarY = BOTTOM_PADDING + currentExpansionY;
+        float maxExpansion = Math.max(0.001f, (totalRows - 1) * (SLOT_SIZE + SLOT_SPACING));
 
-        for (int row = 0; row < 3; row++) {
+        for (int row = 0; row < totalRows; row++) {
             float rowY = toolbarY - row * (SLOT_SIZE + SLOT_SPACING);
-            float rowAlpha = (row == 0) ? 1f : Math.min(1f, currentExpansionY / (2 * (SLOT_SIZE + SLOT_SPACING)));
+            float rowAlpha = (row == 0) ? 1f : Math.min(1f, currentExpansionY / maxExpansion);
 
             if (rowAlpha > 0.5f && worldY >= rowY && worldY <= rowY + SLOT_SIZE) {
                 for (int col = 0; col < ROW_SIZE; col++) {
@@ -264,31 +334,43 @@ public class InventoryUI {
         Gdx.gl.glEnable(GL20.GL_BLEND);
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
 
+        // Slot background
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         if (isSelected) {
-            shapeRenderer.setColor(0.3f, 0.6f, 0.9f, 0.8f * alpha);
+            shapeRenderer.setColor(C_BG_SEL[0], C_BG_SEL[1], C_BG_SEL[2], C_BG_SEL[3] * alpha);
         } else {
-            shapeRenderer.setColor(0.2f, 0.2f, 0.2f, 0.7f * alpha);
+            shapeRenderer.setColor(C_BG[0], C_BG[1], C_BG[2], C_BG[3] * alpha);
         }
         shapeRenderer.rect(x, y, SLOT_SIZE, SLOT_SIZE);
         shapeRenderer.end();
 
-        Gdx.gl.glDisable(GL20.GL_BLEND);
-
-        Gdx.gl.glEnable(GL20.GL_BLEND);
+        // Slot border
         shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
         if (isSelected) {
-            shapeRenderer.setColor(0.0f, 1.0f, 1.0f, 1.0f * alpha);
+            shapeRenderer.setColor(C_TEAL[0], C_TEAL[1], C_TEAL[2], 1f * alpha);
             shapeRenderer.rect(x, y, SLOT_SIZE, SLOT_SIZE);
             shapeRenderer.rect(x - 2, y - 2, SLOT_SIZE + 4, SLOT_SIZE + 4);
         } else {
-            shapeRenderer.setColor(0.5f, 0.5f, 0.5f, 0.8f * alpha);
+            shapeRenderer.setColor(C_BORDER[0], C_BORDER[1], C_BORDER[2], C_BORDER[3] * alpha);
+            shapeRenderer.rect(x, y, SLOT_SIZE, SLOT_SIZE);
         }
-        shapeRenderer.rect(x, y, SLOT_SIZE, SLOT_SIZE);
         shapeRenderer.end();
+
+        // Corner accents on selected slot
+        if (isSelected) {
+            float cs = 4f;
+            shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+            shapeRenderer.setColor(C_TEAL[0], C_TEAL[1], C_TEAL[2], 1f * alpha);
+            shapeRenderer.rect(x - 2,              y + SLOT_SIZE - cs + 2, cs, cs);
+            shapeRenderer.rect(x + SLOT_SIZE - cs + 2, y + SLOT_SIZE - cs + 2, cs, cs);
+            shapeRenderer.rect(x - 2,              y - 2,              cs, cs);
+            shapeRenderer.rect(x + SLOT_SIZE - cs + 2, y - 2,          cs, cs);
+            shapeRenderer.end();
+        }
 
         Gdx.gl.glDisable(GL20.GL_BLEND);
 
+        // Item icon
         if (item != null) {
             Gdx.gl.glEnable(GL20.GL_BLEND);
             shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
@@ -301,11 +383,11 @@ public class InventoryUI {
             Gdx.gl.glDisable(GL20.GL_BLEND);
         }
 
+        // Slot number (bottom-left, teal)
         if (slotIndex < ROW_SIZE) {
             batch.begin();
-            font.setColor(1f, 1f, 1f, alpha);
-            String slotNumber = String.valueOf(slotIndex + 1);
-            font.draw(batch, slotNumber, x + SLOT_SIZE - 12f, y + 12f);
+            smallFont.setColor(C_TEAL[0], C_TEAL[1], C_TEAL[2], 0.85f * alpha);
+            smallFont.draw(batch, String.valueOf(slotIndex + 1), x + 4f, y + 14f);
             batch.end();
         }
     }
@@ -313,12 +395,12 @@ public class InventoryUI {
     private Color getItemColor(Item item) {
         switch (item.getType()) {
             case WATERING_CAN: return new Color(0.2f, 0.7f, 1.0f, 0.9f);
-            case SEED: return new Color(0.8f, 0.6f, 0.2f, 0.9f);
-            case SICKLE: return new Color(0.6f, 0.4f, 0.4f, 0.9f);
-            case PLANT_FOOD: return new Color(0.9f, 0.3f, 0.2f, 0.9f);
-            case FERTILIZER: return new Color(0.9f, 0.7f, 0.1f, 0.9f);
-            case CRYSTAL: return new Color(0.4f, 0.8f, 1.0f, 0.95f);
-            default: return new Color(0.5f, 0.5f, 0.5f, 0.5f);
+            case SEED:         return new Color(0.8f, 0.6f, 0.2f, 0.9f);
+            case SICKLE:       return new Color(0.6f, 0.4f, 0.4f, 0.9f);
+            case PLANT_FOOD:   return new Color(0.9f, 0.3f, 0.2f, 0.9f);
+            case FERTILIZER:   return new Color(0.9f, 0.7f, 0.1f, 0.9f);
+            case CRYSTAL:      return new Color(0.4f, 0.8f, 1.0f, 0.95f);
+            default:           return new Color(0.5f, 0.5f, 0.5f, 0.5f);
         }
     }
 
@@ -326,5 +408,6 @@ public class InventoryUI {
         shapeRenderer.dispose();
         batch.dispose();
         font.dispose();
+        smallFont.dispose();
     }
 }
