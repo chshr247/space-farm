@@ -135,7 +135,7 @@ public class OutdoorZoneRenderer {
         return texture;
     }
 
-    public void render(OrthographicCamera camera) {
+    public void render(OrthographicCamera camera, long scavengeDuration) {
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
         int tileSize = baseLayer.getTileWidth();
@@ -149,7 +149,7 @@ public class OutdoorZoneRenderer {
             batch.setColor(1,1,1,0.8f);
             batch.draw(droneTextures[i],locStartX,locStartY,locWidth,locHeight);
             if(location.isScavenging()) {
-                renderProgressBar(location,locStartX,locStartY,locWidth,locHeight);
+                renderProgressBar(location,locStartX,locStartY,locWidth,locHeight, scavengeDuration);
             }
             if(location.isInCooldown()) {
                 renderCooldownIndicator(location,locStartX,locStartY,locWidth,locHeight);
@@ -158,8 +158,8 @@ public class OutdoorZoneRenderer {
         batch.end();
     }
 
-    private void renderProgressBar(ScavengingLocation location, float x, float y, float width, float height) {
-        float progress = location.getScavengingProgress();
+    private void renderProgressBar(ScavengingLocation location, float x, float y, float width, float height, long scavengeDuration) {
+        float progress = location.getScavengingProgress(scavengeDuration);
         float barHeight = 5;
         Pixmap barPixmap = new Pixmap((int)width,(int)barHeight,Pixmap.Format.RGBA8888);
         barPixmap.setColor(1f,0f,0f,0.5f);

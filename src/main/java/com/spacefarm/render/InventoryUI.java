@@ -58,7 +58,8 @@ public class InventoryUI {
      * Update animations.
      */
     public void update(float deltaTime) {
-        targetExpansionY = isExpanded ? (2 * (SLOT_SIZE + SLOT_SPACING)) : 0f;
+        int totalRows = inventory.getSize() / (int)ROW_SIZE;
+        targetExpansionY = isExpanded ? (Math.max(0, totalRows - 1) * (SLOT_SIZE + SLOT_SPACING)) : 0f;
         float alpha = 1f - (float) Math.exp(-ANIMATION_SPEED * deltaTime);
         currentExpansionY += (targetExpansionY - currentExpansionY) * alpha;
     }
@@ -81,7 +82,8 @@ public class InventoryUI {
 
         // Animation: Row 0 (toolbar) moves up, Row 1 and 2 appear below it
         float toolbarY = baseBottomY + currentExpansionY;
-        float maxExpansion = 2 * (SLOT_SIZE + SLOT_SPACING);
+        int totalRows = inventory.getSize() / (int)ROW_SIZE;
+        float maxExpansion = Math.max(0.001f, (totalRows - 1) * (SLOT_SIZE + SLOT_SPACING));
         float progress = Math.max(0f, Math.min(1f, currentExpansionY / maxExpansion));
 
         // Ensure strictly 0 alpha when fully collapsed to avoid ghosting
@@ -93,12 +95,14 @@ public class InventoryUI {
         // Draw toggle button (moves with toolbar)
         buttonX = startX - TOGGLE_BUTTON_SIZE - 10f;
         buttonY = toolbarY + (SLOT_SIZE - TOGGLE_BUTTON_SIZE) / 2f;
-        renderToggleButton(buttonX, buttonY);
+        if (totalRows > 1) {
+            renderToggleButton(buttonX, buttonY);
+        }
 
         // Draw rows
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
 
-        for (int row = 0; row < 3; row++) {
+        for (int row = 0; row < totalRows; row++) {
             float rowY = toolbarY - row * (SLOT_SIZE + SLOT_SPACING);
             float rowAlpha = (row == 0) ? 1f : extraRowsAlpha;
 
@@ -170,7 +174,9 @@ public class InventoryUI {
         float worldX = screenX;
         float worldY = graphics.getHeight() - screenY;
 
-        if (worldX >= buttonX && worldX <= buttonX + TOGGLE_BUTTON_SIZE &&
+        int totalRows = inventory.getSize() / (int)ROW_SIZE;
+
+        if (totalRows > 1 && worldX >= buttonX && worldX <= buttonX + TOGGLE_BUTTON_SIZE &&
             worldY >= buttonY && worldY <= buttonY + TOGGLE_BUTTON_SIZE) {
             isExpanded = !isExpanded;
             return true;
@@ -179,10 +185,11 @@ public class InventoryUI {
         float totalWidth = ROW_SIZE * (SLOT_SIZE + SLOT_SPACING);
         float startX = (graphics.getWidth() - totalWidth) / 2f;
         float toolbarY = BOTTOM_PADDING + currentExpansionY;
+        float maxExpansion = Math.max(0.001f, (totalRows - 1) * (SLOT_SIZE + SLOT_SPACING));
 
-        for (int row = 0; row < 3; row++) {
+        for (int row = 0; row < totalRows; row++) {
             float rowY = toolbarY - row * (SLOT_SIZE + SLOT_SPACING);
-            float rowAlpha = (row == 0) ? 1f : Math.min(1f, currentExpansionY / (2 * (SLOT_SIZE + SLOT_SPACING)));
+            float rowAlpha = (row == 0) ? 1f : Math.min(1f, currentExpansionY / maxExpansion);
 
             if (rowAlpha > 0.5f && worldY >= rowY && worldY <= rowY + SLOT_SIZE) {
                 for (int col = 0; col < ROW_SIZE; col++) {
@@ -222,13 +229,15 @@ public class InventoryUI {
         float worldX = screenX;
         float worldY = graphics.getHeight() - screenY;
 
+        int totalRows = inventory.getSize() / (int)ROW_SIZE;
         float totalWidth = ROW_SIZE * (SLOT_SIZE + SLOT_SPACING);
         float startX = (graphics.getWidth() - totalWidth) / 2f;
         float toolbarY = BOTTOM_PADDING + currentExpansionY;
+        float maxExpansion = Math.max(0.001f, (totalRows - 1) * (SLOT_SIZE + SLOT_SPACING));
 
-        for (int row = 0; row < 3; row++) {
+        for (int row = 0; row < totalRows; row++) {
             float rowY = toolbarY - row * (SLOT_SIZE + SLOT_SPACING);
-            float rowAlpha = (row == 0) ? 1f : Math.min(1f, currentExpansionY / (2 * (SLOT_SIZE + SLOT_SPACING)));
+            float rowAlpha = (row == 0) ? 1f : Math.min(1f, currentExpansionY / maxExpansion);
 
             if (rowAlpha > 0.5f && worldY >= rowY && worldY <= rowY + SLOT_SIZE) {
                 for (int col = 0; col < ROW_SIZE; col++) {

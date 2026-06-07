@@ -19,6 +19,11 @@ import com.spacefarm.inventory.Inventory;
 import com.spacefarm.inventory.Seed;
 import com.spacefarm.inventory.Sickle;
 import com.spacefarm.oxygen.OxygenManager;
+import com.spacefarm.render.ContextMenuOverlay;
+import com.spacefarm.render.DroneConsoleOverlay;
+import com.spacefarm.render.GameOverOverlay;
+import com.spacefarm.render.InventoryUI;
+import com.spacefarm.render.SeedWheelOverlay;
 import com.spacefarm.render.*;
 import com.spacefarm.world.BaseZone;
 import com.spacefarm.world.OutdoorZone;
@@ -45,6 +50,7 @@ public class GameSession {
     private ContextMenuOverlay contextMenu;
     private GameOverOverlay gameOverOverlay;
     private SeedWheelOverlay seedWheelOverlay;
+    private DroneConsoleOverlay droneConsoleOverlay;
     private GameInteractionService interactionService;
     private TilePicker tilePicker;
     private boolean gameOver;
@@ -103,6 +109,7 @@ public class GameSession {
         contextMenu = new ContextMenuOverlay();
         gameOverOverlay = new GameOverOverlay();
         seedWheelOverlay = new SeedWheelOverlay();
+        droneConsoleOverlay = new DroneConsoleOverlay(this);
         interactionService = new GameInteractionService(this);
         gameOver = false;
 
@@ -111,6 +118,7 @@ public class GameSession {
 
     public void update(float deltaTime) {
         inventoryUI.update(deltaTime);
+        droneConsoleOverlay.update(deltaTime);
         interactionService.update(deltaTime);
     }
 
@@ -128,6 +136,10 @@ public class GameSession {
 
     public boolean handleKeyDown(int keycode) {
         return interactionService.handleKeyDown(keycode);
+    }
+
+    public boolean handleScrolled(float amountX, float amountY) {
+        return interactionService.handleScrolled(amountX, amountY);
     }
 
     public void dispose() {
@@ -153,6 +165,9 @@ public class GameSession {
             seedWheelOverlay.dispose();
         }
         if (treeBoxUI != null) treeBoxUI.dispose();
+        if (droneConsoleOverlay != null) {
+            droneConsoleOverlay.dispose();
+        }
     }
     public Wallet getWallet() { return wallet; }
 
@@ -204,6 +219,10 @@ public class GameSession {
 
     public SeedWheelOverlay getSeedWheelOverlay() {
         return seedWheelOverlay;
+    }
+
+    public DroneConsoleOverlay getDroneConsoleOverlay() {
+        return droneConsoleOverlay;
     }
 
     public TilePicker getTilePicker() {

@@ -10,6 +10,7 @@ import com.spacefarm.inventory.PlantFood;
 import com.spacefarm.inventory.RareSeed;
 import com.spacefarm.inventory.Seed;
 import com.spacefarm.oxygen.OxygenConstants;
+import com.spacefarm.world.OutdoorConstants;
 import com.spacefarm.world.ScavengingLocation;
 import com.spacefarm.world.SeedWheelConstants;
 import com.spacefarm.world.TileCoord;
@@ -60,9 +61,19 @@ public class GameInteractionService {
         if (session.getTreeBoxUI().handleClick(screenX, uiY)) return true;
 
         if (button == Buttons.LEFT) {
+            // Check inventory first so we can start dragging items while console is open
             if (session.getInventoryUI().handleTouchDown(screenX, screenY)) {
                 return true;
             }
+        }
+
+        if (session.getDroneConsoleOverlay().isVisible()) {
+            if (session.getDroneConsoleOverlay().handleTouchDown(screenX, screenY)) {
+                return true;
+            }
+            // If we clicked outside the console (and not on inventory), close it
+            session.getDroneConsoleOverlay().setVisible(false);
+            return true;
         }
 
         if (session.getSeedWheelOverlay().isVisible()) {
@@ -104,13 +115,21 @@ public class GameInteractionService {
                 session.getInventoryUI().handleTouchUp(screenX, screenY);
 
                 if (targetSlot == -1) {
-                    // Dropped outside inventory, apply to tile
+                    // Dropped outside inventory
+                    if (session.getDroneConsoleOverlay().isOverTradeSlot(screenX, screenY)) {
+                        Item item = session.getInventory().getItem(draggedSlot);
+                        if (item != null && item.getType() == Item.ItemType.CRYSTAL) {
+                            session.getDroneConsoleOverlay().addCrystal();
+                            session.getInventory().removeItem(draggedSlot);
+                            return true;
+                        }
+                    }
+
+                    // Apply to tile if not console
                     int prevSelected = session.getInventory().getSelectedSlot();
                     session.getInventory().selectSlot(draggedSlot);
                     handleTileClick(screenX, screenY);
                     
-                    // We check if the item still exists (e.g. seeds could be consumed) before restoring selection, 
-                    // though selectSlot is safe even if slot is empty.
                     session.getInventory().selectSlot(prevSelected);
                 }
                 return true;
@@ -157,6 +176,14 @@ public class GameInteractionService {
         return false;
     }
 
+    public boolean handleScrolled(float amountX, float amountY) {
+        if (session.isGameOver()) return false;
+        if (session.getDroneConsoleOverlay().isVisible()) {
+            return session.getDroneConsoleOverlay().handleScrolled(amountY);
+        }
+        return false;
+    }
+
     private void handleTileClick(int screenX, int screenY) {
         TileCoord coord = session.getTilePicker().screenToTile(screenX, screenY);
         if (coord == null) {
@@ -164,6 +191,11 @@ public class GameInteractionService {
         }
 
         session.getOxygenManager().updatePositionTile(coord);
+
+        if (session.getBaseZone().isDroneZone(coord)) {
+            session.getDroneConsoleOverlay().setVisible(true);
+            return;
+        }
 
         if (lastSelected != null) {
             session.getSelectionLayer().setCell(lastSelected.x(), lastSelected.y(), null);
@@ -250,10 +282,13 @@ public class GameInteractionService {
     }
 
     private void updateScavenging(float deltaTime) {
+        int upgradeLevel = session.getDroneConsoleOverlay().getScavengeUpgradeLevel();
+        long durationMillis = Math.max(30000L, OutdoorConstants.SCAVENGING_DURATION_MILLIS - upgradeLevel * 30000L);
+        
         for (ScavengingLocation location : session.getOutdoorZone().getScavengingLocations()) {
             if (location.isScavenging()) {
                 session.getOxygenManager().consumeOxygenDuringScavenging(deltaTime);
-                if (location.isScavengingComplete()) {
+                if (location.isScavengingComplete(durationMillis)) {
                     location.completeScavenging();
                     session.getInventory().addItem(new Crystal());
                 }
@@ -287,4 +322,3 @@ public class GameInteractionService {
         }
     }
 }
-
