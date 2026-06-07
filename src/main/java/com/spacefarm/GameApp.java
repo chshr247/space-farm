@@ -34,7 +34,7 @@ public class GameApp extends ApplicationAdapter {
 
         session = new GameSession();
         session.create(camera);
-        
+
         saveManager = new SaveManager();
         if (saveManager.hasSaveFile()) {
             saveManager.load(session);
@@ -61,12 +61,10 @@ public class GameApp extends ApplicationAdapter {
         float deltaTime = Gdx.graphics.getDeltaTime();
         session.update(deltaTime);
 
-        // Update autosave timer
         autosaveTimer += deltaTime;
         if (autosaveTimer >= AUTOSAVE_INTERVAL) {
             if (saveManager != null && session != null) {
                 saveManager.save(session);
-                Gdx.app.log("GameApp", "Periodic autosave complete");
             }
             autosaveTimer = 0f;
         }
@@ -91,11 +89,7 @@ public class GameApp extends ApplicationAdapter {
         if (saveManager != null && session != null) {
             saveManager.save(session);
         }
-        if (sceneRenderer != null) {
-            sceneRenderer.dispose();
-        }
-        if (session != null) {
-            session.dispose();
-        }
+        if (sceneRenderer != null) sceneRenderer.dispose();
+        if (session != null) session.dispose();
     }
 }

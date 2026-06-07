@@ -19,7 +19,11 @@ import com.spacefarm.inventory.Inventory;
 import com.spacefarm.inventory.Seed;
 import com.spacefarm.inventory.Sickle;
 import com.spacefarm.oxygen.OxygenManager;
-import com.spacefarm.render.*;
+import com.spacefarm.render.ContextMenuOverlay;
+import com.spacefarm.render.GameOverOverlay;
+import com.spacefarm.render.InventoryUI;
+import com.spacefarm.render.SeedWheelOverlay;
+import com.spacefarm.render.TreeBoxUI;
 import com.spacefarm.world.BaseZone;
 import com.spacefarm.world.OutdoorZone;
 import com.spacefarm.DifficultyLevel;
@@ -47,12 +51,12 @@ public class GameSession {
     private SeedWheelOverlay seedWheelOverlay;
     private GameInteractionService interactionService;
     private TilePicker tilePicker;
+    private TreeBoxUI treeBoxUI;
     private boolean gameOver;
     private Texture baseTileTexture;
     private Texture highlightTexture;
     private Wallet wallet;
     private DifficultyLevel difficulty = DifficultyLevel.NORMAL; // default до вибору в меню
-    private TreeBoxUI treeBoxUI;
 
     /**
      * Call this from the menu BEFORE create().
@@ -93,8 +97,6 @@ public class GameSession {
         inventory.addItem(1, new Seed(5));
         inventory.addItem(2, Sickle.getInstance());
 
-        treeBoxUI = new TreeBoxUI();
-
         oxygenManager = new OxygenManager();
         wallet = new Wallet(difficulty.startingMoney);
         oxygenManager.setBaseZone(baseZone);
@@ -104,6 +106,7 @@ public class GameSession {
         gameOverOverlay = new GameOverOverlay();
         seedWheelOverlay = new SeedWheelOverlay();
         interactionService = new GameInteractionService(this);
+        treeBoxUI = new TreeBoxUI();
         gameOver = false;
 
         centerCameraOnMap(camera);
@@ -152,9 +155,12 @@ public class GameSession {
         if (seedWheelOverlay != null) {
             seedWheelOverlay.dispose();
         }
-        if (treeBoxUI != null) treeBoxUI.dispose();
+        if (treeBoxUI != null) {
+            treeBoxUI.dispose();
+        }
     }
     public Wallet getWallet() { return wallet; }
+    public TreeBoxUI getTreeBoxUI() { return treeBoxUI; }
 
     public DifficultyLevel getDifficulty() {
         return difficulty;
@@ -191,8 +197,6 @@ public class GameSession {
     public InventoryUI getInventoryUI() {
         return inventoryUI;
     }
-
-    public TreeBoxUI getTreeBoxUI() { return treeBoxUI; }
 
     public ContextMenuOverlay getContextMenu() {
         return contextMenu;

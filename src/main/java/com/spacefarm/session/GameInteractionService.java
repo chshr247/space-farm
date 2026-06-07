@@ -56,8 +56,16 @@ public class GameInteractionService {
         if (session.isGameOver()) {
             return false;
         }
-        float uiY = Gdx.graphics.getHeight() - screenY;
-        if (session.getTreeBoxUI().handleClick(screenX, uiY)) return true;
+
+        // TreeBoxUI intercepts all clicks when visible
+        if (session.getTreeBoxUI().isVisible()) {
+            int phaseBefore = session.getTreeBoxUI().getPhase();
+            boolean consumed = session.getTreeBoxUI().handleClick(screenX, screenY, Gdx.graphics.getHeight());
+            if (session.getTreeBoxUI().getPhase() > phaseBefore) {
+                session.getBaseZone().expandZone(4);
+            }
+            return consumed;
+        }
 
         if (button == Buttons.LEFT) {
             if (session.getInventoryUI().handleTouchDown(screenX, screenY)) {
@@ -108,8 +116,8 @@ public class GameInteractionService {
                     int prevSelected = session.getInventory().getSelectedSlot();
                     session.getInventory().selectSlot(draggedSlot);
                     handleTileClick(screenX, screenY);
-                    
-                    // We check if the item still exists (e.g. seeds could be consumed) before restoring selection, 
+
+                    // We check if the item still exists (e.g. seeds could be consumed) before restoring selection,
                     // though selectSlot is safe even if slot is empty.
                     session.getInventory().selectSlot(prevSelected);
                 }
@@ -172,6 +180,7 @@ public class GameInteractionService {
         session.getSelectionLayer().setCell(coord.x(), coord.y(), session.createHighlightCell());
         lastSelected = coord;
 
+        // Click on tree area — open TreeBoxUI
         if (session.getBaseZone().isTreeArea(coord)) {
             session.getTreeBoxUI().show();
             return;
@@ -287,4 +296,3 @@ public class GameInteractionService {
         }
     }
 }
-

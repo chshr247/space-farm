@@ -15,6 +15,7 @@ public class GameSceneRenderer {
     private final BaseZoneRenderer baseZoneRenderer;
     private final OutdoorZoneRenderer outdoorZoneRenderer;
     private final OxygenUI oxygenUI;
+    private final TreeBoxUI treeBoxUI;
 
     public GameSceneRenderer(GameSession gameSession) {
         this.gameSession = gameSession;
@@ -29,6 +30,7 @@ public class GameSceneRenderer {
         this.outdoorZoneRenderer = new OutdoorZoneRenderer(gameSession.getOutdoorZone(), baseLayer, map, tileSize);
         this.baseZoneRenderer = new BaseZoneRenderer(gameSession.getBaseZone(), baseLayer, tileSize);
         this.oxygenUI = new OxygenUI(gameSession.getOxygenManager());
+        this.treeBoxUI = gameSession.getTreeBoxUI();
     }
 
     public void render(OrthographicCamera camera, int screenWidth, int screenHeight) {
@@ -48,7 +50,8 @@ public class GameSceneRenderer {
         if (gameSession.isGameOver()) {
             gameSession.getGameOverOverlay().render(screenWidth, screenHeight);
         }
-        gameSession.getTreeBoxUI().render(screenWidth, screenHeight);
+
+        treeBoxUI.render(screenWidth, screenHeight);
     }
 
     public void dispose() {
@@ -59,6 +62,4 @@ public class GameSceneRenderer {
         cropRenderer.dispose();
         oxygenUI.dispose();
     }
-
 }
-

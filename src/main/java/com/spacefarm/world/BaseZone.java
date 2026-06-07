@@ -56,9 +56,9 @@ public class BaseZone {
         int droneY = baseY + 3;
         this.droneZoneCenter = new TileCoord(droneX, droneY);
     }
-            /*Adds one new garden bed (called when player buys upgrade).
-            * Returns true if successful, false if MAX_GARDEN_BEDS limit is reached.
-            */
+    /*Adds one new garden bed (called when player buys upgrade).
+     * Returns true if successful, false if MAX_GARDEN_BEDS limit is reached.
+     */
     public boolean addGardenBed() {
         if (gardenBeds.size() >= BaseZoneConstants.MAX_GARDEN_BEDS) {
             return false; // Досягнуто максимум
@@ -81,7 +81,7 @@ public class BaseZone {
 
     public boolean isInBaseZone(int x, int y) {
         return x >= baseX && x < baseX + baseWidth &&
-               y >= baseY && y < baseY + baseHeight;
+                y >= baseY && y < baseY + baseHeight;
     }
 
     /**
@@ -95,7 +95,7 @@ public class BaseZone {
         int treeStartX = treeCenter.x();
         int treeStartY = treeCenter.y();
         return x >= treeStartX && x < treeStartX + treeWidth &&
-               y >= treeStartY && y < treeStartY + treeHeight;
+                y >= treeStartY && y < treeStartY + treeHeight;
     }
 
     /**
@@ -109,7 +109,7 @@ public class BaseZone {
         for (TileCoord bed : gardenBeds) {
             // Each bed is 2x2
             if (x >= bed.x() && x < bed.x() + 2 &&
-                y >= bed.y() && y < bed.y() + 2) {
+                    y >= bed.y() && y < bed.y() + 2) {
                 return true;
             }
         }
@@ -127,8 +127,25 @@ public class BaseZone {
         int droneStartX = droneZoneCenter.x();
         int droneStartY = droneZoneCenter.y();
         return x >= droneStartX && x < droneStartX + droneZoneSize &&
-               y >= droneStartY && y < droneStartY + droneZoneSize;
+                y >= droneStartY && y < droneStartY + droneZoneSize;
     }
+
+    private boolean dirty = false;
+
+    /**
+     * Expand the safe oxygen zone by {@code tiles} in every direction.
+     * Called when the Core Tree evolves to a new phase.
+     */
+    public void expandZone(int tiles) {
+        baseX      -= tiles;
+        baseY      -= tiles;
+        baseWidth  += tiles * 2;
+        baseHeight += tiles * 2;
+        dirty = true;
+    }
+
+    public boolean isDirty()  { return dirty; }
+    public void clearDirty()  { dirty = false; }
 
     // Getters
     public int getBaseX() { return baseX; }
@@ -145,4 +162,3 @@ public class BaseZone {
     public int getDroneZoneSize() { return droneZoneSize; }
     public int getGardenBedCount() { return gardenBeds.size();}
 }
-
