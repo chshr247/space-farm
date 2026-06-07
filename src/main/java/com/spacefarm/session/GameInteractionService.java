@@ -10,6 +10,7 @@ import com.spacefarm.inventory.PlantFood;
 import com.spacefarm.inventory.RareSeed;
 import com.spacefarm.inventory.Seed;
 import com.spacefarm.oxygen.OxygenConstants;
+import com.spacefarm.world.OutdoorConstants;
 import com.spacefarm.world.ScavengingLocation;
 import com.spacefarm.world.SeedWheelConstants;
 import com.spacefarm.world.TileCoord;
@@ -281,10 +282,13 @@ public class GameInteractionService {
     }
 
     private void updateScavenging(float deltaTime) {
+        int upgradeLevel = session.getDroneConsoleOverlay().getScavengeUpgradeLevel();
+        long durationMillis = Math.max(30000L, OutdoorConstants.SCAVENGING_DURATION_MILLIS - upgradeLevel * 30000L);
+        
         for (ScavengingLocation location : session.getOutdoorZone().getScavengingLocations()) {
             if (location.isScavenging()) {
                 session.getOxygenManager().consumeOxygenDuringScavenging(deltaTime);
-                if (location.isScavengingComplete()) {
+                if (location.isScavengingComplete(durationMillis)) {
                     location.completeScavenging();
                     session.getInventory().addItem(new Crystal());
                 }

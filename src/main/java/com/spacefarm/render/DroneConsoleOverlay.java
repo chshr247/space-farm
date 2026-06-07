@@ -42,6 +42,10 @@ public class DroneConsoleOverlay {
         return 0;
     }
     
+    public int getScavengeUpgradeLevel() {
+        return getUpgradeLevel("base_scavenge");
+    }
+    
     private float getFlightDuration() {
         int speedLevel = getUpgradeLevel("base_speed");
         return Math.max(1.0f, BASE_FLIGHT_DURATION - speedLevel * 1.0f);
@@ -111,6 +115,7 @@ public class DroneConsoleOverlay {
 
         baseUpgrades.add(new UpgradeItem("base_inv", "Backpack Mod", "Larger inventory", 800, 2));
         baseUpgrades.add(new UpgradeItem("base_speed", "Turbo Thrusters", "Faster delivery time", 400, 3));
+        baseUpgrades.add(new UpgradeItem("base_scavenge", "Drone Scanner", "Faster scavenging", 600, 3));
     }
 
     private void calculateMaxScroll() {
