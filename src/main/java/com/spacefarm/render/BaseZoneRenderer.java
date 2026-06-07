@@ -172,6 +172,12 @@ public class BaseZoneRenderer {
     }
 
     public void render(OrthographicCamera camera) {
+        // Re-apply tiles if zone was expanded
+        if (baseZone.isDirty()) {
+            applyBaseZoneTiles();
+            baseZone.clearDirty();
+        }
+
         // Render structure overlays (tree and drone sprites)
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
@@ -220,5 +226,3 @@ public class BaseZoneRenderer {
         if (batch != null) batch.dispose();
     }
 }
-
-

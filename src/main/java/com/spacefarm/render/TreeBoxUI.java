@@ -1,6 +1,5 @@
 package com.spacefarm.render;
 
-import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
@@ -18,11 +17,11 @@ public class TreeBoxUI {
 
     private static final float BTN_W      = 70f;
     private static final float BTN_H      = 24f;
-    private static final float BTN_BOX_GAP = 6f;  // gap between box and its button
+    private static final float BTN_BOX_GAP = 6f;
 
     private static final float CLOSE_SIZE = 26f;
 
-    private static final int BOX_COUNT = 5; // 3 top + 2 bottom
+    private static final int BOX_COUNT = 5;
 
     private final ShapeRenderer shapeRenderer;
     private final SpriteBatch   batch;
@@ -50,20 +49,36 @@ public class TreeBoxUI {
 
     public void show()         { visible = true; }
     public void hide()         { visible = false; }
+    public void toggle()       { visible = !visible; }
     public boolean isVisible() { return visible; }
 
-    public boolean handleClick(float screenX, float screenY) {
+    public int getPhase() { return phase; }
+
+    /** Returns true when all 5 tree phases have been confirmed. */
+    public boolean isComplete() {
+        for (boolean c : confirmed) {
+            if (!c) return false;
+        }
+        return true;
+    }
+
+    /**
+     * @param screenX raw LibGDX touchDown X (left = 0)
+     * @param screenY raw LibGDX touchDown Y (top = 0) — converted internally
+     */
+    public boolean handleClick(float screenX, float screenY, int screenHeight) {
         if (!visible) return false;
-        // Close
+        // Convert to OpenGL bottom-up Y
+        float y = screenHeight - screenY;
+
         if (screenX >= closeX && screenX <= closeX + CLOSE_SIZE
-                && screenY >= closeY && screenY <= closeY + CLOSE_SIZE) {
+                && y >= closeY && y <= closeY + CLOSE_SIZE) {
             hide();
             return true;
         }
-        // Each box confirm button — only if unlocked
         for (int i = 0; i < BOX_COUNT; i++) {
             if (screenX >= btnX[i] && screenX <= btnX[i] + BTN_W
-                    && screenY >= btnY[i] && screenY <= btnY[i] + BTN_H) {
+                    && y >= btnY[i] && y <= btnY[i] + BTN_H) {
                 if (isUnlocked(i) && !confirmed[i]) {
                     confirmed[i] = true;
                     phase++;
@@ -71,7 +86,8 @@ public class TreeBoxUI {
                 return true;
             }
         }
-        return false;
+        // Swallow all clicks when panel is open
+        return true;
     }
 
     public void render(int screenWidth, int screenHeight) {
@@ -80,25 +96,22 @@ public class TreeBoxUI {
         float px = (screenWidth  - PANEL_W) / 2f;
         float py = (screenHeight - PANEL_H) / 2f;
 
-        // unit height = box + button + gap
         float unitH = BOX_SIZE + BTN_BOX_GAP + BTN_H;
         float totalGroupH = 2 * unitH + BOX_GAP;
-        float row2Y = py + (PANEL_H - totalGroupH) / 2f;  // bottom row boxes
-        float row1Y = row2Y + unitH + BOX_GAP;             // top row boxes
+        float row2Y = py + (PANEL_H - totalGroupH) / 2f;
+        float row1Y = row2Y + unitH + BOX_GAP;
 
         float row1TotalW = 3 * BOX_SIZE + 2 * BOX_GAP;
         float row1X = px + (PANEL_W - row1TotalW) / 2f;
 
-        float row2TotalW = 2 * BOX_SIZE + 1 * BOX_GAP;
+        float row2TotalW = 2 * BOX_SIZE + BOX_GAP;
         float row2X = px + (PANEL_W - row2TotalW) / 2f;
 
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
 
-        // Panel
         shapeRenderer.setColor(0.15f, 0.15f, 0.18f, 0.93f);
         shapeRenderer.rect(px, py, PANEL_W, PANEL_H);
 
-        // Top row
         for (int i = 0; i < 3; i++) {
             float bx = row1X + i * (BOX_SIZE + BOX_GAP);
             drawBox(bx, row1Y, isUnlocked(i), confirmed[i]);
@@ -107,7 +120,6 @@ public class TreeBoxUI {
             btnX[i] = bx;
             btnY[i] = bBtnY;
         }
-        // Bottom row
         for (int i = 0; i < 2; i++) {
             float bx = row2X + i * (BOX_SIZE + BOX_GAP);
             drawBox(bx, row2Y, isUnlocked(3 + i), confirmed[3 + i]);
@@ -117,7 +129,6 @@ public class TreeBoxUI {
             btnY[3 + i] = bBtnY;
         }
 
-        // Close button
         closeX = px + PANEL_W - CLOSE_SIZE - 8f;
         closeY = py + PANEL_H - CLOSE_SIZE - 8f;
         shapeRenderer.setColor(0.7f, 0.2f, 0.2f, 1f);
@@ -125,7 +136,6 @@ public class TreeBoxUI {
 
         shapeRenderer.end();
 
-        //  borders
         shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
         shapeRenderer.setColor(0.5f, 0.5f, 0.55f, 1f);
         shapeRenderer.rect(px, py, PANEL_W, PANEL_H);
@@ -140,11 +150,9 @@ public class TreeBoxUI {
         }
         shapeRenderer.end();
 
-        // text
         batch.begin();
         GlyphLayout layout = new GlyphLayout();
 
-        // Confirm under each box
         String confirmLabel = "Confirm";
         layout.setText(smallFont, confirmLabel);
         for (int i = 0; i < BOX_COUNT; i++) {
@@ -153,13 +161,11 @@ public class TreeBoxUI {
                     btnY[i] + (BTN_H + layout.height) / 2f);
         }
 
-        // Phase counter
         font.getData().setScale(1.1f);
         String phaseText = "Phase: " + phase;
         layout.setText(font, phaseText);
         font.draw(batch, phaseText, px + 10f, py + PANEL_H - 10f);
 
-        // Close X
         font.getData().setScale(1f);
         layout.setText(font, "X");
         font.draw(batch, "X",
@@ -171,11 +177,9 @@ public class TreeBoxUI {
 
     private void drawBox(float bx, float by, boolean unlocked, boolean done) {
         if (!unlocked) {
-            // Locked — dark grey
             shapeRenderer.setColor(0.18f, 0.18f, 0.18f, 1f);
             shapeRenderer.rect(bx, by, BOX_SIZE, BOX_SIZE);
         } else if (done) {
-            // Confirmed — green tint
             shapeRenderer.setColor(0.15f, 0.35f, 0.15f, 1f);
             shapeRenderer.rect(bx, by, BOX_SIZE, BOX_SIZE);
             float ix = bx + (BOX_SIZE - BOX_INNER) / 2f;
@@ -183,7 +187,6 @@ public class TreeBoxUI {
             shapeRenderer.setColor(0.3f, 0.75f, 0.3f, 1f);
             shapeRenderer.rect(ix, iy, BOX_INNER, BOX_INNER);
         } else {
-            // Available — normal orange
             shapeRenderer.setColor(0.28f, 0.22f, 0.14f, 1f);
             shapeRenderer.rect(bx, by, BOX_SIZE, BOX_SIZE);
             float ix = bx + (BOX_SIZE - BOX_INNER) / 2f;
@@ -195,9 +198,9 @@ public class TreeBoxUI {
 
     private void drawBtn(float bx, float by, boolean unlocked, boolean done) {
         if (!unlocked || done) {
-            shapeRenderer.setColor(0.3f, 0.3f, 0.3f, 1f);  // greyed out
+            shapeRenderer.setColor(0.3f, 0.3f, 0.3f, 1f);
         } else {
-            shapeRenderer.setColor(0.2f, 0.55f, 0.2f, 1f);  // active green
+            shapeRenderer.setColor(0.2f, 0.55f, 0.2f, 1f);
         }
         shapeRenderer.rect(bx, by, BTN_W, BTN_H);
     }

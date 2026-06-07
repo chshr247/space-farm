@@ -7,7 +7,7 @@
         "itemType": "WATERING_CAN"
       },
       {
-        "quantity": 4,
+        "quantity": 5,
         "name": "Насіння",
         "description": "Насіння для посадження (5)",
         "itemType": "SEED"
@@ -17,12 +17,7 @@
         "description": "Інструмент для збору врожаю",
         "itemType": "SICKLE"
       },
-      {
-        "quantity": 20,
-        "name": "Насіння",
-        "description": "Насіння для посадження (20)",
-        "itemType": "SEED"
-      },
+      null,
       null,
       null,
       null,
@@ -44,53 +39,16 @@
       null,
       null
     ],
-    "selectedSlot": 1
+    "selectedSlot": 0
   },
   "oxygen": {
-    "currentOxygen": 8.0,
-    "isAtBase": false
+    "currentOxygen": 100.0,
+    "isAtBase": true
   },
   "farming": {
     "crops": {}
   },
-  "locations": [
-    {
-      "isCleared": false,
-      "lastClearedTime": 0,
-      "isScavenging": true,
-      "scavengingStartTime": 1780703403352
-    },
-    {
-      "isCleared": false,
-      "lastClearedTime": 0,
-      "isScavenging": true,
-      "scavengingStartTime": 1780703408436
-    },
-    {
-      "isCleared": false,
-      "lastClearedTime": 0,
-      "isScavenging": true,
-      "scavengingStartTime": 1780703405686
-    },
-    {
-      "isCleared": false,
-      "lastClearedTime": 0,
-      "isScavenging": true,
-      "scavengingStartTime": 1780703409386
-    },
-    {
-      "isCleared": false,
-      "lastClearedTime": 0,
-      "isScavenging": true,
-      "scavengingStartTime": 1780703404136
-    },
-    {
-      "isCleared": true,
-      "lastClearedTime": 1780703419590,
-      "isScavenging": false,
-      "scavengingStartTime": 0
-    }
-  ],
+  "locations": [],
   "wallet": {
     "balance": 1000.0
   },
