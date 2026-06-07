@@ -40,12 +40,17 @@ public class GameSceneRenderer {
         gridOverlay.render(camera);
         cropRenderer.render(camera);
         baseZoneRenderer.render(camera);
-        outdoorZoneRenderer.render(camera);
+        
+        int upgradeLevel = gameSession.getDroneConsoleOverlay().getScavengeUpgradeLevel();
+        long durationMillis = Math.max(30000L, com.spacefarm.world.OutdoorConstants.SCAVENGING_DURATION_MILLIS - upgradeLevel * 30000L);
+        outdoorZoneRenderer.render(camera, durationMillis);
+        
         gameSession.getContextMenu().render(camera);
 
-        gameSession.getInventoryUI().render(screenWidth, screenHeight);
         oxygenUI.render(screenWidth, screenHeight);
         gameSession.getSeedWheelOverlay().render(screenWidth, screenHeight);
+        gameSession.getDroneConsoleOverlay().render();
+        gameSession.getInventoryUI().render(screenWidth, screenHeight);
 
         if (gameSession.isGameOver()) {
             gameSession.getGameOverOverlay().render(screenWidth, screenHeight);

@@ -10,6 +10,7 @@ import com.spacefarm.inventory.PlantFood;
 import com.spacefarm.inventory.RareSeed;
 import com.spacefarm.inventory.Seed;
 import com.spacefarm.oxygen.OxygenConstants;
+import com.spacefarm.world.OutdoorConstants;
 import com.spacefarm.world.ScavengingLocation;
 import com.spacefarm.world.SeedWheelConstants;
 import com.spacefarm.world.TileCoord;
@@ -28,7 +29,6 @@ public class GameInteractionService {
         session.getSeedWheelOverlay().update(deltaTime);
 
         if (session.getSeedWheelOverlay().hasResult()) {
-            // Змінено int на FarmingConstants.CropType
             FarmingConstants.CropType resultType = session.getSeedWheelOverlay().getResultAndReset();
             handleSeedWheelResult(resultType);
 
@@ -73,6 +73,14 @@ public class GameInteractionService {
             }
         }
 
+        if (session.getDroneConsoleOverlay().isVisible()) {
+            if (session.getDroneConsoleOverlay().handleTouchDown(screenX, screenY)) {
+                return true;
+            }
+            session.getDroneConsoleOverlay().setVisible(false);
+            return true;
+        }
+
         if (session.getSeedWheelOverlay().isVisible()) {
             if (button == Buttons.LEFT) {
                 float adjustedY = Gdx.graphics.getHeight() - screenY;
@@ -112,11 +120,17 @@ public class GameInteractionService {
                 session.getInventoryUI().handleTouchUp(screenX, screenY);
 
                 if (targetSlot == -1) {
-                    // Dropped outside inventory, apply to tile
+                    if (session.getDroneConsoleOverlay().isOverTradeSlot(screenX, screenY)) {
+                        Item item = session.getInventory().getItem(draggedSlot);
+                        if (item != null && item.getType() == Item.ItemType.CRYSTAL) {
+                            session.getDroneConsoleOverlay().addCrystal();
+                            session.getInventory().removeItem(draggedSlot);
+                            return true;
+                        }
+                    }
                     int prevSelected = session.getInventory().getSelectedSlot();
                     session.getInventory().selectSlot(draggedSlot);
                     handleTileClick(screenX, screenY);
-
                     // We check if the item still exists (e.g. seeds could be consumed) before restoring selection,
                     // though selectSlot is safe even if slot is empty.
                     session.getInventory().selectSlot(prevSelected);
@@ -165,6 +179,14 @@ public class GameInteractionService {
         return false;
     }
 
+    public boolean handleScrolled(float amountX, float amountY) {
+        if (session.isGameOver()) return false;
+        if (session.getDroneConsoleOverlay().isVisible()) {
+            return session.getDroneConsoleOverlay().handleScrolled(amountY);
+        }
+        return false;
+    }
+
     private void handleTileClick(int screenX, int screenY) {
         TileCoord coord = session.getTilePicker().screenToTile(screenX, screenY);
         if (coord == null) {
@@ -172,6 +194,11 @@ public class GameInteractionService {
         }
 
         session.getOxygenManager().updatePositionTile(coord);
+
+        if (session.getBaseZone().isDroneZone(coord)) {
+            session.getDroneConsoleOverlay().setVisible(true);
+            return;
+        }
 
         if (lastSelected != null) {
             session.getSelectionLayer().setCell(lastSelected.x(), lastSelected.y(), null);
@@ -205,17 +232,12 @@ public class GameInteractionService {
             }
         } else if (session.getInventory().isSeedSelected()) {
             if (!session.getBaseZone().isGardenBed(coord)) {
-                // Посадка дозволена лише на грядках бази
                 return;
             }
 
-            // 1. Отримуємо вибраний предмет (насіння) з інвентаря
             Item selectedSeed = session.getInventory().getSelectedItem();
-
-            // 2. За замовчуванням ставимо звичайний тип
             FarmingConstants.CropType cropType = FarmingConstants.CropType.DEFAULT;
 
-            // 3. Змінюємо тип, якщо це рідкісне або легендарне насіння
             if (selectedSeed != null) {
                 if (selectedSeed.getType() == Item.ItemType.RARE_SEED) {
                     cropType = FarmingConstants.CropType.EPIC;
@@ -224,7 +246,6 @@ public class GameInteractionService {
                 }
             }
 
-            // 4. Передаємо визначений cropType у метод plantSeed
             if (!session.getFarmingSystem().hasCrop(coord) && session.getFarmingSystem().plantSeed(coord, cropType)) {
                 session.getInventory().useSeed();
                 removeSelectedStackIfEmpty();
@@ -242,7 +263,6 @@ public class GameInteractionService {
             session.getContextMenu().hide();
             return;
         }
-
         float worldX = coord.x() * session.getBaseLayer().getTileWidth();
         float worldY = coord.y() * session.getBaseLayer().getTileHeight();
         session.getContextMenu().showAt(worldX, worldY);
@@ -259,10 +279,13 @@ public class GameInteractionService {
     }
 
     private void updateScavenging(float deltaTime) {
+        int upgradeLevel = session.getDroneConsoleOverlay().getScavengeUpgradeLevel();
+        long durationMillis = Math.max(30000L, OutdoorConstants.SCAVENGING_DURATION_MILLIS - upgradeLevel * 30000L);
+
         for (ScavengingLocation location : session.getOutdoorZone().getScavengingLocations()) {
             if (location.isScavenging()) {
                 session.getOxygenManager().consumeOxygenDuringScavenging(deltaTime);
-                if (location.isScavengingComplete()) {
+                if (location.isScavengingComplete(durationMillis)) {
                     location.completeScavenging();
                     session.getInventory().addItem(new Crystal());
                 }

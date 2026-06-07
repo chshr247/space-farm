@@ -208,8 +208,8 @@ public class BaseZoneRenderer {
         int tileSize = baseLayer.getTileWidth();
         TileCoord dronePos = baseZone.getDroneZoneCenter();
 
-        float droneStartX = dronePos.x() * tileSize;
-        float droneStartY = dronePos.y() * tileSize;
+        float droneStartX = dronePos.x() * tileSize + baseZone.getDroneOffsetX();
+        float droneStartY = dronePos.y() * tileSize + baseZone.getDroneOffsetY();
         float droneSize = baseZone.getDroneZoneSize() * tileSize;
 
         batch.setColor(1, 1, 1, 0.85f);

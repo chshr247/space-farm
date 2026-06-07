@@ -38,6 +38,9 @@ public class GameInputRouter extends InputAdapter {
 
     @Override
     public boolean scrolled(float amountX, float amountY) {
+        if (gameSession.handleScrolled(amountX, amountY)) {
+            return true;
+        }
         return cameraController.scrolled(amountX, amountY);
     }
 

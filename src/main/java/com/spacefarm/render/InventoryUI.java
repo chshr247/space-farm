@@ -216,7 +216,7 @@ public class InventoryUI {
         int totalRows = inventory.getSize() / (int)ROW_SIZE;
 
         if (totalRows > 1 && worldX >= buttonX && worldX <= buttonX + TOGGLE_BUTTON_SIZE &&
-                worldY >= buttonY && worldY <= buttonY + TOGGLE_BUTTON_SIZE) {
+worldY >= buttonY && worldY <= buttonY + TOGGLE_BUTTON_SIZE) {
             isExpanded = !isExpanded;
             return true;
         }

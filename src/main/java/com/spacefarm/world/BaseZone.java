@@ -21,6 +21,8 @@ public class BaseZone {
     private List<TileCoord> gardenBeds;
     private TileCoord droneZoneCenter;
     private int droneZoneSize;
+    private float droneOffsetX = 0f;
+    private float droneOffsetY = 0f;
 
     public BaseZone(int centerX, int centerY, int zoneWidth, int zoneHeight) {
         // Position base zone in the center of the map
@@ -161,4 +163,10 @@ public class BaseZone {
     public TileCoord getDroneZoneCenter() { return droneZoneCenter; }
     public int getDroneZoneSize() { return droneZoneSize; }
     public int getGardenBedCount() { return gardenBeds.size();}
+ public float getDroneOffsetX() { return droneOffsetX; }
+    public float getDroneOffsetY() { return droneOffsetY; }
+    public void setDroneOffsets(float x, float y) {
+        this.droneOffsetX = x;
+        this.droneOffsetY = y;
+    }
 }
