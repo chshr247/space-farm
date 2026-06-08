@@ -59,12 +59,31 @@ public class GameInteractionService {
 
         // TreeBoxUI intercepts all clicks when visible
         if (session.getTreeBoxUI().isVisible()) {
-            int phaseBefore = session.getTreeBoxUI().getPhase();
-            boolean consumed = session.getTreeBoxUI().handleClick(screenX, screenY, Gdx.graphics.getHeight());
-            if (session.getTreeBoxUI().getPhase() > phaseBefore) {
-                session.getBaseZone().expandZone(4);
+            int result = session.getTreeBoxUI().handleClick(screenX, screenY, Gdx.graphics.getHeight());
+
+            if (result >= 0 && result < 5) {
+                // A confirm button was clicked — verify before accepting
+                boolean canConfirm = session.getTreeBoxUI().isUnlocked(result)
+                        && !session.getTreeBoxUI().isConfirmed(result)
+                        && session.getInventory().hasTreePhaseItem(result);
+
+                if (canConfirm) {
+                    // 1. Consume the required item from inventory
+                    session.getInventory().removeTreePhaseItem(result);
+                    // 2. Confirm the phase in UI
+                    session.getTreeBoxUI().confirmPhase(result);
+                    // 3. Green outdoor zone around the corresponding location
+                    session.getOutdoorZone().greenLocation(result);
+                    // Phase 5 (index 4) also greens the seed wheel location (index 5)
+                    if (result == 4) {
+                        session.getOutdoorZone().greenLocation(5);
+                    }
+                    // 4. Expand the base zone
+                    session.getBaseZone().expandZone(4);
+                }
             }
-            return consumed;
+
+            return true; // panel always swallows all clicks
         }
 
         if (button == Buttons.LEFT) {
@@ -284,7 +303,7 @@ public class GameInteractionService {
 
         for (ScavengingLocation location : session.getOutdoorZone().getScavengingLocations()) {
             if (location.isScavenging()) {
-                session.getOxygenManager().consumeOxygenDuringScavenging(deltaTime);
+                session.getOxygenManager().consumeOxygenDuringScavenging(deltaTime, location.isGreened());
                 if (location.isScavengingComplete(durationMillis)) {
                     location.completeScavenging();
                     session.getInventory().addItem(new Crystal());

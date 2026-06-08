@@ -20,6 +20,7 @@ public class OutdoorZoneRenderer {
     private Texture borderTileTexture;
     private Texture[] locationTextures;
     private Texture[] droneTextures;
+    private Texture greenOverlayTexture;
     private SpriteBatch batch;
 
     public OutdoorZoneRenderer(OutdoorZone outdoorZone, TiledMapTileLayer baseLayer, int tileSize) {
@@ -60,6 +61,8 @@ public class OutdoorZoneRenderer {
             locationTextures[i] = createSolidTexture(tileSize,tileSize,lr,lg,lb,255);
             droneTextures[i] = createCrystalDroneTexture(locWidth,locHeight);
         }
+        // Green overlay for tree-phase unlocked locations
+        greenOverlayTexture = createSolidTexture(1, 1, 40, 200, 60, 180);
     }
 
     private void applyBorderTiles() {
@@ -155,6 +158,19 @@ public class OutdoorZoneRenderer {
                 renderCooldownIndicator(location,locStartX,locStartY,locWidth,locHeight);
             }
         }
+        // Green overlay for locations unlocked by tree phases
+        for (int i = 0; i < locationCount; i++) {
+            ScavengingLocation location = outdoorZone.getLocations().get(i);
+            if (location.isGreened()) {
+                float locStartX = location.getTopLeft().x() * tileSize;
+                float locStartY = location.getTopLeft().y() * tileSize;
+                float locWidth  = location.getWidth()  * tileSize;
+                float locHeight = location.getHeight() * tileSize;
+                batch.setColor(1f, 1f, 1f, 1f);
+                batch.draw(greenOverlayTexture, locStartX, locStartY, locWidth, locHeight);
+            }
+        }
+        batch.setColor(1f, 1f, 1f, 1f); // reset color
         batch.end();
     }
 
@@ -194,6 +210,7 @@ public class OutdoorZoneRenderer {
         if(borderTileTexture != null) borderTileTexture.dispose();
         if(locationTextures != null) for(Texture t : locationTextures) if(t != null) t.dispose();
         if(droneTextures != null) for(Texture t : droneTextures) if(t != null) t.dispose();
+        if(greenOverlayTexture != null) greenOverlayTexture.dispose();
         if(batch != null) batch.dispose();
     }
 }

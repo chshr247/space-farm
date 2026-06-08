@@ -15,6 +15,7 @@ public class Inventory {
 
         // Initialize with a watering can in the first slot
         slots[0] = WateringCan.getInstance();
+
     }
 
     /**
@@ -243,6 +244,45 @@ public class Inventory {
      */
     public Item[] getSlots() {
         return slots;
+    }
+
+    /**
+     * Maps a tree phase index (0-4) to the required ItemType.
+     */
+    private static final Item.ItemType[] TREE_PHASE_ITEM_TYPES = {
+            Item.ItemType.BIO_COMPOST,
+            Item.ItemType.LIVING_DEW,
+            Item.ItemType.MYCORRHIZA_NETWORK,
+            Item.ItemType.UNIVERSE_FLOWER,
+            Item.ItemType.EDEN_CORE
+    };
+
+    /**
+     * Returns true if inventory contains the item required for the given tree phase index (0-4).
+     */
+    public boolean hasTreePhaseItem(int phaseIndex) {
+        if (phaseIndex < 0 || phaseIndex >= TREE_PHASE_ITEM_TYPES.length) return false;
+        Item.ItemType required = TREE_PHASE_ITEM_TYPES[phaseIndex];
+        for (Item item : slots) {
+            if (item != null && item.getType() == required) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Removes the item required for the given tree phase index from inventory.
+     * Returns true if the item was found and removed, false otherwise.
+     */
+    public boolean removeTreePhaseItem(int phaseIndex) {
+        if (phaseIndex < 0 || phaseIndex >= TREE_PHASE_ITEM_TYPES.length) return false;
+        Item.ItemType required = TREE_PHASE_ITEM_TYPES[phaseIndex];
+        for (int i = 0; i < slots.length; i++) {
+            if (slots[i] != null && slots[i].getType() == required) {
+                slots[i] = null;
+                return true;
+            }
+        }
+        return false;
     }
 }
 

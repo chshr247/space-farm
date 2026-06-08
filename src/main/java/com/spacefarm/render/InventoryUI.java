@@ -106,9 +106,7 @@ public class InventoryUI {
         // Draw toggle button (moves with toolbar)
         buttonX = startX - TOGGLE_BUTTON_SIZE - 10f;
         buttonY = toolbarY + (SLOT_SIZE - TOGGLE_BUTTON_SIZE) / 2f;
-        if (totalRows > 1) {
-            renderToggleButton(buttonX, buttonY);
-        }
+        renderToggleButton(buttonX, buttonY);
 
         // Draw rows
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
@@ -215,8 +213,12 @@ public class InventoryUI {
 
         int totalRows = inventory.getSize() / (int)ROW_SIZE;
 
-        if (totalRows > 1 && worldX >= buttonX && worldX <= buttonX + TOGGLE_BUTTON_SIZE &&
-worldY >= buttonY && worldY <= buttonY + TOGGLE_BUTTON_SIZE) {
+        if (worldX >= buttonX && worldX <= buttonX + TOGGLE_BUTTON_SIZE &&
+                worldY >= buttonY && worldY <= buttonY + TOGGLE_BUTTON_SIZE) {
+            if (totalRows == 1) {
+                inventory.expandInventory();
+                inventory.expandInventory();
+            }
             isExpanded = !isExpanded;
             return true;
         }
@@ -400,7 +402,13 @@ worldY >= buttonY && worldY <= buttonY + TOGGLE_BUTTON_SIZE) {
             case PLANT_FOOD:   return new Color(0.9f, 0.3f, 0.2f, 0.9f);
             case FERTILIZER:   return new Color(0.9f, 0.7f, 0.1f, 0.9f);
             case CRYSTAL:      return new Color(0.4f, 0.8f, 1.0f, 0.95f);
-            default:           return new Color(0.5f, 0.5f, 0.5f, 0.5f);
+            // Tree phase items
+            case BIO_COMPOST:       return new Color(0.5f, 0.35f, 0.15f, 0.95f); // коричневий
+            case LIVING_DEW:        return new Color(0.3f, 0.85f, 0.95f, 0.95f); // блакитний
+            case MYCORRHIZA_NETWORK:return new Color(0.6f, 0.25f, 0.75f, 0.95f); // фіолетовий
+            case UNIVERSE_FLOWER:   return new Color(0.95f, 0.4f, 0.75f, 0.95f); // рожевий
+            case EDEN_CORE:         return new Color(0.15f, 0.95f, 0.4f, 0.95f); // яскраво-зелений
+            default:                return new Color(0.5f, 0.5f, 0.5f, 0.9f);
         }
     }
 

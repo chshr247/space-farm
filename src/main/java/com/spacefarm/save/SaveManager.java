@@ -195,8 +195,13 @@ public class SaveManager {
                 case LEGENDARY_SEED: return context.deserialize(json, LegendarySeed.class);
                 case SICKLE: return Sickle.getInstance();
                 case PLANT_FOOD: return context.deserialize(json, PlantFood.class);
-                case CRYSTAL: return context.deserialize(json, Crystal.class);
-                case EMPTY: return null;
+                case CRYSTAL:            return context.deserialize(json, Crystal.class);
+                case BIO_COMPOST:        return new BioCompost();
+                case LIVING_DEW:         return new LivingDew();
+                case MYCORRHIZA_NETWORK: return new MycorrhizaNetwork();
+                case UNIVERSE_FLOWER:    return new UniverseFlower();
+                case EDEN_CORE:          return new EdenCore();
+                case EMPTY:              return null;
                 default: throw new JsonParseException("Unknown item type: " + type);
             }
         }
