@@ -33,6 +33,8 @@ import com.spacefarm.economy.Wallet;
 import com.spacefarm.world.BaseZoneConstants;
 import com.spacefarm.oxygen.OxygenConstants;
 import com.spacefarm.world.OutdoorConstants;
+import com.spacefarm.audio.AudioManager;
+
 import com.spacefarm.inventory.BioCompost;
 import com.spacefarm.inventory.LivingDew;
 import com.spacefarm.inventory.MycorrhizaNetwork;
@@ -66,6 +68,8 @@ public class GameSession {
     private Texture baseTileTexture;
     private Texture highlightTexture;
     private Wallet wallet;
+    private DifficultyLevel difficulty = DifficultyLevel.NORMAL; // default до вибору в меню
+    private AudioManager audioManager;
     private DifficultyLevel difficulty = DifficultyLevel.NORMAL;
 
     /**
@@ -117,6 +121,9 @@ public class GameSession {
         wallet = new Wallet(difficulty.startingMoney);
         oxygenManager.setBaseZone(baseZone);
 
+        audioManager = new AudioManager();
+        audioManager.playMusic();
+
         inventoryUI = new InventoryUI(inventory, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         contextMenu = new ContextMenuOverlay();
         gameOverOverlay = new GameOverOverlay();
@@ -153,6 +160,60 @@ public class GameSession {
         return interactionService.handleKeyDown(keycode);
     }
 
+    public void dispose() {
+        if (map != null) {
+            map.dispose();
+        }
+        if (baseTileTexture != null) {
+            baseTileTexture.dispose();
+        }
+        if (highlightTexture != null) {
+            highlightTexture.dispose();
+        }
+        if (inventoryUI != null) {
+            inventoryUI.dispose();
+        }
+        if (contextMenu != null) {
+            contextMenu.dispose();
+        }
+        if (gameOverOverlay != null) {
+            gameOverOverlay.dispose();
+        }
+        if (seedWheelOverlay != null) {
+            seedWheelOverlay.dispose();
+        }
+        if (audioManager != null) {
+            audioManager.dispose();
+        }
+    }
+
+    public AudioManager getAudioManager() {
+        return audioManager;
+    }
+    public Wallet getWallet() { return wallet; }
+
+    public DifficultyLevel getDifficulty() {
+        return difficulty;
+    }
+
+    public TiledMap getMap() {
+        return map;
+    }
+
+    public TiledMapTileLayer getBaseLayer() {
+        return baseLayer;
+    }
+
+    public BaseZone getBaseZone() {
+        return baseZone;
+    }
+
+    public OutdoorZone getOutdoorZone() {
+        return outdoorZone;
+    }
+
+    public FarmingSystem getFarmingSystem() {
+        return farmingSystem;
     public boolean handleScrolled(float amountX, float amountY) {
         return interactionService.handleScrolled(amountX, amountY);
     }
