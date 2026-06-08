@@ -172,6 +172,12 @@ public class BaseZoneRenderer {
     }
 
     public void render(OrthographicCamera camera) {
+        // Re-apply tiles if zone was expanded
+        if (baseZone.isDirty()) {
+            applyBaseZoneTiles();
+            baseZone.clearDirty();
+        }
+
         // Render structure overlays (tree and drone sprites)
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
@@ -202,8 +208,8 @@ public class BaseZoneRenderer {
         int tileSize = baseLayer.getTileWidth();
         TileCoord dronePos = baseZone.getDroneZoneCenter();
 
-        float droneStartX = dronePos.x() * tileSize;
-        float droneStartY = dronePos.y() * tileSize;
+        float droneStartX = dronePos.x() * tileSize + baseZone.getDroneOffsetX();
+        float droneStartY = dronePos.y() * tileSize + baseZone.getDroneOffsetY();
         float droneSize = baseZone.getDroneZoneSize() * tileSize;
 
         batch.setColor(1, 1, 1, 0.85f);
@@ -220,5 +226,3 @@ public class BaseZoneRenderer {
         if (batch != null) batch.dispose();
     }
 }
-
-

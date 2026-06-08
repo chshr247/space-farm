@@ -38,6 +38,9 @@ public class GameInputRouter extends InputAdapter {
 
     @Override
     public boolean scrolled(float amountX, float amountY) {
+        if (gameSession.handleScrolled(amountX, amountY)) {
+            return true;
+        }
         return cameraController.scrolled(amountX, amountY);
     }
 
@@ -45,5 +48,10 @@ public class GameInputRouter extends InputAdapter {
     public boolean keyDown(int keycode) {
         return gameSession.handleKeyDown(keycode);
     }
-}
 
+    @Override
+    public boolean mouseMoved(int screenX, int screenY) {
+        gameSession.getInventoryUI().handleMouseMoved(screenX, screenY);
+        return false;
+    }
+}

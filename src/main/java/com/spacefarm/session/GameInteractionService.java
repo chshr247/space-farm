@@ -10,6 +10,7 @@ import com.spacefarm.inventory.PlantFood;
 import com.spacefarm.inventory.RareSeed;
 import com.spacefarm.inventory.Seed;
 import com.spacefarm.oxygen.OxygenConstants;
+import com.spacefarm.world.OutdoorConstants;
 import com.spacefarm.world.ScavengingLocation;
 import com.spacefarm.world.SeedWheelConstants;
 import com.spacefarm.world.TileCoord;
@@ -28,7 +29,6 @@ public class GameInteractionService {
         session.getSeedWheelOverlay().update(deltaTime);
 
         if (session.getSeedWheelOverlay().hasResult()) {
-            // Змінено int на FarmingConstants.CropType
             FarmingConstants.CropType resultType = session.getSeedWheelOverlay().getResultAndReset();
             handleSeedWheelResult(resultType);
 
@@ -39,11 +39,11 @@ public class GameInteractionService {
             }
         }
 
-        if (session.getOxygenManager().isOxygenDepleted() && !session.isGameOver()) {
+        if (session.getOxygenManager().isOxygenDepleted() && !session.isGameOver() && !session.isVictory()) {
             session.setGameOver(true);
         }
 
-        if (session.isGameOver()) {
+        if (session.isGameOver() || session.isVictory()) {
             return;
         }
 
@@ -53,14 +53,55 @@ public class GameInteractionService {
     }
 
     public boolean handleTouchDown(int screenX, int screenY, int button) {
-        if (session.isGameOver()) {
+        if (session.isGameOver() || session.isVictory()) {
             return false;
+        }
+
+        // TreeBoxUI intercepts all clicks when visible
+        if (session.getTreeBoxUI().isVisible()) {
+            int result = session.getTreeBoxUI().handleClick(screenX, screenY, Gdx.graphics.getHeight());
+
+            if (result >= 0 && result < 5) {
+                // A confirm button was clicked — verify before accepting
+                boolean canConfirm = session.getTreeBoxUI().isUnlocked(result)
+                        && !session.getTreeBoxUI().isConfirmed(result)
+                        && session.getInventory().hasTreePhaseItem(result);
+
+                if (canConfirm) {
+                    // 1. Consume the required item from inventory
+                    session.getInventory().removeTreePhaseItem(result);
+                    // 2. Confirm the phase in UI
+                    session.getTreeBoxUI().confirmPhase(result);
+                    // 3. Green outdoor zone around the corresponding location
+                    session.getOutdoorZone().greenLocation(result);
+                    // Phase 5 (index 4) also greens the seed wheel location (index 5)
+                    if (result == 4) {
+                        session.getOutdoorZone().greenLocation(5);
+                    }
+                    // 4. Expand the base zone
+                    session.getBaseZone().expandZone(4);
+                    // 5. Check for victory (all 5 phases complete)
+                    if (session.getTreeBoxUI().isComplete()) {
+                        session.setVictory(true);
+                    }
+                }
+            }
+
+            return true; // panel always swallows all clicks
         }
 
         if (button == Buttons.LEFT) {
             if (session.getInventoryUI().handleTouchDown(screenX, screenY)) {
                 return true;
             }
+        }
+
+        if (session.getDroneConsoleOverlay().isVisible()) {
+            if (session.getDroneConsoleOverlay().handleTouchDown(screenX, screenY)) {
+                return true;
+            }
+            session.getDroneConsoleOverlay().setVisible(false);
+            return true;
         }
 
         if (session.getSeedWheelOverlay().isVisible()) {
@@ -86,14 +127,14 @@ public class GameInteractionService {
     }
 
     public boolean handleTouchDragged(int screenX, int screenY) {
-        if (session.isGameOver()) {
+        if (session.isGameOver() || session.isVictory()) {
             return false;
         }
         return session.getInventoryUI().handleTouchDragged(screenX, screenY);
     }
 
     public boolean handleTouchUp(int screenX, int screenY, int button) {
-        if (session.isGameOver()) {
+        if (session.isGameOver() || session.isVictory()) {
             return false;
         }
         if (button == Buttons.LEFT) {
@@ -103,12 +144,18 @@ public class GameInteractionService {
                 session.getInventoryUI().handleTouchUp(screenX, screenY);
 
                 if (targetSlot == -1) {
-                    // Dropped outside inventory, apply to tile
+                    if (session.getDroneConsoleOverlay().isOverTradeSlot(screenX, screenY)) {
+                        Item item = session.getInventory().getItem(draggedSlot);
+                        if (item != null && item.getType() == Item.ItemType.CRYSTAL) {
+                            session.getDroneConsoleOverlay().addCrystal();
+                            session.getInventory().removeItem(draggedSlot);
+                            return true;
+                        }
+                    }
                     int prevSelected = session.getInventory().getSelectedSlot();
                     session.getInventory().selectSlot(draggedSlot);
                     handleTileClick(screenX, screenY);
-                    
-                    // We check if the item still exists (e.g. seeds could be consumed) before restoring selection, 
+                    // We check if the item still exists (e.g. seeds could be consumed) before restoring selection,
                     // though selectSlot is safe even if slot is empty.
                     session.getInventory().selectSlot(prevSelected);
                 }
@@ -156,6 +203,14 @@ public class GameInteractionService {
         return false;
     }
 
+    public boolean handleScrolled(float amountX, float amountY) {
+        if (session.isGameOver()) return false;
+        if (session.getDroneConsoleOverlay().isVisible()) {
+            return session.getDroneConsoleOverlay().handleScrolled(amountY);
+        }
+        return false;
+    }
+
     private void handleTileClick(int screenX, int screenY) {
         TileCoord coord = session.getTilePicker().screenToTile(screenX, screenY);
         if (coord == null) {
@@ -164,12 +219,23 @@ public class GameInteractionService {
 
         session.getOxygenManager().updatePositionTile(coord);
 
+        if (session.getBaseZone().isDroneZone(coord)) {
+            session.getDroneConsoleOverlay().setVisible(true);
+            return;
+        }
+
         if (lastSelected != null) {
             session.getSelectionLayer().setCell(lastSelected.x(), lastSelected.y(), null);
         }
 
         session.getSelectionLayer().setCell(coord.x(), coord.y(), session.createHighlightCell());
         lastSelected = coord;
+
+        // Click on tree area — open TreeBoxUI
+        if (session.getBaseZone().isTreeArea(coord)) {
+            session.getTreeBoxUI().show();
+            return;
+        }
 
         ScavengingLocation location = session.getOutdoorZone().getLocationAt(coord);
         if (location != null) {
@@ -192,17 +258,12 @@ public class GameInteractionService {
             }
         } else if (session.getInventory().isSeedSelected()) {
             if (!session.getBaseZone().isGardenBed(coord)) {
-                // Посадка дозволена лише на грядках бази
                 return;
             }
 
-            // 1. Отримуємо вибраний предмет (насіння) з інвентаря
             Item selectedSeed = session.getInventory().getSelectedItem();
-
-            // 2. За замовчуванням ставимо звичайний тип
             FarmingConstants.CropType cropType = FarmingConstants.CropType.DEFAULT;
 
-            // 3. Змінюємо тип, якщо це рідкісне або легендарне насіння
             if (selectedSeed != null) {
                 if (selectedSeed.getType() == Item.ItemType.RARE_SEED) {
                     cropType = FarmingConstants.CropType.EPIC;
@@ -211,7 +272,6 @@ public class GameInteractionService {
                 }
             }
 
-            // 4. Передаємо визначений cropType у метод plantSeed
             if (!session.getFarmingSystem().hasCrop(coord) && session.getFarmingSystem().plantSeed(coord, cropType)) {
                 session.getInventory().useSeed();
                 session.getAudioManager().playPlantSound();
@@ -231,7 +291,6 @@ public class GameInteractionService {
             session.getContextMenu().hide();
             return;
         }
-
         float worldX = coord.x() * session.getBaseLayer().getTileWidth();
         float worldY = coord.y() * session.getBaseLayer().getTileHeight();
         session.getContextMenu().showAt(worldX, worldY);
@@ -248,10 +307,13 @@ public class GameInteractionService {
     }
 
     private void updateScavenging(float deltaTime) {
+        int upgradeLevel = session.getDroneConsoleOverlay().getScavengeUpgradeLevel();
+        long durationMillis = Math.max(30000L, OutdoorConstants.SCAVENGING_DURATION_MILLIS - upgradeLevel * 30000L);
+
         for (ScavengingLocation location : session.getOutdoorZone().getScavengingLocations()) {
             if (location.isScavenging()) {
-                session.getOxygenManager().consumeOxygenDuringScavenging(deltaTime);
-                if (location.isScavengingComplete()) {
+                session.getOxygenManager().consumeOxygenDuringScavenging(deltaTime, location.isGreened());
+                if (location.isScavengingComplete(durationMillis)) {
                     location.completeScavenging();
                     session.getInventory().addItem(new Crystal());
                 }
@@ -285,4 +347,3 @@ public class GameInteractionService {
         }
     }
 }
-

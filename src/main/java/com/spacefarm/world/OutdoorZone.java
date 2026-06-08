@@ -142,6 +142,27 @@ public class OutdoorZone {
         }
         return scavenging;
     }
+    /**
+     * Marks a scavenging location as greened (nature reclaims the area).
+     * Call this when a tree phase is confirmed.
+     * Phase index 0-4 maps to regular locations; index 5 is the seed wheel location.
+     */
+    public void greenLocation(int locationIndex) {
+        if (locationIndex >= 0 && locationIndex < locations.size()) {
+            locations.get(locationIndex).setGreened(true);
+        }
+    }
+
+    /**
+     * Returns how many locations are currently greened.
+     */
+    public int getGreenedLocationCount() {
+        int count = 0;
+        for (ScavengingLocation loc : locations) {
+            if (loc.isGreened()) count++;
+        }
+        return count;
+    }
     
     // Getters
     public int getBorderX() { return borderX; }

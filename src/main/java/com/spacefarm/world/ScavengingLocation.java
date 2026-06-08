@@ -18,6 +18,7 @@ public class ScavengingLocation {
     private boolean isScavenging;
     private long lastClearedTime;
     private LocationType locationType;
+    private boolean isGreened = false;
 
     // Constructors
     public ScavengingLocation(int x, int y, int width, int height, int color) {
@@ -87,12 +88,12 @@ public class ScavengingLocation {
     /**
      * Check if scavenging is complete.
      */
-    public boolean isScavengingComplete() {
+    public boolean isScavengingComplete(long durationMillis) {
         if (!isScavenging) {
             return false;
         }
         long elapsedTime = System.currentTimeMillis() - scavengingStartTime;
-        return elapsedTime >= OutdoorConstants.SCAVENGING_DURATION_MILLIS;
+        return elapsedTime >= durationMillis;
     }
     
     /**
@@ -107,12 +108,12 @@ public class ScavengingLocation {
     /**
      * Get the percentage of scavenging progress (0-100).
      */
-    public float getScavengingProgress() {
+    public float getScavengingProgress(long durationMillis) {
         if (!isScavenging) {
             return 0f;
         }
         long elapsedTime = System.currentTimeMillis() - scavengingStartTime;
-        return Math.min(100f, (elapsedTime * 100f) / OutdoorConstants.SCAVENGING_DURATION_MILLIS);
+        return Math.min(100f, (elapsedTime * 100f) / (float)durationMillis);
     }
     
     /**
@@ -135,5 +136,7 @@ public class ScavengingLocation {
     public long getScavengingStartTime() { return scavengingStartTime; }
     public long getLastClearedTime() { return lastClearedTime; }
     public LocationType getLocationType() { return locationType; }
+    public boolean isGreened()               { return isGreened; }
+    public void setGreened(boolean greened)  { this.isGreened = greened; }
 }
 

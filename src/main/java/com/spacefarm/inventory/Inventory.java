@@ -4,33 +4,46 @@ package com.spacefarm.inventory;
  * Manages the player's inventory with 8 slots.
  */
 public class Inventory {
-    private static final int INVENTORY_SIZE = 24;
+    private int inventorySize = 8;
     private static final int ROW_SIZE = 8;
     private Item[] slots;
     private int selectedSlot;
 
     public Inventory() {
-        this.slots = new Item[INVENTORY_SIZE];
+        this.slots = new Item[inventorySize];
         this.selectedSlot = 0;
 
         // Initialize with a watering can in the first slot
         slots[0] = WateringCan.getInstance();
+
     }
 
     /**
      * Set all slots.
      */
     public void setSlots(Item[] newSlots) {
-        if (newSlots != null && newSlots.length == INVENTORY_SIZE) {
+        if (newSlots != null) {
             this.slots = newSlots;
+            this.inventorySize = newSlots.length;
         }
+    }
+
+    /**
+     * Expands the inventory by adding a new row.
+     */
+    public void expandInventory() {
+        int newSize = this.inventorySize + ROW_SIZE;
+        Item[] newSlots = new Item[newSize];
+        System.arraycopy(this.slots, 0, newSlots, 0, this.slots.length);
+        this.slots = newSlots;
+        this.inventorySize = newSize;
     }
 
     /**
      * Select a slot by index (0-7).
      */
     public void selectSlot(int slotIndex) {
-        if (slotIndex >= 0 && slotIndex < INVENTORY_SIZE) {
+        if (slotIndex >= 0 && slotIndex < inventorySize) {
             selectedSlot = slotIndex;
         }
     }
@@ -53,7 +66,7 @@ public class Inventory {
      * Get the item in a specific slot.
      */
     public Item getItem(int slotIndex) {
-        if (slotIndex >= 0 && slotIndex < INVENTORY_SIZE) {
+        if (slotIndex >= 0 && slotIndex < inventorySize) {
             return slots[slotIndex];
         }
         return null;
@@ -63,7 +76,7 @@ public class Inventory {
      * Add an item to a specific slot.
      */
     public boolean addItem(int slotIndex, Item item) {
-        if (slotIndex >= 0 && slotIndex < INVENTORY_SIZE && slots[slotIndex] == null) {
+        if (slotIndex >= 0 && slotIndex < inventorySize && slots[slotIndex] == null) {
             slots[slotIndex] = item;
             return true;
         }
@@ -74,7 +87,7 @@ public class Inventory {
      * Remove an item from a specific slot.
      */
     public Item removeItem(int slotIndex) {
-        if (slotIndex >= 0 && slotIndex < INVENTORY_SIZE) {
+        if (slotIndex >= 0 && slotIndex < inventorySize) {
             Item item = slots[slotIndex];
             slots[slotIndex] = null;
             return item;
@@ -86,7 +99,7 @@ public class Inventory {
      * Swap items between two slots.
      */
     public void swapItems(int slot1, int slot2) {
-        if (slot1 >= 0 && slot1 < INVENTORY_SIZE && slot2 >= 0 && slot2 < INVENTORY_SIZE) {
+        if (slot1 >= 0 && slot1 < inventorySize && slot2 >= 0 && slot2 < inventorySize) {
             Item temp = slots[slot1];
             slots[slot1] = slots[slot2];
             slots[slot2] = temp;
@@ -97,7 +110,7 @@ public class Inventory {
      * Get the size of inventory.
      */
     public int getSize() {
-        return INVENTORY_SIZE;
+        return inventorySize;
     }
 
     /**
@@ -231,6 +244,45 @@ public class Inventory {
      */
     public Item[] getSlots() {
         return slots;
+    }
+
+    /**
+     * Maps a tree phase index (0-4) to the required ItemType.
+     */
+    private static final Item.ItemType[] TREE_PHASE_ITEM_TYPES = {
+            Item.ItemType.BIO_COMPOST,
+            Item.ItemType.LIVING_DEW,
+            Item.ItemType.MYCORRHIZA_NETWORK,
+            Item.ItemType.UNIVERSE_FLOWER,
+            Item.ItemType.EDEN_CORE
+    };
+
+    /**
+     * Returns true if inventory contains the item required for the given tree phase index (0-4).
+     */
+    public boolean hasTreePhaseItem(int phaseIndex) {
+        if (phaseIndex < 0 || phaseIndex >= TREE_PHASE_ITEM_TYPES.length) return false;
+        Item.ItemType required = TREE_PHASE_ITEM_TYPES[phaseIndex];
+        for (Item item : slots) {
+            if (item != null && item.getType() == required) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Removes the item required for the given tree phase index from inventory.
+     * Returns true if the item was found and removed, false otherwise.
+     */
+    public boolean removeTreePhaseItem(int phaseIndex) {
+        if (phaseIndex < 0 || phaseIndex >= TREE_PHASE_ITEM_TYPES.length) return false;
+        Item.ItemType required = TREE_PHASE_ITEM_TYPES[phaseIndex];
+        for (int i = 0; i < slots.length; i++) {
+            if (slots[i] != null && slots[i].getType() == required) {
+                slots[i] = null;
+                return true;
+            }
+        }
+        return false;
     }
 }
 

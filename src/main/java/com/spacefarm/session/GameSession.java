@@ -20,9 +20,12 @@ import com.spacefarm.inventory.Seed;
 import com.spacefarm.inventory.Sickle;
 import com.spacefarm.oxygen.OxygenManager;
 import com.spacefarm.render.ContextMenuOverlay;
+import com.spacefarm.render.DroneConsoleOverlay;
 import com.spacefarm.render.GameOverOverlay;
+import com.spacefarm.render.VictoryOverlay;
 import com.spacefarm.render.InventoryUI;
 import com.spacefarm.render.SeedWheelOverlay;
+import com.spacefarm.render.TreeBoxUI;
 import com.spacefarm.world.BaseZone;
 import com.spacefarm.world.OutdoorZone;
 import com.spacefarm.DifficultyLevel;
@@ -32,6 +35,11 @@ import com.spacefarm.oxygen.OxygenConstants;
 import com.spacefarm.world.OutdoorConstants;
 import com.spacefarm.audio.AudioManager;
 
+import com.spacefarm.inventory.BioCompost;
+import com.spacefarm.inventory.LivingDew;
+import com.spacefarm.inventory.MycorrhizaNetwork;
+import com.spacefarm.inventory.UniverseFlower;
+import com.spacefarm.inventory.EdenCore;
 
 public class GameSession {
     private static final int DEFAULT_TILE_SIZE = 64;
@@ -49,15 +57,20 @@ public class GameSession {
     private InventoryUI inventoryUI;
     private ContextMenuOverlay contextMenu;
     private GameOverOverlay gameOverOverlay;
+    private VictoryOverlay  victoryOverlay;
     private SeedWheelOverlay seedWheelOverlay;
+    private DroneConsoleOverlay droneConsoleOverlay;
     private GameInteractionService interactionService;
     private TilePicker tilePicker;
+    private TreeBoxUI treeBoxUI;
     private boolean gameOver;
+    private boolean victory;
     private Texture baseTileTexture;
     private Texture highlightTexture;
     private Wallet wallet;
     private DifficultyLevel difficulty = DifficultyLevel.NORMAL; // default до вибору в меню
     private AudioManager audioManager;
+    private DifficultyLevel difficulty = DifficultyLevel.NORMAL;
 
     /**
      * Call this from the menu BEFORE create().
@@ -65,7 +78,6 @@ public class GameSession {
      */
     public void applyDifficulty(DifficultyLevel difficultyLevel) {
         this.difficulty = difficultyLevel;
-
         OxygenConstants.OXYGEN_DECREASE_AMOUNT  = difficultyLevel.oxygenDecreaseAmount;
         OutdoorConstants.OXYGEN_DECREASE_AMOUNT = difficultyLevel.oxygenDecreaseAmount;
         BaseZoneConstants.STARTING_GARDEN_BEDS = difficultyLevel.startingGardenBeds;
@@ -98,6 +110,13 @@ public class GameSession {
         inventory.addItem(1, new Seed(5));
         inventory.addItem(2, Sickle.getInstance());
 
+        // TODO: REMOVE BEFORE RELEASE — debug items for tree phase testing
+        inventory.addItem(new BioCompost());
+        inventory.addItem(new LivingDew());
+        inventory.addItem(new MycorrhizaNetwork());
+        inventory.addItem(new UniverseFlower());
+        inventory.addItem(new EdenCore());
+
         oxygenManager = new OxygenManager();
         wallet = new Wallet(difficulty.startingMoney);
         oxygenManager.setBaseZone(baseZone);
@@ -108,8 +127,12 @@ public class GameSession {
         inventoryUI = new InventoryUI(inventory, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         contextMenu = new ContextMenuOverlay();
         gameOverOverlay = new GameOverOverlay();
+        victoryOverlay  = new VictoryOverlay();
         seedWheelOverlay = new SeedWheelOverlay();
+        droneConsoleOverlay = new DroneConsoleOverlay(this);
         interactionService = new GameInteractionService(this);
+        treeBoxUI = new TreeBoxUI();
+        treeBoxUI.setInventory(inventory); // ← цей рядок критично важливий
         gameOver = false;
 
         centerCameraOnMap(camera);
@@ -117,6 +140,7 @@ public class GameSession {
 
     public void update(float deltaTime) {
         inventoryUI.update(deltaTime);
+        droneConsoleOverlay.update(deltaTime);
         interactionService.update(deltaTime);
     }
 
@@ -190,47 +214,46 @@ public class GameSession {
 
     public FarmingSystem getFarmingSystem() {
         return farmingSystem;
+    public boolean handleScrolled(float amountX, float amountY) {
+        return interactionService.handleScrolled(amountX, amountY);
     }
 
-    public Inventory getInventory() {
-        return inventory;
+    public void dispose() {
+        if (map != null) map.dispose();
+        if (baseTileTexture != null) baseTileTexture.dispose();
+        if (highlightTexture != null) highlightTexture.dispose();
+        if (inventoryUI != null) inventoryUI.dispose();
+        if (contextMenu != null) contextMenu.dispose();
+        if (gameOverOverlay != null) gameOverOverlay.dispose();
+        if (victoryOverlay  != null) victoryOverlay.dispose();
+        if (seedWheelOverlay != null) seedWheelOverlay.dispose();
+        if (treeBoxUI != null) treeBoxUI.dispose();
+        if (droneConsoleOverlay != null) droneConsoleOverlay.dispose();
     }
 
-    public OxygenManager getOxygenManager() {
-        return oxygenManager;
-    }
+    public Wallet getWallet() { return wallet; }
+    public TreeBoxUI getTreeBoxUI() { return treeBoxUI; }
 
-    public InventoryUI getInventoryUI() {
-        return inventoryUI;
-    }
-
-    public ContextMenuOverlay getContextMenu() {
-        return contextMenu;
-    }
-
-    public GameOverOverlay getGameOverOverlay() {
-        return gameOverOverlay;
-    }
-
-    public SeedWheelOverlay getSeedWheelOverlay() {
-        return seedWheelOverlay;
-    }
-
-    public TilePicker getTilePicker() {
-        return tilePicker;
-    }
-
-    public TiledMapTileLayer getSelectionLayer() {
-        return selectionLayer;
-    }
-
-    public void setGameOver(boolean gameOver) {
-        this.gameOver = gameOver;
-    }
-
-    public boolean isGameOver() {
-        return gameOver;
-    }
+    public DifficultyLevel getDifficulty() { return difficulty; }
+    public TiledMap getMap() { return map; }
+    public TiledMapTileLayer getBaseLayer() { return baseLayer; }
+    public BaseZone getBaseZone() { return baseZone; }
+    public OutdoorZone getOutdoorZone() { return outdoorZone; }
+    public FarmingSystem getFarmingSystem() { return farmingSystem; }
+    public Inventory getInventory() { return inventory; }
+    public OxygenManager getOxygenManager() { return oxygenManager; }
+    public InventoryUI getInventoryUI() { return inventoryUI; }
+    public ContextMenuOverlay getContextMenu() { return contextMenu; }
+    public GameOverOverlay getGameOverOverlay() { return gameOverOverlay; }
+    public SeedWheelOverlay getSeedWheelOverlay() { return seedWheelOverlay; }
+    public DroneConsoleOverlay getDroneConsoleOverlay() { return droneConsoleOverlay; }
+    public TilePicker getTilePicker() { return tilePicker; }
+    public TiledMapTileLayer getSelectionLayer() { return selectionLayer; }
+    public void setGameOver(boolean gameOver) { this.gameOver = gameOver; }
+    public boolean isGameOver() { return gameOver; }
+    public VictoryOverlay getVictoryOverlay() { return victoryOverlay; }
+    public void setVictory(boolean victory)   { this.victory = victory; }
+    public boolean isVictory()                { return victory; }
 
     public WorldBounds getWorldBounds() {
         float worldWidth = baseLayer.getWidth() * baseLayer.getTileWidth();
@@ -261,12 +284,10 @@ public class GameSession {
         int baseY = baseZone.getBaseY();
         int baseWidth = baseZone.getBaseWidth();
         int baseHeight = baseZone.getBaseHeight();
-
         float tileWidth = baseLayer.getTileWidth();
         float tileHeight = baseLayer.getTileHeight();
         float baseCenterX = (baseX + baseWidth / 2f) * tileWidth;
         float baseCenterY = (baseY + baseHeight / 2f) * tileHeight;
-
         camera.position.set(baseCenterX, baseCenterY, 0f);
         camera.update();
     }
@@ -274,7 +295,6 @@ public class GameSession {
     private TiledMapTileLayer createFallbackLayer() {
         baseTileTexture = createSolidTexture(DEFAULT_TILE_SIZE, DEFAULT_TILE_SIZE, 60, 70, 90, 255);
         StaticTiledMapTile tile = new StaticTiledMapTile(new TextureRegion(baseTileTexture));
-
         TiledMapTileLayer layer = new TiledMapTileLayer(DEFAULT_MAP_WIDTH, DEFAULT_MAP_HEIGHT, DEFAULT_TILE_SIZE, DEFAULT_TILE_SIZE);
         for (int x = 0; x < DEFAULT_MAP_WIDTH; x++) {
             for (int y = 0; y < DEFAULT_MAP_HEIGHT; y++) {

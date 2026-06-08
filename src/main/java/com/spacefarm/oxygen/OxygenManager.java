@@ -45,16 +45,17 @@ public class OxygenManager {
     /**
      * Consume oxygen during scavenging (accumulate time for stable consumption).
      */
-    public void consumeOxygenDuringScavenging(float deltaTime) {
+    public void consumeOxygenDuringScavenging(float deltaTime, boolean locationIsGreened) {
         scavengingTimer += deltaTime;
 
-        // Consume exactly 2% every 10 seconds
         if (scavengingTimer >= OxygenConstants.OXYGEN_DECREASE_INTERVAL) {
-            currentOxygen -= OxygenConstants.OXYGEN_DECREASE_AMOUNT;
-            scavengingTimer = 0f;
+            float decrease = OxygenConstants.OXYGEN_DECREASE_AMOUNT;
+            if (locationIsGreened) {
+                decrease = Math.max(0f, decrease - 2f);
+            }
+            currentOxygen -= decrease;
             scavengingTimer = 0f;
 
-            // Clamp oxygen
             if (currentOxygen < OxygenConstants.MIN_OXYGEN) {
                 currentOxygen = OxygenConstants.MIN_OXYGEN;
             }
@@ -128,7 +129,7 @@ public class OxygenManager {
      * Check if oxygen is critically low (below 20%).
      */
     public boolean isCritical() {
-        return currentOxygen < 20f;
+        return currentOxygen <= 20f;
     }
 
     /**
@@ -137,4 +138,5 @@ public class OxygenManager {
     public boolean isOxygenDepleted() {
         return currentOxygen <= 0f;
     }
+
 }

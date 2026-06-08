@@ -15,6 +15,7 @@ public class GameSceneRenderer {
     private final BaseZoneRenderer baseZoneRenderer;
     private final OutdoorZoneRenderer outdoorZoneRenderer;
     private final OxygenUI oxygenUI;
+    private final TreeBoxUI treeBoxUI;
 
     public GameSceneRenderer(GameSession gameSession) {
         this.gameSession = gameSession;
@@ -29,6 +30,7 @@ public class GameSceneRenderer {
         this.outdoorZoneRenderer = new OutdoorZoneRenderer(gameSession.getOutdoorZone(), baseLayer, map, tileSize);
         this.baseZoneRenderer = new BaseZoneRenderer(gameSession.getBaseZone(), baseLayer, tileSize);
         this.oxygenUI = new OxygenUI(gameSession.getOxygenManager());
+        this.treeBoxUI = gameSession.getTreeBoxUI();
     }
 
     public void render(OrthographicCamera camera, int screenWidth, int screenHeight) {
@@ -38,15 +40,25 @@ public class GameSceneRenderer {
         gridOverlay.render(camera);
         cropRenderer.render(camera);
         baseZoneRenderer.render(camera);
-        outdoorZoneRenderer.render(camera);
+
+        int upgradeLevel = gameSession.getDroneConsoleOverlay().getScavengeUpgradeLevel();
+        long durationMillis = Math.max(30000L, com.spacefarm.world.OutdoorConstants.SCAVENGING_DURATION_MILLIS - upgradeLevel * 30000L);
+        outdoorZoneRenderer.render(camera, durationMillis);
+
         gameSession.getContextMenu().render(camera);
 
-        gameSession.getInventoryUI().render(screenWidth, screenHeight);
-        oxygenUI.render(screenWidth, screenHeight);
-        gameSession.getSeedWheelOverlay().render(screenWidth, screenHeight);
-
-        if (gameSession.isGameOver()) {
+        if (gameSession.isVictory()) {
+            // Victory: render only the overlay — skip all other UI
+            gameSession.getVictoryOverlay().render(screenWidth, screenHeight);
+        } else if (gameSession.isGameOver()) {
+            // Game over: render only the overlay — skip all other UI so nothing shows on top
             gameSession.getGameOverOverlay().render(screenWidth, screenHeight);
+        } else {
+            oxygenUI.render(screenWidth, screenHeight);
+            gameSession.getSeedWheelOverlay().render(screenWidth, screenHeight);
+            gameSession.getDroneConsoleOverlay().render();
+            gameSession.getInventoryUI().render(screenWidth, screenHeight);
+            treeBoxUI.render(screenWidth, screenHeight);
         }
     }
 
@@ -59,4 +71,3 @@ public class GameSceneRenderer {
         oxygenUI.dispose();
     }
 }
-
