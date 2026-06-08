@@ -40,6 +40,10 @@ import com.spacefarm.inventory.LivingDew;
 import com.spacefarm.inventory.MycorrhizaNetwork;
 import com.spacefarm.inventory.UniverseFlower;
 import com.spacefarm.inventory.EdenCore;
+import com.spacefarm.inventory.Item;
+import com.spacefarm.inventory.Crystal;
+import com.spacefarm.inventory.RareSeed;
+import com.spacefarm.inventory.LegendarySeed;
 
 public class GameSession {
     private static final int DEFAULT_TILE_SIZE = 64;
@@ -68,14 +72,9 @@ public class GameSession {
     private Texture baseTileTexture;
     private Texture highlightTexture;
     private Wallet wallet;
-    private DifficultyLevel difficulty = DifficultyLevel.NORMAL; // default до вибору в меню
-    private AudioManager audioManager;
     private DifficultyLevel difficulty = DifficultyLevel.NORMAL;
+    private AudioManager audioManager;
 
-    /**
-     * Call this from the menu BEFORE create().
-     * Sets all difficulty-dependent values so create() picks them up correctly.
-     */
     public void applyDifficulty(DifficultyLevel difficultyLevel) {
         this.difficulty = difficultyLevel;
         OxygenConstants.OXYGEN_DECREASE_AMOUNT  = difficultyLevel.oxygenDecreaseAmount;
@@ -110,7 +109,7 @@ public class GameSession {
         inventory.addItem(1, new Seed(5));
         inventory.addItem(2, Sickle.getInstance());
 
-        // TODO: REMOVE BEFORE RELEASE — debug items for tree phase testing
+        // Debug items
         inventory.addItem(new BioCompost());
         inventory.addItem(new LivingDew());
         inventory.addItem(new MycorrhizaNetwork());
@@ -132,8 +131,9 @@ public class GameSession {
         droneConsoleOverlay = new DroneConsoleOverlay(this);
         interactionService = new GameInteractionService(this);
         treeBoxUI = new TreeBoxUI();
-        treeBoxUI.setInventory(inventory); // ← цей рядок критично важливий
+        treeBoxUI.setInventory(inventory);
         gameOver = false;
+        victory = false;
 
         centerCameraOnMap(camera);
     }
@@ -160,60 +160,6 @@ public class GameSession {
         return interactionService.handleKeyDown(keycode);
     }
 
-    public void dispose() {
-        if (map != null) {
-            map.dispose();
-        }
-        if (baseTileTexture != null) {
-            baseTileTexture.dispose();
-        }
-        if (highlightTexture != null) {
-            highlightTexture.dispose();
-        }
-        if (inventoryUI != null) {
-            inventoryUI.dispose();
-        }
-        if (contextMenu != null) {
-            contextMenu.dispose();
-        }
-        if (gameOverOverlay != null) {
-            gameOverOverlay.dispose();
-        }
-        if (seedWheelOverlay != null) {
-            seedWheelOverlay.dispose();
-        }
-        if (audioManager != null) {
-            audioManager.dispose();
-        }
-    }
-
-    public AudioManager getAudioManager() {
-        return audioManager;
-    }
-    public Wallet getWallet() { return wallet; }
-
-    public DifficultyLevel getDifficulty() {
-        return difficulty;
-    }
-
-    public TiledMap getMap() {
-        return map;
-    }
-
-    public TiledMapTileLayer getBaseLayer() {
-        return baseLayer;
-    }
-
-    public BaseZone getBaseZone() {
-        return baseZone;
-    }
-
-    public OutdoorZone getOutdoorZone() {
-        return outdoorZone;
-    }
-
-    public FarmingSystem getFarmingSystem() {
-        return farmingSystem;
     public boolean handleScrolled(float amountX, float amountY) {
         return interactionService.handleScrolled(amountX, amountY);
     }
@@ -229,11 +175,12 @@ public class GameSession {
         if (seedWheelOverlay != null) seedWheelOverlay.dispose();
         if (treeBoxUI != null) treeBoxUI.dispose();
         if (droneConsoleOverlay != null) droneConsoleOverlay.dispose();
+        if (audioManager != null) audioManager.dispose();
     }
 
+    public AudioManager getAudioManager() { return audioManager; }
     public Wallet getWallet() { return wallet; }
     public TreeBoxUI getTreeBoxUI() { return treeBoxUI; }
-
     public DifficultyLevel getDifficulty() { return difficulty; }
     public TiledMap getMap() { return map; }
     public TiledMapTileLayer getBaseLayer() { return baseLayer; }
@@ -306,7 +253,7 @@ public class GameSession {
         return layer;
     }
 
-    TiledMapTileLayer.Cell createHighlightCell() {
+    public TiledMapTileLayer.Cell createHighlightCell() {
         if (highlightTexture == null) {
             highlightTexture = createSolidTexture(baseLayer.getTileWidth(), baseLayer.getTileHeight(), 255, 255, 0, 120);
         }
