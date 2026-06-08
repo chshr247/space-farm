@@ -11,6 +11,7 @@ import com.spacefarm.input.GameInputRouter;
 import com.spacefarm.render.GameOverOverlay;
 import com.spacefarm.render.GameSceneRenderer;
 import com.spacefarm.render.MainMenuOverlay;
+import com.spacefarm.render.VictoryOverlay;
 import com.spacefarm.save.SaveManager;
 import com.spacefarm.session.GameSession;
 
@@ -92,12 +93,22 @@ public class GameApp extends ApplicationAdapter {
             autosaveTimer = 0f;
         }
 
-        if (!session.isGameOver()) cameraController.update(delta);
+        if (!session.isGameOver() && !session.isVictory()) cameraController.update(delta);
 
         camera.update();
         sceneRenderer.render(camera, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 
-        if (session.isGameOver()) {
+        if (session.isVictory()) {
+            VictoryOverlay.Action winAction = session.getVictoryOverlay().handleInput();
+            if (winAction == VictoryOverlay.Action.RESTART) {
+                DifficultyLevel diff = session.getDifficulty();
+                disposeGame();
+                startNewGame(diff);
+            } else if (winAction == VictoryOverlay.Action.MAIN_MENU) {
+                disposeGame();
+                showMainMenu();
+            }
+        } else if (session.isGameOver()) {
             GameOverOverlay.Action goAction = session.getGameOverOverlay().handleInput();
             if (goAction == GameOverOverlay.Action.RESTART) {
                 DifficultyLevel diff = session.getDifficulty();
