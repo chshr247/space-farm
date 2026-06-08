@@ -34,7 +34,6 @@ import com.spacefarm.world.BaseZoneConstants;
 import com.spacefarm.oxygen.OxygenConstants;
 import com.spacefarm.world.OutdoorConstants;
 import com.spacefarm.audio.AudioManager;
-
 import com.spacefarm.inventory.BioCompost;
 import com.spacefarm.inventory.LivingDew;
 import com.spacefarm.inventory.MycorrhizaNetwork;
@@ -57,7 +56,7 @@ public class GameSession {
     private InventoryUI inventoryUI;
     private ContextMenuOverlay contextMenu;
     private GameOverOverlay gameOverOverlay;
-    private VictoryOverlay  victoryOverlay;
+    private VictoryOverlay victoryOverlay;
     private SeedWheelOverlay seedWheelOverlay;
     private DroneConsoleOverlay droneConsoleOverlay;
     private GameInteractionService interactionService;
@@ -68,19 +67,15 @@ public class GameSession {
     private Texture baseTileTexture;
     private Texture highlightTexture;
     private Wallet wallet;
-    private DifficultyLevel difficulty = DifficultyLevel.NORMAL; // default до вибору в меню
-    private AudioManager audioManager;
     private DifficultyLevel difficulty = DifficultyLevel.NORMAL;
+    private AudioManager audioManager;
 
-    /**
-     * Call this from the menu BEFORE create().
-     * Sets all difficulty-dependent values so create() picks them up correctly.
-     */
+    /** Call BEFORE create(). Sets all difficulty-dependent constants. */
     public void applyDifficulty(DifficultyLevel difficultyLevel) {
         this.difficulty = difficultyLevel;
         OxygenConstants.OXYGEN_DECREASE_AMOUNT  = difficultyLevel.oxygenDecreaseAmount;
         OutdoorConstants.OXYGEN_DECREASE_AMOUNT = difficultyLevel.oxygenDecreaseAmount;
-        BaseZoneConstants.STARTING_GARDEN_BEDS = difficultyLevel.startingGardenBeds;
+        BaseZoneConstants.STARTING_GARDEN_BEDS  = difficultyLevel.startingGardenBeds;
     }
 
     public void create(OrthographicCamera camera) {
@@ -127,13 +122,14 @@ public class GameSession {
         inventoryUI = new InventoryUI(inventory, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         contextMenu = new ContextMenuOverlay();
         gameOverOverlay = new GameOverOverlay();
-        victoryOverlay  = new VictoryOverlay();
+        victoryOverlay = new VictoryOverlay();
         seedWheelOverlay = new SeedWheelOverlay();
         droneConsoleOverlay = new DroneConsoleOverlay(this);
         interactionService = new GameInteractionService(this);
         treeBoxUI = new TreeBoxUI();
-        treeBoxUI.setInventory(inventory); // ← цей рядок критично важливий
+        treeBoxUI.setInventory(inventory);
         gameOver = false;
+        victory = false;
 
         centerCameraOnMap(camera);
     }
@@ -160,60 +156,6 @@ public class GameSession {
         return interactionService.handleKeyDown(keycode);
     }
 
-    public void dispose() {
-        if (map != null) {
-            map.dispose();
-        }
-        if (baseTileTexture != null) {
-            baseTileTexture.dispose();
-        }
-        if (highlightTexture != null) {
-            highlightTexture.dispose();
-        }
-        if (inventoryUI != null) {
-            inventoryUI.dispose();
-        }
-        if (contextMenu != null) {
-            contextMenu.dispose();
-        }
-        if (gameOverOverlay != null) {
-            gameOverOverlay.dispose();
-        }
-        if (seedWheelOverlay != null) {
-            seedWheelOverlay.dispose();
-        }
-        if (audioManager != null) {
-            audioManager.dispose();
-        }
-    }
-
-    public AudioManager getAudioManager() {
-        return audioManager;
-    }
-    public Wallet getWallet() { return wallet; }
-
-    public DifficultyLevel getDifficulty() {
-        return difficulty;
-    }
-
-    public TiledMap getMap() {
-        return map;
-    }
-
-    public TiledMapTileLayer getBaseLayer() {
-        return baseLayer;
-    }
-
-    public BaseZone getBaseZone() {
-        return baseZone;
-    }
-
-    public OutdoorZone getOutdoorZone() {
-        return outdoorZone;
-    }
-
-    public FarmingSystem getFarmingSystem() {
-        return farmingSystem;
     public boolean handleScrolled(float amountX, float amountY) {
         return interactionService.handleScrolled(amountX, amountY);
     }
@@ -225,69 +167,62 @@ public class GameSession {
         if (inventoryUI != null) inventoryUI.dispose();
         if (contextMenu != null) contextMenu.dispose();
         if (gameOverOverlay != null) gameOverOverlay.dispose();
-        if (victoryOverlay  != null) victoryOverlay.dispose();
+        if (victoryOverlay != null) victoryOverlay.dispose();
         if (seedWheelOverlay != null) seedWheelOverlay.dispose();
         if (treeBoxUI != null) treeBoxUI.dispose();
         if (droneConsoleOverlay != null) droneConsoleOverlay.dispose();
+        if (audioManager != null) audioManager.dispose();
     }
 
-    public Wallet getWallet() { return wallet; }
-    public TreeBoxUI getTreeBoxUI() { return treeBoxUI; }
-
-    public DifficultyLevel getDifficulty() { return difficulty; }
-    public TiledMap getMap() { return map; }
-    public TiledMapTileLayer getBaseLayer() { return baseLayer; }
-    public BaseZone getBaseZone() { return baseZone; }
-    public OutdoorZone getOutdoorZone() { return outdoorZone; }
-    public FarmingSystem getFarmingSystem() { return farmingSystem; }
-    public Inventory getInventory() { return inventory; }
-    public OxygenManager getOxygenManager() { return oxygenManager; }
-    public InventoryUI getInventoryUI() { return inventoryUI; }
-    public ContextMenuOverlay getContextMenu() { return contextMenu; }
-    public GameOverOverlay getGameOverOverlay() { return gameOverOverlay; }
-    public SeedWheelOverlay getSeedWheelOverlay() { return seedWheelOverlay; }
+    public Wallet getWallet()                           { return wallet; }
+    public TreeBoxUI getTreeBoxUI()                     { return treeBoxUI; }
+    public DifficultyLevel getDifficulty()              { return difficulty; }
+    public TiledMap getMap()                            { return map; }
+    public TiledMapTileLayer getBaseLayer()             { return baseLayer; }
+    public BaseZone getBaseZone()                       { return baseZone; }
+    public OutdoorZone getOutdoorZone()                 { return outdoorZone; }
+    public FarmingSystem getFarmingSystem()             { return farmingSystem; }
+    public Inventory getInventory()                     { return inventory; }
+    public OxygenManager getOxygenManager()             { return oxygenManager; }
+    public InventoryUI getInventoryUI()                 { return inventoryUI; }
+    public ContextMenuOverlay getContextMenu()          { return contextMenu; }
+    public GameOverOverlay getGameOverOverlay()         { return gameOverOverlay; }
+    public SeedWheelOverlay getSeedWheelOverlay()       { return seedWheelOverlay; }
     public DroneConsoleOverlay getDroneConsoleOverlay() { return droneConsoleOverlay; }
-    public TilePicker getTilePicker() { return tilePicker; }
-    public TiledMapTileLayer getSelectionLayer() { return selectionLayer; }
-    public void setGameOver(boolean gameOver) { this.gameOver = gameOver; }
-    public boolean isGameOver() { return gameOver; }
-    public VictoryOverlay getVictoryOverlay() { return victoryOverlay; }
-    public void setVictory(boolean victory)   { this.victory = victory; }
-    public boolean isVictory()                { return victory; }
+    public TilePicker getTilePicker()                   { return tilePicker; }
+    public TiledMapTileLayer getSelectionLayer()        { return selectionLayer; }
+    public AudioManager getAudioManager()               { return audioManager; }
+    public void setGameOver(boolean gameOver)           { this.gameOver = gameOver; }
+    public boolean isGameOver()                         { return gameOver; }
+    public VictoryOverlay getVictoryOverlay()           { return victoryOverlay; }
+    public void setVictory(boolean victory)             { this.victory = victory; }
+    public boolean isVictory()                          { return victory; }
 
     public WorldBounds getWorldBounds() {
-        float worldWidth = baseLayer.getWidth() * baseLayer.getTileWidth();
+        float worldWidth  = baseLayer.getWidth()  * baseLayer.getTileWidth();
         float worldHeight = baseLayer.getHeight() * baseLayer.getTileHeight();
         return new WorldBounds(0f, 0f, worldWidth, worldHeight);
     }
 
     private TiledMap loadMapOrFallback() {
         FileHandle tmx = Gdx.files.internal("maps/world.tmx");
-        if (tmx.exists()) {
-            return new TmxMapLoader().load("maps/world.tmx");
-        }
+        if (tmx.exists()) return new TmxMapLoader().load("maps/world.tmx");
         return new TiledMap();
     }
 
     private TiledMapTileLayer findFirstTileLayer(TiledMap map) {
         MapLayers layers = map.getLayers();
         for (MapLayer layer : layers) {
-            if (layer instanceof TiledMapTileLayer) {
-                return (TiledMapTileLayer) layer;
-            }
+            if (layer instanceof TiledMapTileLayer) return (TiledMapTileLayer) layer;
         }
         return null;
     }
 
     private void centerCameraOnMap(OrthographicCamera camera) {
-        int baseX = baseZone.getBaseX();
-        int baseY = baseZone.getBaseY();
-        int baseWidth = baseZone.getBaseWidth();
-        int baseHeight = baseZone.getBaseHeight();
-        float tileWidth = baseLayer.getTileWidth();
+        float tileWidth  = baseLayer.getTileWidth();
         float tileHeight = baseLayer.getTileHeight();
-        float baseCenterX = (baseX + baseWidth / 2f) * tileWidth;
-        float baseCenterY = (baseY + baseHeight / 2f) * tileHeight;
+        float baseCenterX = (baseZone.getBaseX() + baseZone.getBaseWidth()  / 2f) * tileWidth;
+        float baseCenterY = (baseZone.getBaseY() + baseZone.getBaseHeight() / 2f) * tileHeight;
         camera.position.set(baseCenterX, baseCenterY, 0f);
         camera.update();
     }
@@ -295,7 +230,8 @@ public class GameSession {
     private TiledMapTileLayer createFallbackLayer() {
         baseTileTexture = createSolidTexture(DEFAULT_TILE_SIZE, DEFAULT_TILE_SIZE, 60, 70, 90, 255);
         StaticTiledMapTile tile = new StaticTiledMapTile(new TextureRegion(baseTileTexture));
-        TiledMapTileLayer layer = new TiledMapTileLayer(DEFAULT_MAP_WIDTH, DEFAULT_MAP_HEIGHT, DEFAULT_TILE_SIZE, DEFAULT_TILE_SIZE);
+        TiledMapTileLayer layer = new TiledMapTileLayer(DEFAULT_MAP_WIDTH, DEFAULT_MAP_HEIGHT,
+                DEFAULT_TILE_SIZE, DEFAULT_TILE_SIZE);
         for (int x = 0; x < DEFAULT_MAP_WIDTH; x++) {
             for (int y = 0; y < DEFAULT_MAP_HEIGHT; y++) {
                 TiledMapTileLayer.Cell cell = new TiledMapTileLayer.Cell();
@@ -308,7 +244,8 @@ public class GameSession {
 
     TiledMapTileLayer.Cell createHighlightCell() {
         if (highlightTexture == null) {
-            highlightTexture = createSolidTexture(baseLayer.getTileWidth(), baseLayer.getTileHeight(), 255, 255, 0, 120);
+            highlightTexture = createSolidTexture(
+                    baseLayer.getTileWidth(), baseLayer.getTileHeight(), 255, 255, 0, 120);
         }
         StaticTiledMapTile tile = new StaticTiledMapTile(new TextureRegion(highlightTexture));
         TiledMapTileLayer.Cell cell = new TiledMapTileLayer.Cell();
