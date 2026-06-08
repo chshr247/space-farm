@@ -17,16 +17,27 @@
         "description": "Інструмент для збору врожаю",
         "itemType": "SICKLE"
       },
+      null,
       {
-        "quantity": 20,
-        "name": "Насіння",
-        "description": "Насіння для посадження (20)",
-        "itemType": "SEED"
+        "name": "Living Dew",
+        "description": "Tree phase 2 item. Shop price: $1000",
+        "itemType": "LIVING_DEW"
       },
-      null,
-      null,
-      null,
-      null,
+      {
+        "name": "Mycorrhiza Net",
+        "description": "Tree phase 3 item. Shop price: $2000",
+        "itemType": "MYCORRHIZA_NETWORK"
+      },
+      {
+        "name": "Universe Flower",
+        "description": "Tree phase 4 item. Shop price: $4000",
+        "itemType": "UNIVERSE_FLOWER"
+      },
+      {
+        "name": "Eden Core",
+        "description": "Tree phase 5 item. Shop price: $8000",
+        "itemType": "EDEN_CORE"
+      },
       null,
       null,
       null,
@@ -44,7 +55,7 @@
       null,
       null
     ],
-    "selectedSlot": 4
+    "selectedSlot": 10
   },
   "oxygen": {
     "currentOxygen": 100.0,
@@ -85,8 +96,8 @@
       "scavengingStartTime": 0
     },
     {
-      "isCleared": true,
-      "lastClearedTime": 1780902988379,
+      "isCleared": false,
+      "lastClearedTime": 0,
       "isScavenging": false,
       "scavengingStartTime": 0
     }

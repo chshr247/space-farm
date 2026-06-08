@@ -18,6 +18,7 @@ public class ScavengingLocation {
     private boolean isScavenging;
     private long lastClearedTime;
     private LocationType locationType;
+    private boolean isGreened = false;
 
     // Constructors
     public ScavengingLocation(int x, int y, int width, int height, int color) {
@@ -135,5 +136,7 @@ public class ScavengingLocation {
     public long getScavengingStartTime() { return scavengingStartTime; }
     public long getLastClearedTime() { return lastClearedTime; }
     public LocationType getLocationType() { return locationType; }
+    public boolean isGreened()               { return isGreened; }
+    public void setGreened(boolean greened)  { this.isGreened = greened; }
 }
 

@@ -32,6 +32,11 @@ import com.spacefarm.economy.Wallet;
 import com.spacefarm.world.BaseZoneConstants;
 import com.spacefarm.oxygen.OxygenConstants;
 import com.spacefarm.world.OutdoorConstants;
+import com.spacefarm.inventory.BioCompost;
+import com.spacefarm.inventory.LivingDew;
+import com.spacefarm.inventory.MycorrhizaNetwork;
+import com.spacefarm.inventory.UniverseFlower;
+import com.spacefarm.inventory.EdenCore;
 
 public class GameSession {
     private static final int DEFAULT_TILE_SIZE = 64;
@@ -98,6 +103,13 @@ public class GameSession {
         inventory.addItem(1, new Seed(5));
         inventory.addItem(2, Sickle.getInstance());
 
+        // TODO: REMOVE BEFORE RELEASE — debug items for tree phase testing
+        inventory.addItem(new BioCompost());
+        inventory.addItem(new LivingDew());
+        inventory.addItem(new MycorrhizaNetwork());
+        inventory.addItem(new UniverseFlower());
+        inventory.addItem(new EdenCore());
+
         oxygenManager = new OxygenManager();
         wallet = new Wallet(difficulty.startingMoney);
         oxygenManager.setBaseZone(baseZone);
@@ -109,6 +121,7 @@ public class GameSession {
         droneConsoleOverlay = new DroneConsoleOverlay(this);
         interactionService = new GameInteractionService(this);
         treeBoxUI = new TreeBoxUI();
+        treeBoxUI.setInventory(inventory); // ← цей рядок критично важливий
         gameOver = false;
 
         centerCameraOnMap(camera);
