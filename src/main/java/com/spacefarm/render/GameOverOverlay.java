@@ -21,7 +21,7 @@ public class GameOverOverlay {
 
     private final Rectangle btnRestart  = new Rectangle();
     private final Rectangle btnMainMenu = new Rectangle();
-    private boolean prevTouch = false;
+    private boolean prevTouch = true; // ignore any touch already held when overlay appears
 
     public GameOverOverlay() {
         shapeRenderer = new ShapeRenderer();

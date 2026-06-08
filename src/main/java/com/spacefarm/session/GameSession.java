@@ -22,6 +22,7 @@ import com.spacefarm.oxygen.OxygenManager;
 import com.spacefarm.render.ContextMenuOverlay;
 import com.spacefarm.render.DroneConsoleOverlay;
 import com.spacefarm.render.GameOverOverlay;
+import com.spacefarm.render.VictoryOverlay;
 import com.spacefarm.render.InventoryUI;
 import com.spacefarm.render.SeedWheelOverlay;
 import com.spacefarm.render.TreeBoxUI;
@@ -54,12 +55,14 @@ public class GameSession {
     private InventoryUI inventoryUI;
     private ContextMenuOverlay contextMenu;
     private GameOverOverlay gameOverOverlay;
+    private VictoryOverlay  victoryOverlay;
     private SeedWheelOverlay seedWheelOverlay;
     private DroneConsoleOverlay droneConsoleOverlay;
     private GameInteractionService interactionService;
     private TilePicker tilePicker;
     private TreeBoxUI treeBoxUI;
     private boolean gameOver;
+    private boolean victory;
     private Texture baseTileTexture;
     private Texture highlightTexture;
     private Wallet wallet;
@@ -117,6 +120,7 @@ public class GameSession {
         inventoryUI = new InventoryUI(inventory, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         contextMenu = new ContextMenuOverlay();
         gameOverOverlay = new GameOverOverlay();
+        victoryOverlay  = new VictoryOverlay();
         seedWheelOverlay = new SeedWheelOverlay();
         droneConsoleOverlay = new DroneConsoleOverlay(this);
         interactionService = new GameInteractionService(this);
@@ -160,6 +164,7 @@ public class GameSession {
         if (inventoryUI != null) inventoryUI.dispose();
         if (contextMenu != null) contextMenu.dispose();
         if (gameOverOverlay != null) gameOverOverlay.dispose();
+        if (victoryOverlay  != null) victoryOverlay.dispose();
         if (seedWheelOverlay != null) seedWheelOverlay.dispose();
         if (treeBoxUI != null) treeBoxUI.dispose();
         if (droneConsoleOverlay != null) droneConsoleOverlay.dispose();
@@ -185,6 +190,9 @@ public class GameSession {
     public TiledMapTileLayer getSelectionLayer() { return selectionLayer; }
     public void setGameOver(boolean gameOver) { this.gameOver = gameOver; }
     public boolean isGameOver() { return gameOver; }
+    public VictoryOverlay getVictoryOverlay() { return victoryOverlay; }
+    public void setVictory(boolean victory)   { this.victory = victory; }
+    public boolean isVictory()                { return victory; }
 
     public WorldBounds getWorldBounds() {
         float worldWidth = baseLayer.getWidth() * baseLayer.getTileWidth();

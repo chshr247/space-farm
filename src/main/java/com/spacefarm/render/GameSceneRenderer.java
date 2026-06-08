@@ -47,8 +47,11 @@ public class GameSceneRenderer {
 
         gameSession.getContextMenu().render(camera);
 
-        if (gameSession.isGameOver()) {
-            // Game over: render only the overlay
+        if (gameSession.isVictory()) {
+            // Victory: render only the overlay — skip all other UI
+            gameSession.getVictoryOverlay().render(screenWidth, screenHeight);
+        } else if (gameSession.isGameOver()) {
+            // Game over: render only the overlay — skip all other UI so nothing shows on top
             gameSession.getGameOverOverlay().render(screenWidth, screenHeight);
         } else {
             oxygenUI.render(screenWidth, screenHeight);
