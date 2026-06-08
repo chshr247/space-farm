@@ -34,6 +34,12 @@ public abstract class Item {
         SICKLE,
         PLANT_FOOD,
         CRYSTAL,
+        // Tree phase items (phases 1-5)
+        BIO_COMPOST,
+        LIVING_DEW,
+        MYCORRHIZA_NETWORK,
+        UNIVERSE_FLOWER,
+        EDEN_CORE,
         EMPTY
     }
 }

@@ -17,7 +17,12 @@
         "description": "Інструмент для збору врожаю",
         "itemType": "SICKLE"
       },
-      null,
+      {
+        "quantity": 20,
+        "name": "Насіння",
+        "description": "Насіння для посадження (20)",
+        "itemType": "SEED"
+      },
       null,
       null,
       null,
@@ -39,7 +44,7 @@
       null,
       null
     ],
-    "selectedSlot": 0
+    "selectedSlot": 4
   },
   "oxygen": {
     "currentOxygen": 100.0,
@@ -48,7 +53,44 @@
   "farming": {
     "crops": {}
   },
-  "locations": [],
+  "locations": [
+    {
+      "isCleared": false,
+      "lastClearedTime": 0,
+      "isScavenging": false,
+      "scavengingStartTime": 0
+    },
+    {
+      "isCleared": false,
+      "lastClearedTime": 0,
+      "isScavenging": false,
+      "scavengingStartTime": 0
+    },
+    {
+      "isCleared": false,
+      "lastClearedTime": 0,
+      "isScavenging": false,
+      "scavengingStartTime": 0
+    },
+    {
+      "isCleared": false,
+      "lastClearedTime": 0,
+      "isScavenging": false,
+      "scavengingStartTime": 0
+    },
+    {
+      "isCleared": false,
+      "lastClearedTime": 0,
+      "isScavenging": false,
+      "scavengingStartTime": 0
+    },
+    {
+      "isCleared": true,
+      "lastClearedTime": 1780902988379,
+      "isScavenging": false,
+      "scavengingStartTime": 0
+    }
+  ],
   "wallet": {
     "balance": 1000.0
   },
