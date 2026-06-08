@@ -109,6 +109,7 @@ public class GameInteractionService {
                 float adjustedY = Gdx.graphics.getHeight() - screenY;
                 if (session.getSeedWheelOverlay().isButtonHit(screenX, adjustedY)) {
                     session.getSeedWheelOverlay().startSpin();
+                    session.getAudioManager().playWheelSound();
                     return true;
                 }
             }
@@ -251,7 +252,9 @@ public class GameInteractionService {
 
         if (session.getInventory().isWateringCanSelected()) {
             if (session.getFarmingSystem().hasCrop(coord)) {
-                session.getFarmingSystem().waterCrop(coord);
+                if (session.getFarmingSystem().waterCrop(coord)) {
+                    session.getAudioManager().playWaterSound();
+                }
             }
         } else if (session.getInventory().isSeedSelected()) {
             if (!session.getBaseZone().isGardenBed(coord)) {
@@ -271,11 +274,13 @@ public class GameInteractionService {
 
             if (!session.getFarmingSystem().hasCrop(coord) && session.getFarmingSystem().plantSeed(coord, cropType)) {
                 session.getInventory().useSeed();
+                session.getAudioManager().playPlantSound();
                 removeSelectedStackIfEmpty();
             }
         } else if (session.getInventory().isSickleSelected()) {
             if (session.getFarmingSystem().hasCrop(coord) && session.getFarmingSystem().harvestCrop(coord)) {
                 session.getInventory().addPlantFood(1);
+                session.getAudioManager().playHarvestSound();
             }
         }
     }

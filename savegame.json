@@ -7,10 +7,10 @@
         "itemType": "WATERING_CAN"
       },
       {
-        "quantity": 5,
-        "name": "Насіння",
-        "description": "Насіння для посадження (5)",
-        "itemType": "SEED"
+        "quantity": 11,
+        "name": "Урожай",
+        "description": "Помідори для їдження (1)",
+        "itemType": "PLANT_FOOD"
       },
       {
         "name": "Коса",
@@ -18,35 +18,53 @@
         "itemType": "SICKLE"
       },
       {
-        "name": "Bio-Compost",
-        "description": "Tree phase 1 item. Shop price: $500",
-        "itemType": "BIO_COMPOST"
+        "quantity": 3,
+        "name": "Рідкісне насіння",
+        "description": "Рідкісне насіння (10)",
+        "itemType": "RARE_SEED"
       },
       {
-        "name": "Living Dew",
-        "description": "Tree phase 2 item. Shop price: $1000",
-        "itemType": "LIVING_DEW"
+        "name": "Crystal",
+        "description": "A valuable space crystal obtained from scavenging",
+        "itemType": "CRYSTAL"
       },
       {
-        "name": "Mycorrhiza Net",
-        "description": "Tree phase 3 item. Shop price: $2000",
-        "itemType": "MYCORRHIZA_NETWORK"
+        "name": "Crystal",
+        "description": "A valuable space crystal obtained from scavenging",
+        "itemType": "CRYSTAL"
       },
       {
-        "name": "Universe Flower",
-        "description": "Tree phase 4 item. Shop price: $4000",
-        "itemType": "UNIVERSE_FLOWER"
+        "name": "Crystal",
+        "description": "A valuable space crystal obtained from scavenging",
+        "itemType": "CRYSTAL"
       },
       {
-        "name": "Eden Core",
-        "description": "Tree phase 5 item. Shop price: $8000",
-        "itemType": "EDEN_CORE"
-      }
+        "quantity": 17,
+        "name": "Насіння",
+        "description": "Насіння для посадження (20)",
+        "itemType": "SEED"
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
     ],
-    "selectedSlot": 0
+    "selectedSlot": 2
   },
   "oxygen": {
-    "currentOxygen": 100.0,
+    "currentOxygen": 64.0,
     "isAtBase": true
   },
   "farming": {
@@ -60,10 +78,22 @@
       "scavengingStartTime": 0
     },
     {
-      "isCleared": false,
-      "lastClearedTime": 0,
+      "isCleared": true,
+      "lastClearedTime": 1780727714472,
       "isScavenging": false,
-      "scavengingStartTime": 0
+      "scavengingStartTime": 1780726417054
+    },
+    {
+      "isCleared": true,
+      "lastClearedTime": 1780727714472,
+      "isScavenging": false,
+      "scavengingStartTime": 1780726464232
+    },
+    {
+      "isCleared": true,
+      "lastClearedTime": 1780727714472,
+      "isScavenging": false,
+      "scavengingStartTime": 1780726465572
     },
     {
       "isCleared": false,
@@ -72,26 +102,14 @@
       "scavengingStartTime": 0
     },
     {
-      "isCleared": false,
-      "lastClearedTime": 0,
-      "isScavenging": false,
-      "scavengingStartTime": 0
-    },
-    {
-      "isCleared": false,
-      "lastClearedTime": 0,
-      "isScavenging": false,
-      "scavengingStartTime": 0
-    },
-    {
-      "isCleared": false,
-      "lastClearedTime": 0,
+      "isCleared": true,
+      "lastClearedTime": 1780727860449,
       "isScavenging": false,
       "scavengingStartTime": 0
     }
   ],
   "wallet": {
-    "balance": 100.0
+    "balance": 1000.0
   },
   "gameOver": false
 }
