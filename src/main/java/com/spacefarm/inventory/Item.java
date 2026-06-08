@@ -1,8 +1,6 @@
 package com.spacefarm.inventory;
 
-/**
- * Base class for all inventory items.
- */
+// Базовий клас для всіх об'єктів в інвентарі
 public abstract class Item {
     protected String name;
     protected String description;
@@ -20,9 +18,6 @@ public abstract class Item {
         return description;
     }
 
-    /**
-     * Get the item type for identification.
-     */
     public abstract ItemType getType();
 
     public enum ItemType {

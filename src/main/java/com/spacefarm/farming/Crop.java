@@ -14,7 +14,6 @@ public class Crop {
     private float timeSinceWatered;
     private WaterState waterState;
 
-    // Конструктор тепер вимагає вказати тип при створенні
     public Crop(CropType type) {
         this.type = type;
         this.growthStage = GrowthStage.SEED;
@@ -23,9 +22,7 @@ public class Crop {
         this.waterState = WaterState.NORMAL;
     }
 
-    /**
-     * Update the crop's growth and water state.
-     */
+    // Оновлює стан росту та поливу рослини за проміжок часу
     public void update(float deltaTime) {
         updateGrowthStage(deltaTime);
         updateWaterState(deltaTime);
@@ -63,7 +60,7 @@ public class Crop {
             case YOUNG:
                 return FarmingConstants.STAGE_3_DURATION;
             case MATURE:
-                return -1f;
+                return -1f; // -1 означає, що це кінцева стадія і вона не змінюється
             default:
                 return -1f;
         }

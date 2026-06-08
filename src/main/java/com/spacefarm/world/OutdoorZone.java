@@ -2,9 +2,7 @@ package com.spacefarm.world;
 
 import java.util.*;
 
-/**
- * Represents the outdoor zone with scavenging locations arranged around a border.
- */
+
 public class OutdoorZone {
     private List<ScavengingLocation> locations;
     private int baseX, baseY, baseWidth, baseHeight;
@@ -21,9 +19,7 @@ public class OutdoorZone {
         initializeLocations();
     }
     
-    /**
-     * Initialize the grey border around the base.
-     */
+    // ініціалізація сірого контуру навколо бази (наша зона поза базою)
     private void initializeBorder() {
         int borderWidth = OutdoorConstants.BORDER_WIDTH;
         this.borderX = baseX - borderWidth;
@@ -32,15 +28,13 @@ public class OutdoorZone {
         this.borderHeight = baseHeight + 2 * borderWidth;
     }
     
-    /**
-     * Initialize 6 scavenging locations scattered around the border.
-     */
+    // ініціалізація шести локацій
     private void initializeLocations() {
-        // Regular scavenging locations
+        // звичайні локації
         int width = OutdoorConstants.OUTDOOR_LOCATION_WIDTH;
         int height = OutdoorConstants.OUTDOOR_LOCATION_HEIGHT;
         
-        // Define 5 positions around the border (top, bottom, left, right, corners)
+        // 5 їхніх позицій розкиданих по контуру зони
         int[][] positions = {
             // Top edge - center
             {baseX + baseWidth / 2 - width / 2, borderY + 5},
@@ -55,8 +49,8 @@ public class OutdoorZone {
         };
         
         for (int i = 0; i < OutdoorConstants.NUM_LOCATIONS; i++) {
-            int x = positions[i][0];
-            int y = positions[i][1];
+            int x = positions[i][0]; // x координата локації, де 0 це індекс масиву позицій
+            int y = positions[i][1]; // y координата локації, де 1 це індекс масиву позицій
             int color = OutdoorConstants.LOCATION_COLORS[i];
             
             ScavengingLocation location = new ScavengingLocation(x, y, width, height, color);
@@ -77,9 +71,7 @@ public class OutdoorZone {
         locations.add(seedWheelLocation);
     }
     
-    /**
-     * Check if a tile coordinate is within the border zone.
-     */
+    // перевірка чи координата знаходиться в зоні поза базою
     public boolean isInBorder(TileCoord coord) {
         return isInBorder(coord.x(), coord.y());
     }
@@ -91,9 +83,7 @@ public class OutdoorZone {
                  y >= baseY && y < baseY + baseHeight);  // Exclude base itself
     }
     
-    /**
-     * Check if a tile coordinate is within any outdoor location.
-     */
+    // перевіряє чи координата знаходиться в будь-якій з локацій поза базою
     public boolean isInOutdoor(TileCoord coord) {
         return isInOutdoor(coord.x(), coord.y());
     }
@@ -106,10 +96,7 @@ public class OutdoorZone {
         }
         return false;
     }
-    
-    /**
-     * Get the location containing the given tile coordinate.
-     */
+
     public ScavengingLocation getLocationAt(TileCoord coord) {
         return getLocationAt(coord.x(), coord.y());
     }
@@ -122,17 +109,11 @@ public class OutdoorZone {
         }
         return null;
     }
-    
-    /**
-     * Get all scavenging locations.
-     */
+    // отримати всі локації які існують
     public List<ScavengingLocation> getLocations() {
         return new ArrayList<>(locations);
     }
-    
-    /**
-     * Get all currently scavenging locations.
-     */
+    // отримати всі локації, які на даний момент зачищаються
     public List<ScavengingLocation> getScavengingLocations() {
         List<ScavengingLocation> scavenging = new ArrayList<>();
         for (ScavengingLocation location : locations) {
@@ -142,20 +123,14 @@ public class OutdoorZone {
         }
         return scavenging;
     }
-    /**
-     * Marks a scavenging location as greened (nature reclaims the area).
-     * Call this when a tree phase is confirmed.
-     * Phase index 0-4 maps to regular locations; index 5 is the seed wheel location.
-     */
+     // Позначає локацію як зелену після успішної зачистки
+     // Phase index 0-4 maps to regular locations; index 5 is the seed wheel location.
     public void greenLocation(int locationIndex) {
         if (locationIndex >= 0 && locationIndex < locations.size()) {
             locations.get(locationIndex).setGreened(true);
         }
     }
 
-    /**
-     * Returns how many locations are currently greened.
-     */
     public int getGreenedLocationCount() {
         int count = 0;
         for (ScavengingLocation loc : locations) {
@@ -163,8 +138,7 @@ public class OutdoorZone {
         }
         return count;
     }
-    
-    // Getters
+
     public int getBorderX() { return borderX; }
     public int getBorderY() { return borderY; }
     public int getBorderWidth() { return borderWidth; }

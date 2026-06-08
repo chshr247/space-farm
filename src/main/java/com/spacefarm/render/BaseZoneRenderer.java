@@ -11,9 +11,7 @@ import com.badlogic.gdx.maps.tiled.tiles.StaticTiledMapTile;
 import com.spacefarm.world.BaseZone;
 import com.spacefarm.world.TileCoord;
 
-/**
- * Renders the base zone with green tiles and special structures.
- */
+
 public class BaseZoneRenderer {
     private BaseZone baseZone;
     private TiledMapTileLayer baseLayer;

@@ -1,8 +1,6 @@
 package com.spacefarm.inventory;
 
-/**
- * Manages the player's inventory with 8 slots.
- */
+// малий інвентар на 8 слотів
 public class Inventory {
     private int inventorySize = 8;
     private static final int ROW_SIZE = 8;
@@ -12,25 +10,18 @@ public class Inventory {
     public Inventory() {
         this.slots = new Item[inventorySize];
         this.selectedSlot = 0;
-
-        // Initialize with a watering can in the first slot
+        // ініціалізація лійки в перший слот
         slots[0] = WateringCan.getInstance();
 
     }
 
-    /**
-     * Set all slots.
-     */
     public void setSlots(Item[] newSlots) {
         if (newSlots != null) {
             this.slots = newSlots;
             this.inventorySize = newSlots.length;
         }
     }
-
-    /**
-     * Expands the inventory by adding a new row.
-     */
+    // Розширення інвентарю додаванням ще одного ряду слотів
     public void expandInventory() {
         int newSize = this.inventorySize + ROW_SIZE;
         Item[] newSlots = new Item[newSize];
@@ -39,32 +30,20 @@ public class Inventory {
         this.inventorySize = newSize;
     }
 
-    /**
-     * Select a slot by index (0-7).
-     */
     public void selectSlot(int slotIndex) {
         if (slotIndex >= 0 && slotIndex < inventorySize) {
             selectedSlot = slotIndex;
         }
     }
 
-    /**
-     * Get the currently selected slot.
-     */
     public int getSelectedSlot() {
         return selectedSlot;
     }
-
-    /**
-     * Get the item in the selected slot.
-     */
+    // отримати об'єкт з обраного слоту зі змінної
     public Item getSelectedItem() {
         return slots[selectedSlot];
     }
-
-    /**
-     * Get the item in a specific slot.
-     */
+    // отримати об'єкт з конкретного слоту за індексом у параметрах
     public Item getItem(int slotIndex) {
         if (slotIndex >= 0 && slotIndex < inventorySize) {
             return slots[slotIndex];
@@ -72,9 +51,6 @@ public class Inventory {
         return null;
     }
 
-    /**
-     * Add an item to a specific slot.
-     */
     public boolean addItem(int slotIndex, Item item) {
         if (slotIndex >= 0 && slotIndex < inventorySize && slots[slotIndex] == null) {
             slots[slotIndex] = item;
@@ -82,10 +58,6 @@ public class Inventory {
         }
         return false;
     }
-
-    /**
-     * Remove an item from a specific slot.
-     */
     public Item removeItem(int slotIndex) {
         if (slotIndex >= 0 && slotIndex < inventorySize) {
             Item item = slots[slotIndex];
@@ -95,9 +67,6 @@ public class Inventory {
         return null;
     }
 
-    /**
-     * Swap items between two slots.
-     */
     public void swapItems(int slot1, int slot2) {
         if (slot1 >= 0 && slot1 < inventorySize && slot2 >= 0 && slot2 < inventorySize) {
             Item temp = slots[slot1];
@@ -106,24 +75,14 @@ public class Inventory {
         }
     }
 
-    /**
-     * Get the size of inventory.
-     */
     public int getSize() {
         return inventorySize;
     }
 
-    /**
-     * Check if the selected item is a watering can.
-     */
     public boolean isWateringCanSelected() {
         Item selected = getSelectedItem();
         return selected != null && selected.getType() == Item.ItemType.WATERING_CAN;
     }
-
-    /**
-     * Check if the selected item is any type of seeds.
-     */
     public boolean isSeedSelected() {
         Item selected = getSelectedItem();
         if (selected != null) {
@@ -142,10 +101,6 @@ public class Inventory {
         return false;
     }
 
-    /**
-     * Use a seed from the selected slot if it's any type of seeds.
-     * Returns true if a seed was used, false otherwise.
-     */
     public boolean useSeed() {
         Item selected = getSelectedItem();
         if (selected != null) {
@@ -164,17 +119,11 @@ public class Inventory {
         return false;
     }
 
-    /**
-     * Check if sickle is selected.
-     */
     public boolean isSickleSelected() {
         Item selected = getSelectedItem();
         return selected != null && selected.getType() == Item.ItemType.SICKLE;
     }
 
-    /**
-     * Check if plant food is selected.
-     */
     public boolean isPlantFoodSelected() {
         Item selected = getSelectedItem();
         if (selected != null && selected.getType() == Item.ItemType.PLANT_FOOD) {
@@ -184,10 +133,6 @@ public class Inventory {
         return false;
     }
 
-    /**
-     * Consume plant food from selected slot.
-     * Returns true if food was consumed, false otherwise.
-     */
     public boolean consumePlantFood() {
         Item selected = getSelectedItem();
         if (selected != null && selected.getType() == Item.ItemType.PLANT_FOOD) {
@@ -197,10 +142,6 @@ public class Inventory {
         return false;
     }
 
-    /**
-     * Add plant food to inventory (finds or creates stack).
-     * Returns true if added successfully.
-     */
     public boolean addPlantFood(int quantity) {
         // First try to add to existing plant food stack
         for (int i = 0; i < slots.length; i++) {
@@ -212,7 +153,6 @@ public class Inventory {
                 return true;  // Added to existing stack
             }
         }
-
         // If no existing stack, find empty slot
         for (int i = 0; i < slots.length; i++) {
             if (slots[i] == null) {
@@ -220,14 +160,8 @@ public class Inventory {
                 return true;
             }
         }
-
         return false;  // No space
     }
-
-    /**
-     * Add a crystal to inventory.
-     * Returns true if added successfully.
-     */
     public boolean addItem(Item item) {
         // Find an empty slot
         for (int i = 0; i < slots.length; i++) {
@@ -239,16 +173,11 @@ public class Inventory {
         return false;  // No space
     }
 
-    /**
-     * Get all slots.
-     */
     public Item[] getSlots() {
         return slots;
     }
 
-    /**
-     * Maps a tree phase index (0-4) to the required ItemType.
-     */
+    // Масив типів предметів, необхідних для кожної фази росту дерева (0-4)
     private static final Item.ItemType[] TREE_PHASE_ITEM_TYPES = {
             Item.ItemType.BIO_COMPOST,
             Item.ItemType.LIVING_DEW,
@@ -257,9 +186,6 @@ public class Inventory {
             Item.ItemType.EDEN_CORE
     };
 
-    /**
-     * Returns true if inventory contains the item required for the given tree phase index (0-4).
-     */
     public boolean hasTreePhaseItem(int phaseIndex) {
         if (phaseIndex < 0 || phaseIndex >= TREE_PHASE_ITEM_TYPES.length) return false;
         Item.ItemType required = TREE_PHASE_ITEM_TYPES[phaseIndex];
@@ -269,10 +195,6 @@ public class Inventory {
         return false;
     }
 
-    /**
-     * Removes the item required for the given tree phase index from inventory.
-     * Returns true if the item was found and removed, false otherwise.
-     */
     public boolean removeTreePhaseItem(int phaseIndex) {
         if (phaseIndex < 0 || phaseIndex >= TREE_PHASE_ITEM_TYPES.length) return false;
         Item.ItemType required = TREE_PHASE_ITEM_TYPES[phaseIndex];

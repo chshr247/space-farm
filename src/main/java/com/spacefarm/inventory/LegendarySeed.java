@@ -1,8 +1,7 @@
 package com.spacefarm.inventory;
 
-/**
- * Legendary seed item - restores 50% oxygen.
- */
+
+ // Legendary seed item restores 50% oxygen
 public class LegendarySeed extends Item {
     private int quantity;
     private static final int MAX_QUANTITY = 5;
@@ -22,10 +21,6 @@ public class LegendarySeed extends Item {
         return ItemType.LEGENDARY_SEED;
     }
 
-    /**
-     * Use one seed (decrement quantity).
-     * Returns true if seed was used, false if quantity is 0.
-     */
     public boolean useSeed() {
         if (quantity > 0) {
             quantity--;

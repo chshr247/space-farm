@@ -24,10 +24,7 @@ public class FarmingSystem {
         crops.entrySet().removeIf(entry -> entry.getValue().isDead());
     }
 
-    /**
-     * Plant a seed at the given tile coordinate.
-     * ТЕПЕР ПРИЙМАЄ CropType
-     */
+    // Саджає рослину на координату TileCoord
     public boolean plantSeed(TileCoord coord, FarmingConstants.CropType type) {
         if (!isValidCoord(coord)) {
             return false;
@@ -38,15 +35,11 @@ public class FarmingSystem {
             return false;
         }
 
-        // Передаємо тип у нову рослину
         crops.put(key, new Crop(type));
         return true;
     }
 
-    /**
-     * Plant a seed at the given coordinates (x, y).
-     * ТЕПЕР ПРИЙМАЄ CropType
-     */
+    // Саджає рослину на координату x, y
     public boolean plantSeed(int x, int y, FarmingConstants.CropType type) {
         return plantSeed(new TileCoord(x, y), type);
     }
@@ -99,16 +92,11 @@ public class FarmingSystem {
     public void clear() {
         crops.clear();
     }
-    /**
-     * Get all crops.
-     */
+
     public Map<String, Crop> getCrops() {
         return crops;
     }
 
-    /**
-     * Set all crops.
-     */
     public void setCrops(Map<String, Crop> crops) {
         this.crops.clear();
         this.crops.putAll(crops);

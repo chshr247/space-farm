@@ -3,9 +3,7 @@ package com.spacefarm.world;
 import java.util.*;
 import com.spacefarm.world.BaseZoneConstants;
 
-/**
- * Represents the base/habitat zone with special areas for buildings and structures.
- */
+
 public class BaseZone {
     // Base zone dimensions
     private int baseX;
@@ -17,7 +15,6 @@ public class BaseZone {
     private TileCoord treeCenter;
     private int treeWidth;
     private int treeHeight;
-
     private List<TileCoord> gardenBeds;
     private TileCoord droneZoneCenter;
     private int droneZoneSize;
@@ -42,7 +39,7 @@ public class BaseZone {
         this.treeHeight = 20;
         this.treeCenter = new TileCoord(centerX - treeWidth / 2, centerY - treeHeight / 2);
 
-        // Garden beds in one corner (top-left area)
+        // Garden beds (top-left area)
         this.gardenBeds = new ArrayList<>();
         int gardenStartX = baseX + 3;
         int gardenStartY = baseY + baseHeight - 8;
@@ -52,18 +49,17 @@ public class BaseZone {
             gardenBeds.add(new TileCoord(bedX, bedY));
         }
 
-        // Space drone in opposite corner (bottom-right area)
+        // Space drone (bottom-right area)
         this.droneZoneSize = 5;
         int droneX = baseX + baseWidth - droneZoneSize - 3;
         int droneY = baseY + 3;
         this.droneZoneCenter = new TileCoord(droneX, droneY);
     }
-    /*Adds one new garden bed (called when player buys upgrade).
-     * Returns true if successful, false if MAX_GARDEN_BEDS limit is reached.
-     */
+    // Adds one new garden bed (called when player buys upgrade)
+    // Returns true if successful, false if MAX_GARDEN_BEDS limit is reached.
     public boolean addGardenBed() {
         if (gardenBeds.size() >= BaseZoneConstants.MAX_GARDEN_BEDS) {
-            return false; // Досягнуто максимум
+            return false;
         }
         int gardenStartX = baseX + 3;
         int gardenStartY = baseY + baseHeight - 8;
@@ -74,9 +70,7 @@ public class BaseZone {
         return true;
     }
 
-    /**
-     * Check if a tile is within the base zone.
-     */
+
     public boolean isInBaseZone(TileCoord coord) {
         return isInBaseZone(coord.x(), coord.y());
     }
@@ -86,9 +80,6 @@ public class BaseZone {
                 y >= baseY && y < baseY + baseHeight;
     }
 
-    /**
-     * Check if a tile is within the magical tree area.
-     */
     public boolean isTreeArea(TileCoord coord) {
         return isTreeArea(coord.x(), coord.y());
     }
@@ -100,9 +91,6 @@ public class BaseZone {
                 y >= treeStartY && y < treeStartY + treeHeight;
     }
 
-    /**
-     * Check if a tile is within a garden bed area.
-     */
     public boolean isGardenBed(TileCoord coord) {
         return isGardenBed(coord.x(), coord.y());
     }
@@ -118,9 +106,6 @@ public class BaseZone {
         return false;
     }
 
-    /**
-     * Check if a tile is within the drone zone.
-     */
     public boolean isDroneZone(TileCoord coord) {
         return isDroneZone(coord.x(), coord.y());
     }
@@ -133,11 +118,7 @@ public class BaseZone {
     }
 
     private boolean dirty = false;
-
-    /**
-     * Expand the safe oxygen zone by {@code tiles} in every direction.
-     * Called when the Core Tree evolves to a new phase.
-     */
+    // Розширює зелену зону після апгрейду фази дерева
     public void expandZone(int tiles) {
         baseX      -= tiles;
         baseY      -= tiles;
@@ -145,11 +126,9 @@ public class BaseZone {
         baseHeight += tiles * 2;
         dirty = true;
     }
-
     public boolean isDirty()  { return dirty; }
     public void clearDirty()  { dirty = false; }
 
-    // Getters
     public int getBaseX() { return baseX; }
     public int getBaseY() { return baseY; }
     public int getBaseWidth() { return baseWidth; }
