@@ -30,6 +30,8 @@ import com.spacefarm.economy.Wallet;
 import com.spacefarm.world.BaseZoneConstants;
 import com.spacefarm.oxygen.OxygenConstants;
 import com.spacefarm.world.OutdoorConstants;
+import com.spacefarm.audio.AudioManager;
+
 
 public class GameSession {
     private static final int DEFAULT_TILE_SIZE = 64;
@@ -55,6 +57,7 @@ public class GameSession {
     private Texture highlightTexture;
     private Wallet wallet;
     private DifficultyLevel difficulty = DifficultyLevel.NORMAL; // default до вибору в меню
+    private AudioManager audioManager;
 
     /**
      * Call this from the menu BEFORE create().
@@ -98,6 +101,9 @@ public class GameSession {
         oxygenManager = new OxygenManager();
         wallet = new Wallet(difficulty.startingMoney);
         oxygenManager.setBaseZone(baseZone);
+
+        audioManager = new AudioManager();
+        audioManager.playMusic();
 
         inventoryUI = new InventoryUI(inventory, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         contextMenu = new ContextMenuOverlay();
@@ -152,6 +158,13 @@ public class GameSession {
         if (seedWheelOverlay != null) {
             seedWheelOverlay.dispose();
         }
+        if (audioManager != null) {
+            audioManager.dispose();
+        }
+    }
+
+    public AudioManager getAudioManager() {
+        return audioManager;
     }
     public Wallet getWallet() { return wallet; }
 

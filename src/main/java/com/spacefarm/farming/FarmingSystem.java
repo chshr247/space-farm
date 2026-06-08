@@ -98,6 +98,7 @@ public class FarmingSystem {
 
     public void clear() {
         crops.clear();
+    }
     /**
      * Get all crops.
      */
