@@ -64,8 +64,18 @@ public class BaseZone {
         int gardenStartX = baseX + 3;
         int gardenStartY = baseY + baseHeight - 8;
         int i = gardenBeds.size();
-        int bedX = gardenStartX + (i % 2) * 4;
-        int bedY = gardenStartY - (i / 2) * 4;
+        int bedX, bedY;
+        if (i < 12) {
+            // Section 1: 2 columns, 6 rows going up, step 4
+            bedX = gardenStartX + (i % 2) * 4;
+            bedY = gardenStartY - (i / 2) * 4;
+        } else {
+            // Section 2: identical structure to section 1, shifted right of tree
+            int j = i - 12;
+            int sec2StartX = treeCenter.x() + treeWidth + 1;
+            bedX = sec2StartX + (j % 2) * 4;
+            bedY = gardenStartY - (j / 2) * 4;
+        }
         gardenBeds.add(new TileCoord(bedX, bedY));
         return true;
     }
