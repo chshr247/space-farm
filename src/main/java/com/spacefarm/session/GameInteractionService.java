@@ -27,6 +27,7 @@ public class GameInteractionService {
 
     public void update(float deltaTime) {
         session.getSeedWheelOverlay().update(deltaTime);
+        session.getTreeBoxUI().update(deltaTime);
 
         // If player dismissed result modal → hasResult() is true → add items → hide overlay
         if (session.getSeedWheelOverlay().hasResult()) {
