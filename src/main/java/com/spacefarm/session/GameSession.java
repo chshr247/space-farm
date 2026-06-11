@@ -33,6 +33,8 @@ import com.spacefarm.inventory.LivingDew;
 import com.spacefarm.inventory.MycorrhizaNetwork;
 import com.spacefarm.inventory.UniverseFlower;
 import com.spacefarm.inventory.EdenCore;
+import com.spacefarm.render.OutdoorZoneRenderer;
+import com.spacefarm.render.BaseZoneRenderer;
 
 public class GameSession {
     private static final int DEFAULT_TILE_SIZE = 64;
@@ -64,6 +66,7 @@ public class GameSession {
     private Wallet wallet;
     private DifficultyLevel difficulty = DifficultyLevel.NORMAL;
     private AudioManager audioManager;
+    private BaseZoneRenderer baseZoneRenderer;
 
     /** Call BEFORE create(). Sets all difficulty-dependent constants. */
     public void applyDifficulty(DifficultyLevel difficultyLevel) {
@@ -259,4 +262,6 @@ public class GameSession {
 
     public OutdoorZoneRenderer getOutdoorZoneRenderer(){ return outdoorZoneRenderer; }
     public void setOutdoorZoneRenderer(OutdoorZoneRenderer outdoorZoneRenderer){ this.outdoorZoneRenderer = outdoorZoneRenderer; }
+    public BaseZoneRenderer getBaseZoneRenderer(){ return baseZoneRenderer; }
+    public void setBaseZoneRenderer(BaseZoneRenderer baseZoneRenderer){ this.baseZoneRenderer = baseZoneRenderer; }
 }

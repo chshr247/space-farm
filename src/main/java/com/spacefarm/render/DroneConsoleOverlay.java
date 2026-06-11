@@ -12,6 +12,9 @@ import com.badlogic.gdx.utils.Align;
 import com.spacefarm.inventory.Crystal;
 import com.spacefarm.inventory.Item;
 import com.spacefarm.session.GameSession;
+import com.spacefarm.world.BaseZoneConstants;
+import com.spacefarm.world.TileCoord;
+import java.util.List;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -116,6 +119,7 @@ public class DroneConsoleOverlay {
         baseUpgrades.add(new UpgradeItem("base_inv", "Backpack Mod", "Larger inventory", 800, 2));
         baseUpgrades.add(new UpgradeItem("base_speed", "Turbo Thrusters", "Faster delivery time", 400, 3));
         baseUpgrades.add(new UpgradeItem("base_scavenge", "Drone Scanner", "Faster scavenging", 600, 3));
+        baseUpgrades.add(new UpgradeItem("base_garden", "Garden Expansion", "Add 1 garden bed to base", 200, BaseZoneConstants.MAX_GARDEN_BEDS - BaseZoneConstants.STARTING_GARDEN_BEDS));
     }
 
     private void calculateMaxScroll() {
@@ -374,10 +378,15 @@ public class DroneConsoleOverlay {
         shapeRenderer.end();
 
         batch.begin();
+        boolean gardenMaxed = "base_garden".equals(upg.id) && session.getBaseZone().getGardenBedCount() >= BaseZoneConstants.MAX_GARDEN_BEDS;
         String btnText = upg.isMaxed() ? "OWNED" : "BUY";
         layout.setText(smallFont, btnText);
         smallFont.setColor(Color.WHITE);
         smallFont.draw(batch, btnText, btnX + (btnW - layout.width)/2, btnY + (btnH + layout.height)/2);
+        if (gardenMaxed) {
+            smallFont.setColor(Color.RED);
+            smallFont.draw(batch, "Ви вже досягли максимальної кількості грядок!", ix, iy - 55);
+        }
     }
 
     public boolean handleTouchDown(float screenX, float screenY) {
@@ -434,6 +443,14 @@ public class DroneConsoleOverlay {
             
             if ("base_inv".equals(upg.id)) {
                 session.getInventory().expandInventory();
+            }
+            if ("base_garden".equals(upg.id)) {
+                boolean added = session.getBaseZone().addGardenBed();
+                if (added) {
+                    List<TileCoord> beds = session.getBaseZone().getGardenBeds();
+                    TileCoord newBed = beds.get(beds.size() - 1);
+                    session.getBaseZoneRenderer().refreshGardenBedTile(newBed);
+                }
             }
             
             Gdx.app.log("DroneConsole", "Purchased: " + upg.name);
