@@ -30,6 +30,7 @@ public class GameSceneRenderer {
         this.outdoorZoneRenderer = new OutdoorZoneRenderer(gameSession.getOutdoorZone(), baseLayer, map, tileSize);
         gameSession.setOutdoorZoneRenderer(this.outdoorZoneRenderer);
         this.baseZoneRenderer = new BaseZoneRenderer(gameSession.getBaseZone(), baseLayer, tileSize);
+        gameSession.setBaseZoneRenderer(this.baseZoneRenderer);
         this.oxygenUI = new OxygenUI(gameSession.getOxygenManager());
         this.treeBoxUI = gameSession.getTreeBoxUI();
     }
