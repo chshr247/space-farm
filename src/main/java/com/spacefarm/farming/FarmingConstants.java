@@ -29,7 +29,7 @@ public class FarmingConstants {
         THIRSTY,       // Needs water soon
         DYING          // Critical need for water
     }
-
+    // Type of seeds
     public enum CropType {
         DEFAULT,
         EPIC,

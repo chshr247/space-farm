@@ -39,11 +39,11 @@ public class GameInteractionService {
             }
         }
 
-        if (session.getOxygenManager().isOxygenDepleted() && !session.isGameOver()) {
+        if (session.getOxygenManager().isOxygenDepleted() && !session.isGameOver() && !session.isVictory()) {
             session.setGameOver(true);
         }
 
-        if (session.isGameOver()) {
+        if (session.isGameOver() || session.isVictory()) {
             return;
         }
 
@@ -53,7 +53,7 @@ public class GameInteractionService {
     }
 
     public boolean handleTouchDown(int screenX, int screenY, int button) {
-        if (session.isGameOver()) {
+        if (session.isGameOver() || session.isVictory()) {
             return false;
         }
 
@@ -82,6 +82,10 @@ public class GameInteractionService {
                     }
                     // 4. Expand the base zone
                     session.getBaseZone().expandZone(4);
+                    // 5. Check for victory (all 5 phases complete)
+                    if (session.getTreeBoxUI().isComplete()) {
+                        session.setVictory(true);
+                    }
                 }
             }
 
@@ -107,6 +111,7 @@ public class GameInteractionService {
                 float adjustedY = Gdx.graphics.getHeight() - screenY;
                 if (session.getSeedWheelOverlay().isButtonHit(screenX, adjustedY)) {
                     session.getSeedWheelOverlay().startSpin();
+                    session.getAudioManager().playWheelSound();
                     return true;
                 }
             }
@@ -124,14 +129,14 @@ public class GameInteractionService {
     }
 
     public boolean handleTouchDragged(int screenX, int screenY) {
-        if (session.isGameOver()) {
+        if (session.isGameOver() || session.isVictory()) {
             return false;
         }
         return session.getInventoryUI().handleTouchDragged(screenX, screenY);
     }
 
     public boolean handleTouchUp(int screenX, int screenY, int button) {
-        if (session.isGameOver()) {
+        if (session.isGameOver() || session.isVictory()) {
             return false;
         }
         if (button == Buttons.LEFT) {
@@ -249,7 +254,9 @@ public class GameInteractionService {
 
         if (session.getInventory().isWateringCanSelected()) {
             if (session.getFarmingSystem().hasCrop(coord)) {
-                session.getFarmingSystem().waterCrop(coord);
+                if (session.getFarmingSystem().waterCrop(coord)) {
+                    session.getAudioManager().playWaterSound();
+                }
             }
         } else if (session.getInventory().isSeedSelected()) {
             if (!session.getBaseZone().isGardenBed(coord)) {
@@ -269,11 +276,13 @@ public class GameInteractionService {
 
             if (!session.getFarmingSystem().hasCrop(coord) && session.getFarmingSystem().plantSeed(coord, cropType)) {
                 session.getInventory().useSeed();
+                session.getAudioManager().playPlantSound();
                 removeSelectedStackIfEmpty();
             }
         } else if (session.getInventory().isSickleSelected()) {
             if (session.getFarmingSystem().hasCrop(coord) && session.getFarmingSystem().harvestCrop(coord)) {
                 session.getInventory().addPlantFood(1);
+                session.getAudioManager().playHarvestSound();
             }
         }
     }

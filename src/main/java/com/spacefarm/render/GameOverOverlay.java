@@ -1,136 +1,171 @@
 package com.spacefarm.render;
 
-import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.Rectangle;
 
-/**
- * Renders a stylised Game Over screen when oxygen is depleted.
- */
 public class GameOverOverlay {
+
+    public enum Action { NONE, RESTART, MAIN_MENU }
 
     private final ShapeRenderer shapeRenderer;
     private final SpriteBatch   batch;
     private final BitmapFont    titleFont;
     private final BitmapFont    subFont;
+    private final BitmapFont    bodyFont;
+    private final BitmapFont    btnFont;
     private final BitmapFont    hintFont;
+
+    private final Rectangle btnRestart  = new Rectangle();
+    private final Rectangle btnMainMenu = new Rectangle();
+    private boolean prevTouch = true; // ignore any touch already held when overlay appears
 
     public GameOverOverlay() {
         shapeRenderer = new ShapeRenderer();
         batch         = new SpriteBatch();
-        titleFont     = FontUtils.createFont("fonts/ArialBold.ttf", 56);
-        subFont       = FontUtils.createFont("fonts/ArialBold.ttf", 22);
-        hintFont      = FontUtils.createFont("fonts/ArialBold.ttf", 16);
+        titleFont = FontUtils.createFont("fonts/ArialBold.ttf", 56);
+        subFont   = FontUtils.createFont("fonts/ArialBold.ttf", 24);
+        bodyFont  = FontUtils.createFont("fonts/ArialBold.ttf", 16);
+        btnFont   = FontUtils.createFont("fonts/ArialBold.ttf", 22);
+        hintFont  = FontUtils.createFont("fonts/ArialBold.ttf", 13);
+    }
+
+    /** Call once per frame BEFORE render(). */
+    public Action handleInput() {
+        boolean touched     = Gdx.input.isTouched();
+        boolean justClicked = touched && !prevTouch;
+        prevTouch = touched;
+        if (!justClicked) return Action.NONE;
+
+        int mx = Gdx.input.getX();
+        int my = Gdx.graphics.getHeight() - Gdx.input.getY();
+
+        if (btnRestart.contains(mx, my))  return Action.RESTART;
+        if (btnMainMenu.contains(mx, my)) return Action.MAIN_MENU;
+        return Action.NONE;
     }
 
     public void render(int sw, int sh) {
-        float cx = sw / 2f;
-        float cy = sh / 2f;
+        float panelW = sw * 0.50f;
+        float panelH = sh * 0.65f;
+        float cx = sw * 0.5f;
+        float cy = sh * 0.5f;
+        float px = cx - panelW * 0.5f;
+        float py = cy - panelH * 0.5f;
 
-        // ── 1. Full-screen vignette ───────────────────────────────────────────
+        drawPanel(px, py, panelW, panelH);
+
+        GlyphLayout layout = new GlyphLayout();
+
+        batch.begin();
+        titleFont.setColor(1f, 0.18f, 0.18f, 1f);
+        layout.setText(titleFont, "GAME OVER");
+        float scaleX = Math.min(1f, (panelW * 0.82f) / layout.width);
+        titleFont.getData().setScale(scaleX, 1f);
+        layout.setText(titleFont, "GAME OVER");
+        titleFont.draw(batch, "GAME OVER", cx - layout.width * 0.5f, py + panelH - panelH * 0.08f);
+        titleFont.getData().setScale(1f, 1f);
+        batch.end();
+
+        drawHRule(cx, py + panelH - panelH * 0.26f, panelW * 0.72f);
+
+        batch.begin();
+        subFont.setColor(0.95f, 0.55f, 0.55f, 1f);
+        layout.setText(subFont, "Кисень вичерпано");
+        subFont.draw(batch, "Кисень вичерпано", cx - layout.width * 0.5f, py + panelH - panelH * 0.33f);
+
+        bodyFont.setColor(0.55f, 0.28f, 0.28f, 1f);
+        String flavour = "Атмосферу не вдалося відновити. Планета залишається мертвою.";
+        layout.setText(bodyFont, flavour);
+        float flavourScale = Math.min(1f, (panelW * 0.82f) / layout.width);
+        bodyFont.getData().setScale(flavourScale, 1f);
+        layout.setText(bodyFont, flavour);
+        bodyFont.draw(batch, flavour, cx - layout.width * 0.5f, py + panelH - panelH * 0.46f);
+        bodyFont.getData().setScale(1f, 1f);
+        batch.end();
+
+        float btnW    = panelW * 0.55f;
+        float btnH    = panelH * 0.11f;
+        float btnGap  = panelH * 0.04f;
+        float stackTop = py + panelH * 0.28f + (2 * btnH + btnGap) * 0.5f;
+
+        btnRestart.set( cx - btnW * 0.5f, stackTop - btnH,              btnW, btnH);
+        btnMainMenu.set(cx - btnW * 0.5f, stackTop - 2 * btnH - btnGap, btnW, btnH);
+
+        drawButton(btnRestart,  "СПРОБУВАТИ ЩЕ РАЗ", 0.22f, 0.05f, 0.05f, 0.90f, 0.20f, 0.20f);
+        drawButton(btnMainMenu, "ГОЛОВНЕ МЕНЮ",       0.10f, 0.06f, 0.12f, 0.55f, 0.20f, 0.60f);
+
+        batch.begin();
+        hintFont.setColor(0.30f, 0.14f, 0.14f, 1f);
+        String hint = "Не здавайся — планета чекає на тебе";
+        layout.setText(hintFont, hint);
+        hintFont.draw(batch, hint, cx - layout.width * 0.5f, py + panelH * 0.04f);
+        batch.end();
+    }
+
+    private void drawPanel(float px, float py, float pw, float ph) {
+        float border = 4f;
+        float cs = Math.min(pw, ph) * 0.028f;
+
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-
-        // deep dark overlay
-        shapeRenderer.setColor(0.04f, 0f, 0f, 0.82f);
-        shapeRenderer.rect(0, 0, sw, sh);
-
-        // centre glow (dark crimson panel)
-        float panelW = 600f, panelH = 360f;
-        float px = cx - panelW / 2f, py = cy - panelH / 2f;
-        shapeRenderer.setColor(0.10f, 0.02f, 0.02f, 0.96f);
-        shapeRenderer.rect(px, py, panelW, panelH);
-
-        // inner accent strip — top
+        shapeRenderer.setColor(0.10f, 0.02f, 0.02f, 0.97f);
+        shapeRenderer.rect(px, py, pw, ph);
         shapeRenderer.setColor(0.55f, 0.05f, 0.05f, 1f);
-        shapeRenderer.rect(px, py + panelH - 4f, panelW, 4f);
-        // inner accent strip — bottom
-        shapeRenderer.rect(px, py, panelW, 4f);
-
-        // decorative left / right side bars
+        shapeRenderer.rect(px, py + ph - border, pw, border);
+        shapeRenderer.rect(px, py,               pw, border);
         shapeRenderer.setColor(0.40f, 0.04f, 0.04f, 1f);
-        shapeRenderer.rect(px, py, 4f, panelH);
-        shapeRenderer.rect(px + panelW - 4f, py, 4f, panelH);
-
-        // corner squares
-        float cs = 14f;
+        shapeRenderer.rect(px,             py, border, ph);
+        shapeRenderer.rect(px + pw - border, py, border, ph);
         shapeRenderer.setColor(0.85f, 0.15f, 0.15f, 1f);
-        shapeRenderer.rect(px - 2f,               py + panelH - cs, cs, cs);
-        shapeRenderer.rect(px + panelW - cs + 2f, py + panelH - cs, cs, cs);
-        shapeRenderer.rect(px - 2f,               py,               cs, cs);
-        shapeRenderer.rect(px + panelW - cs + 2f, py,               cs, cs);
-
+        shapeRenderer.rect(px - 2f,           py + ph - cs, cs, cs);
+        shapeRenderer.rect(px + pw - cs + 2f, py + ph - cs, cs, cs);
+        shapeRenderer.rect(px - 2f,           py,           cs, cs);
+        shapeRenderer.rect(px + pw - cs + 2f, py,           cs, cs);
         shapeRenderer.end();
 
-        // ── 2. Thin border lines ──────────────────────────────────────────────
         shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-        shapeRenderer.setColor(0.75f, 0.10f, 0.10f, 1f);
-        shapeRenderer.rect(px, py, panelW, panelH);
-        shapeRenderer.setColor(0.45f, 0.07f, 0.07f, 1f);
-        shapeRenderer.rect(px + 8f, py + 8f, panelW - 16f, panelH - 16f);
+        shapeRenderer.setColor(0.75f, 0.10f, 0.10f, 0.90f);
+        shapeRenderer.rect(px, py, pw, ph);
+        shapeRenderer.setColor(0.40f, 0.06f, 0.06f, 0.60f);
+        shapeRenderer.rect(px + 10f, py + 10f, pw - 20f, ph - 20f);
+        shapeRenderer.end();
+    }
+
+    private void drawButton(Rectangle r, String label,
+                            float bgR, float bgG, float bgB,
+                            float fgR, float fgG, float fgB) {
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        shapeRenderer.setColor(bgR, bgG, bgB, 0.92f);
+        shapeRenderer.rect(r.x, r.y, r.width, r.height);
         shapeRenderer.end();
 
-        // ── 3. Text — evenly distributed inside the panel ────────────────────
-        // Panel inner area: py+8 .. py+panelH-8  (accounting for inset frame)
-        // Five rows, equally spaced:
-        //   row0 (GAME OVER title)  ~top 25%
-        //   divider line            ~top 45%
-        //   row1 (subtitle)         ~top 52%
-        //   row2 (flavour)          ~top 67%
-        //   row3 (hint)             ~bottom 15%
-
-        float innerTop    = py + panelH - 20f;   // usable top
-        float innerBottom = py + 20f;             // usable bottom
-        float innerH      = innerTop - innerBottom;
-
-        float titleY   = innerTop  - innerH * 0.10f;  // ~top 10% margin
-        float dividerY = innerTop  - innerH * 0.44f;
-        float subY     = innerTop  - innerH * 0.50f;
-        float flavourY = innerTop  - innerH * 0.67f;
-        float hintY    = innerBottom + innerH * 0.10f;
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+        shapeRenderer.setColor(fgR, fgG, fgB, 0.85f);
+        shapeRenderer.rect(r.x, r.y, r.width, r.height);
+        shapeRenderer.end();
 
         GlyphLayout layout = new GlyphLayout();
         batch.begin();
-
-        // "GAME OVER"
-        titleFont.setColor(1f, 0.18f, 0.18f, 1f);
-        layout.setText(titleFont, "GAME OVER");
-        titleFont.draw(batch, "GAME OVER",
-                cx - layout.width / 2f, titleY);
-
+        btnFont.setColor(fgR, fgG, fgB, 1f);
+        layout.setText(btnFont, label);
+        float scaleX = Math.min(1f, (r.width * 0.85f) / layout.width);
+        btnFont.getData().setScale(scaleX, 1f);
+        layout.setText(btnFont, label);
+        btnFont.draw(batch, label,
+                r.x + (r.width  - layout.width)  * 0.5f,
+                r.y + (r.height + layout.height) * 0.5f);
+        btnFont.getData().setScale(1f, 1f);
         batch.end();
+    }
 
-        // divider
+    private void drawHRule(float cx, float y, float w) {
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        shapeRenderer.setColor(0.6f, 0.08f, 0.08f, 1f);
-        float lineW = 400f;
-        shapeRenderer.rect(cx - lineW / 2f, dividerY, lineW, 2f);
+        shapeRenderer.setColor(0.60f, 0.08f, 0.08f, 1f);
+        shapeRenderer.rect(cx - w * 0.5f, y, w, 2f);
         shapeRenderer.end();
-
-        batch.begin();
-
-        // subtitle
-        subFont.setColor(0.95f, 0.65f, 0.65f, 1f);
-        layout.setText(subFont, "Кисень вичерпано");
-        subFont.draw(batch, "Кисень вичерпано",
-                cx - layout.width / 2f, subY);
-
-        // flavour
-        hintFont.setColor(0.60f, 0.35f, 0.35f, 1f);
-        String flavour = "Атмосферу не вдалося відновити. Планета залишається мертвою.";
-        layout.setText(hintFont, flavour);
-        hintFont.draw(batch, flavour,
-                cx - layout.width / 2f, flavourY);
-
-        // bottom hint
-        hintFont.setColor(0.40f, 0.22f, 0.22f, 1f);
-        String hint = "Закрийте гру та спробуйте ще раз";
-        layout.setText(hintFont, hint);
-        hintFont.draw(batch, hint,
-                cx - layout.width / 2f, hintY);
-
-        batch.end();
     }
 
     public void dispose() {
@@ -138,6 +173,8 @@ public class GameOverOverlay {
         batch.dispose();
         titleFont.dispose();
         subFont.dispose();
+        bodyFont.dispose();
+        btnFont.dispose();
         hintFont.dispose();
     }
 }

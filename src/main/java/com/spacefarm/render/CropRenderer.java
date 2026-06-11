@@ -14,9 +14,7 @@ import com.spacefarm.farming.FarmingSystem;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Renders crops and their growth stages.
- */
+
 public class CropRenderer {
     private final FarmingSystem farmingSystem;
     private final TiledMapTileLayer baseLayer;
@@ -31,13 +29,10 @@ public class CropRenderer {
         this.cropTexturesMap = new HashMap<>();
         this.waterIndicatorTexture = createWaterIndicatorTexture();
 
-        // Завантажуємо дефолтні текстури
         cropTexturesMap.put(FarmingConstants.CropType.DEFAULT, loadTextures("sprite/plants/stage1.png", "sprite/plants/stage2.png", "sprite/plants/stage3.png"));
 
-        // Завантажуємо епічні текстури (заміни назви файлів на свої)
         cropTexturesMap.put(FarmingConstants.CropType.EPIC, loadTextures("sprite/plants/epic_stage1.png", "sprite/plants/epic_stage2.png", "sprite/plants/epic_stage2.png"));
 
-        // Завантажуємо легендарні текстури (заміни назви файлів на свої)
         cropTexturesMap.put(FarmingConstants.CropType.LEGENDARY, loadTextures("sprite/plants/leg_stage1.png", "sprite/plants/leg_stage2.png", "sprite/plants/leg_stage3.png"));
     }
 
@@ -54,9 +49,6 @@ public class CropRenderer {
         return textures;
     }
 
-    /**
-     * Render all crops on the map.
-     */
     public void render(OrthographicCamera camera) {
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
@@ -66,13 +58,8 @@ public class CropRenderer {
         float tileWidth = baseLayer.getTileWidth();
         float tileHeight = baseLayer.getTileHeight();
 
-        // 1. Головний цикл тепер по Y, і він йде у зворотному напрямку:
-        // від найдальшого ряду (mapHeight - 1) до найближчого (0)
         for (int y = mapHeight - 1; y >= 0; y--) {
-
-            // 2. Внутрішній цикл по X йде як зазвичай зліва направо
             for (int x = 0; x < mapWidth; x++) {
-
                 Crop crop = farmingSystem.getCrop(x, y);
                 if (crop != null) {
                     float worldX = x * tileWidth;
@@ -88,7 +75,7 @@ public class CropRenderer {
     private void renderCrop(Crop crop, float worldX, float worldY, float tileWidth, float tileHeight) {
         int stageIndex = crop.getGrowthStage().ordinal();
 
-        // Отримуємо правильний масив текстур залежно від типу рослини
+        // правильний масив текстур залежно від типу рослини
         Texture[] texturesForType = cropTexturesMap.get(crop.getType());
         Texture cropTexture = texturesForType[Math.min(stageIndex, 3)];
 
@@ -142,9 +129,6 @@ public class CropRenderer {
         return texture;
     }
 
-    /**
-     * Dispose of all textures.
-     */
     public void dispose() {
         // Очищаємо всі текстури з Map
         for (Texture[] textures : cropTexturesMap.values()) {
