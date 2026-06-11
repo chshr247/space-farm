@@ -28,6 +28,7 @@ public class GameSceneRenderer {
         this.gridOverlay = new GridOverlay(baseLayer);
         this.cropRenderer = new CropRenderer(gameSession.getFarmingSystem(), baseLayer);
         this.outdoorZoneRenderer = new OutdoorZoneRenderer(gameSession.getOutdoorZone(), baseLayer, map, tileSize);
+        gameSession.setOutdoorZoneRenderer(this.outdoorZoneRenderer);
         this.baseZoneRenderer = new BaseZoneRenderer(gameSession.getBaseZone(), baseLayer, tileSize);
         this.oxygenUI = new OxygenUI(gameSession.getOxygenManager());
         this.treeBoxUI = gameSession.getTreeBoxUI();

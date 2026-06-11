@@ -19,12 +19,7 @@ import com.spacefarm.inventory.Inventory;
 import com.spacefarm.inventory.Seed;
 import com.spacefarm.inventory.Sickle;
 import com.spacefarm.oxygen.OxygenManager;
-import com.spacefarm.render.ContextMenuOverlay;
-import com.spacefarm.render.DroneConsoleOverlay;
-import com.spacefarm.render.GameOverOverlay;
-import com.spacefarm.render.InventoryUI;
-import com.spacefarm.render.SeedWheelOverlay;
-import com.spacefarm.render.TreeBoxUI;
+import com.spacefarm.render.*;
 import com.spacefarm.world.BaseZone;
 import com.spacefarm.world.OutdoorZone;
 import com.spacefarm.DifficultyLevel;
@@ -47,6 +42,7 @@ public class GameSession {
     private TiledMapTileLayer baseLayer;
     private TiledMapTileLayer selectionLayer;
     private BaseZone baseZone;
+    private OutdoorZoneRenderer outdoorZoneRenderer;
     private OutdoorZone outdoorZone;
     private FarmingSystem farmingSystem;
     private Inventory inventory;
@@ -255,4 +251,7 @@ public class GameSession {
         pixmap.dispose();
         return texture;
     }
+
+    public OutdoorZoneRenderer getOutdoorZoneRenderer(){ return outdoorZoneRenderer; }
+    public void setOutdoorZoneRenderer(OutdoorZoneRenderer outdoorZoneRenderer){ this.outdoorZoneRenderer = outdoorZoneRenderer; }
 }
