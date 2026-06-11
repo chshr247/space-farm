@@ -76,8 +76,11 @@ public class GameInteractionService {
                     session.getOutdoorZone().greenLocation(result);
                     session.getOutdoorZoneRenderer().applyGreenTiles(result);
                     // Phase 5 (index 4) also greens the seed wheel location (index 5)
+                    if (result == 1) {
+                        session.getOutdoorZone().greenLocation(4);
+                    }
                     if (result == 4) {
-                        session.getOutdoorZone().greenLocation(5);
+                      //  session.getOutdoorZone().greenLocation(5);
                         session.getOutdoorZoneRenderer().applyGreenTiles(5);
                     }
                     // 4. Expand the base zone
