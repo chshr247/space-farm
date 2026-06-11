@@ -1,8 +1,6 @@
 package com.spacefarm.inventory;
 
-/**
- * Represents a crystal - a valuable item obtained from scavenging outdoor zones.
- */
+// Об'єкт який випадає після зачистки звичайної локації
 public class Crystal extends Item {
     public Crystal() {
         super("Crystal", "A valuable space crystal obtained from scavenging");

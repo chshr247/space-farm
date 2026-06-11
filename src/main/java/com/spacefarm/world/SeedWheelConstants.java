@@ -27,9 +27,6 @@ public class SeedWheelConstants {
     public static final float RARE_SEED_OXYGEN_RESTORE = 20f;
     public static final float LEGENDARY_SEED_OXYGEN_RESTORE = 50f;
 
-    // Common seed info
-    public static final float COMMON_SEED_OXYGEN_RESTORE = 0f;  // Common seeds don't restore oxygen
-
     // Cooldown before next spin
     public static final long SPIN_COOLDOWN_MILLIS = 30000;  // 30 seconds between spins
 

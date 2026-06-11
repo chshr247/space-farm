@@ -1,8 +1,7 @@
 package com.spacefarm.inventory;
 
-/**
- * Rare seed item - restores 20% oxygen.
- */
+
+// Rare seed item restores 20% oxygen.
 public class RareSeed extends Item {
     private int quantity;
     private static final int MAX_QUANTITY = 10;
@@ -21,11 +20,6 @@ public class RareSeed extends Item {
     public ItemType getType() {
         return ItemType.RARE_SEED;
     }
-
-    /**
-     * Use one seed (decrement quantity).
-     * Returns true if seed was used, false if quantity is 0.
-     */
     public boolean useSeed() {
         if (quantity > 0) {
             quantity--;
@@ -33,7 +27,6 @@ public class RareSeed extends Item {
         }
         return false;
     }
-
     public int getQuantity() {
         return quantity;
     }

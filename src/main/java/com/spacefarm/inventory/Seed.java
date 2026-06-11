@@ -1,8 +1,6 @@
 package com.spacefarm.inventory;
 
-/**
- * Seed item with limited quantity.
- */
+// Default seed restores 10% oxygen
 public class Seed extends Item {
     private int quantity;
     private static final int MAX_QUANTITY = 20;
@@ -21,10 +19,6 @@ public class Seed extends Item {
         return ItemType.SEED;
     }
 
-    /**
-     * Use one seed (decrement quantity).
-     * Returns true if seed was used, false if quantity is 0.
-     */
     public boolean useSeed() {
         if (quantity > 0) {
             quantity--;
