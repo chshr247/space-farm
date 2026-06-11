@@ -143,5 +143,7 @@ public class OutdoorZone {
     public int getBorderY() { return borderY; }
     public int getBorderWidth() { return borderWidth; }
     public int getBorderHeight() { return borderHeight; }
+    public int getBaseWidth() { return baseWidth; }
+    public int getBaseHeight() { return baseHeight; }
 }
 
