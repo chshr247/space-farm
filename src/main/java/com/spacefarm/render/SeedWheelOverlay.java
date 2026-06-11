@@ -14,32 +14,30 @@ import com.spacefarm.world.SeedWheelConstants;
  * Fortune-wheel overlay.
  *
  * Flow:
- *   1. Player clicks the wheel location → setVisible(true)
+ *   1. Player clicks wheel location → setVisible(true)
  *   2. Player clicks "КРУТИТИ" → GameInteractionService calls startSpin()
- *   3. Wheel spins → determineResult() sets resultType, showResult = true
- *   4. Result modal shown → player clicks "ЗАБРАТИ" / "ЗАКРИТИ"
- *      → handleTouchDown() sets showResult = false
- *   5. Next update() frame → GameInteractionService detects hasResult() == true
- *      → calls getResultAndReset() → adds items → calls setVisible(false)
- *   6. Game continues normally
+ *   3. Wheel spins → determineResult(), then 1s delay → result modal shown
+ *   4. Player clicks "ЗАБРАТИ" / "ЗАКРИТИ" → handleTouchDown() sets showResult=false
+ *   5. Next update() → GameInteractionService detects hasResult()==true
+ *      → getResultAndReset() → adds items → setVisible(false) → game continues
  */
 public class SeedWheelOverlay {
 
-    // ── Sector degrees (must sum to 360)
+    // ── Sector degrees ──────────────────────────────────────────────────────
     private static final float DEG_COMMON    = 360f * (SeedWheelConstants.COMMON_SEED_CHANCE    / 100f); // 216°
     private static final float DEG_RARE      = 360f * (SeedWheelConstants.RARE_SEED_CHANCE      / 100f); // 108°
     private static final float DEG_LEGENDARY = 360f * (SeedWheelConstants.LEGENDARY_SEED_CHANCE / 100f); //  36°
 
-    // ── Sector colours from SeedWheelConstants
-    private static final Color COLOR_COMMON    = fromRGB(SeedWheelConstants.COMMON_ZONE_COLOR);
-    private static final Color COLOR_RARE      = fromRGB(SeedWheelConstants.RARE_ZONE_COLOR);
-    private static final Color COLOR_LEGENDARY = fromRGB(SeedWheelConstants.LEGENDARY_ZONE_COLOR);
+    // ── Sector colours ──────────────────────────────────────────────────────
+    private static final Color COLOR_COMMON    = fromRGB(SeedWheelConstants.COLOR_COMMON);
+    private static final Color COLOR_RARE      = fromRGB(SeedWheelConstants.COLOR_EPIC);
+    private static final Color COLOR_LEGENDARY = fromRGB(SeedWheelConstants.COLOR_LEGENDARY);
 
-    // ── Panel accent colours (hardcoded, match VictoryOverlay / GameOverOverlay) ─
-    private static final float AC_R = 0.10f, AC_G = 0.88f, AC_B = 1.00f; // cyan  — wheel + common result
-    private static final float GR_R = 0.15f, GR_G = 0.90f, GR_B = 0.40f; // green — rare / legendary result
+    // ── Panel accent colours (cyan = wheel/common, green = epic/legendary) ──
+    private static final float AC_R = 0.10f, AC_G = 0.88f, AC_B = 1.00f; // cyan
+    private static final float GR_R = 0.15f, GR_G = 0.90f, GR_B = 0.40f; // green
 
-    // ── Rendering
+    // ── Rendering ───────────────────────────────────────────────────────────
     private final ShapeRenderer sr;
     private final SpriteBatch   batch;
     private final BitmapFont    titleFont;
@@ -48,24 +46,27 @@ public class SeedWheelOverlay {
     private final BitmapFont    hintFont;
     private final GlyphLayout   gl = new GlyphLayout();
 
-    // ── State
-    private boolean isVisible    = false;
-    private boolean isSpinning   = false;
-    private boolean showResult   = false;
+    // ── State ───────────────────────────────────────────────────────────────
+    private boolean isVisible  = false;
+    private boolean isSpinning = false;
+    private boolean showResult = false;
 
-    private float wheelRotation  = 0f;   // degrees, current display angle
-    private float spinTimeLeft   = 0f;   // seconds remaining
-    private float totalRotation  = 0f;   // degrees accumulated this spin
-    private float resultDelay    = 0f;   // countdown before showing result modal
+    private float wheelRotation = 0f;
+    private float spinTimeLeft  = 0f;
+    private float totalRotation = 0f;
+    private float resultDelay   = 0f;
 
     private FarmingConstants.CropType resultType = null;
 
-    // ── Hit-boxes (set during render, used for click detection) ───────────────
+    // ── Hit-boxes (set during render) ───────────────────────────────────────
     private final Rectangle spinBtnRect  = new Rectangle();
     private final Rectangle claimBtnRect = new Rectangle();
     private final Rectangle closeBtnRect = new Rectangle();
 
+    // ── Wheel geometry (set during render) ──────────────────────────────────
     private float wx, wy, wr;
+
+    // ────────────────────────────────────────────────────────────────────────
 
     public SeedWheelOverlay() {
         sr    = new ShapeRenderer();
@@ -77,13 +78,14 @@ public class SeedWheelOverlay {
         hintFont  = FontUtils.createFont("fonts/ArialBold.ttf", 13);
     }
 
+    // ════════════════════════════════════════════════════════════════════════
+    // Public API
+    // ════════════════════════════════════════════════════════════════════════
 
-    /** Call once per frame from GameInteractionService.update(). */
     public void update(float delta) {
-        if (!isSpinning && resultDelay <= 0f) return; // nothing to process
+        if (!isSpinning && resultDelay <= 0f) return;
 
         if (isSpinning) {
-            // ── Wheel spinning ──
             spinTimeLeft -= delta;
             if (spinTimeLeft > 0f) {
                 float t     = spinTimeLeft / SeedWheelConstants.SPIN_DURATION_SECONDS;
@@ -92,7 +94,7 @@ public class SeedWheelOverlay {
                 wheelRotation += step;
                 totalRotation += step;
             } else {
-                // Spin finished — guarantee minimum rotations
+                // Guarantee minimum rotations
                 float minDeg = SeedWheelConstants.MIN_ROTATIONS * 360f;
                 if (totalRotation < minDeg) {
                     wheelRotation += (minDeg - totalRotation);
@@ -100,7 +102,7 @@ public class SeedWheelOverlay {
                 isSpinning   = false;
                 spinTimeLeft = 0f;
                 determineResult();
-                resultDelay  = 1.0f; // 1s pause so player sees where wheel stopped
+                resultDelay  = 1.0f;
             }
         } else if (resultDelay > 0f) {
             resultDelay -= delta;
@@ -111,10 +113,6 @@ public class SeedWheelOverlay {
         }
     }
 
-    /**
-     * Starts a new spin.
-     * Called by GameInteractionService when the player clicks "КРУТИТИ".
-     */
     public void startSpin() {
         if (isSpinning || showResult) return;
         isSpinning    = true;
@@ -125,11 +123,6 @@ public class SeedWheelOverlay {
         wheelRotation += MathUtils.random(0f, 360f);
     }
 
-    /**
-     * Returns the won crop type and clears the result.
-     * Call only when hasResult() == true.
-     * After this, GameInteractionService should call setVisible(false).
-     */
     public FarmingConstants.CropType getResultAndReset() {
         FarmingConstants.CropType r = resultType;
         resultType = null;
@@ -137,55 +130,44 @@ public class SeedWheelOverlay {
         return r;
     }
 
-    /**
-     * True only when ALL of:
-     *   - spin is done
-     *   - 1.5s delay passed (modal was shown)
-     *   - player dismissed the modal (showResult == false)
-     *   - result not yet consumed by GameInteractionService
-     */
+    /** True only after spin done + delay passed + player dismissed modal. */
     public boolean hasResult() {
         return resultType != null && !showResult && resultDelay <= 0f;
     }
 
-    public boolean isVisible()  { return isVisible; }
-    public boolean isSpinning() { return isSpinning; }
-    public void setVisible(boolean v) { isVisible = v; }
+    public boolean isVisible()            { return isVisible; }
+    public boolean isSpinning()           { return isSpinning; }
+    public void    setVisible(boolean v)  { isVisible = v; }
 
     /**
-     * Call from GameInteractionService.handleTouchDown() when overlay is visible.
-     *
-     * - When result modal is shown: handles "ЗАБРАТИ" / "ЗАКРИТИ" clicks,
-     *   returns true (event consumed).
-     * - When wheel is shown: returns false so the caller can handle the spin button.
+     * Called from GameInteractionService.handleTouchDown().
+     * Returns true (swallows click) when result modal is open.
+     * Returns false when wheel is shown, so caller handles spin button.
      */
     public boolean handleTouchDown(float screenX, float screenY) {
         if (!isVisible) return false;
-
         if (showResult) {
             if (claimBtnRect.contains(screenX, screenY)
                     || closeBtnRect.contains(screenX, screenY)) {
                 showResult = false;
-                // resultType stays set → hasResult() will return true next frame
             }
             return true;
         }
-
         return false;
     }
 
-    /**
-     * Returns true if the "КРУТИТИ" spin button was hit.
-     * Compatible with existing GameInteractionService code.
-     */
+    /** Returns true if the "КРУТИТИ" button was hit. */
     public boolean isButtonHit(float screenX, float screenY) {
         return !isSpinning && !showResult && spinBtnRect.contains(screenX, screenY);
     }
 
+    // ════════════════════════════════════════════════════════════════════════
+    // Render
+    // ════════════════════════════════════════════════════════════════════════
+
     public void render(int sw, int sh) {
         if (!isVisible) return;
 
-        // Dim the game behind the overlay
         sr.begin(ShapeRenderer.ShapeType.Filled);
         sr.setColor(0f, 0f, 0f, 0.65f);
         sr.rect(0, 0, sw, sh);
@@ -198,9 +180,7 @@ public class SeedWheelOverlay {
         }
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Wheel panel
-    // ─────────────────────────────────────────────────────────────────────────
+    // ── Wheel panel ──────────────────────────────────────────────────────────
 
     private void renderWheelPanel(int sw, int sh) {
         float panelW = sw * 0.44f;
@@ -222,7 +202,6 @@ public class SeedWheelOverlay {
         drawPointer();
         drawHub();
 
-        // Title
         batch.begin();
         titleFont.setColor(AC_R, AC_G, AC_B, 1f);
         gl.setText(titleFont, "Колесо Фортуни");
@@ -230,7 +209,6 @@ public class SeedWheelOverlay {
                 cx - gl.width * 0.5f, py + panelH - panelH * 0.04f);
         batch.end();
 
-        // Spin button
         float btnW = panelW * 0.55f;
         float btnH = panelH * 0.09f;
         spinBtnRect.set(cx - btnW * 0.5f, py + panelH * 0.065f, btnW, btnH);
@@ -259,28 +237,28 @@ public class SeedWheelOverlay {
 
     private void drawWheelSectors() {
         float start = wheelRotation;
-        drawSector(start,                         DEG_COMMON,    COLOR_COMMON,    "Звичайне",    "насіння");
-        drawSector(start + DEG_COMMON,            DEG_RARE,      COLOR_RARE,      "Епічне",      "насіння");
-        drawSector(start + DEG_COMMON + DEG_RARE, DEG_LEGENDARY, COLOR_LEGENDARY, "Легендарне",  "насіння");
+        drawSector(start,                         DEG_COMMON,    COLOR_COMMON,    "Звичайне",   "насіння");
+        drawSector(start + DEG_COMMON,            DEG_RARE,      COLOR_RARE,      "Епічне",     "насіння");
+        drawSector(start + DEG_COMMON + DEG_RARE, DEG_LEGENDARY, COLOR_LEGENDARY, "Легендарне", "насіння");
     }
 
     private void drawSector(float startDeg, float sweepDeg, Color color,
                             String line1, String line2) {
         int segs = Math.max(3, (int)(sweepDeg / 4f));
 
+        // Dark inner
         sr.begin(ShapeRenderer.ShapeType.Filled);
         sr.setColor(color.r * 0.65f, color.g * 0.65f, color.b * 0.65f, 0.92f);
         for (int i = 0; i < segs; i++) {
             float a1 = startDeg + (float)  i      / segs * sweepDeg;
             float a2 = startDeg + (float)(i + 1)  / segs * sweepDeg;
-            sr.triangle(
-                    wx, wy,
+            sr.triangle(wx, wy,
                     wx + wr * MathUtils.cosDeg(a1), wy + wr * MathUtils.sinDeg(a1),
                     wx + wr * MathUtils.cosDeg(a2), wy + wr * MathUtils.sinDeg(a2));
         }
         sr.end();
 
-        // Lighter outer part
+        // Lighter outer ring
         sr.begin(ShapeRenderer.ShapeType.Filled);
         sr.setColor(color.r, color.g, color.b, 0.90f);
         float innerR = wr * 0.45f;
@@ -304,21 +282,18 @@ public class SeedWheelOverlay {
                 wy + wr * MathUtils.sinDeg(startDeg));
         sr.end();
 
-        // Label
-        float mid = startDeg + sweepDeg * 0.5f;
-        float lx  = wx + wr * 0.60f * MathUtils.cosDeg(mid);
-        float ly  = wy + wr * 0.60f * MathUtils.sinDeg(mid);
-        // All sectors same visual weight — legendary is smaller sector so slightly smaller font
+        // Label — larger font for bigger sectors
+        float mid   = startDeg + sweepDeg * 0.5f;
+        float lx    = wx + wr * 0.60f * MathUtils.cosDeg(mid);
+        float ly    = wy + wr * 0.60f * MathUtils.sinDeg(mid);
         float scale = sweepDeg > 100f ? 1.30f : sweepDeg > 40f ? 1.10f : 1.00f;
 
         batch.begin();
         bodyFont.getData().setScale(scale);
         bodyFont.setColor(1f, 1f, 1f, 1f);
-
         gl.setText(bodyFont, line1);
         float offset = (line2 != null) ? 8f * scale : 0f;
         bodyFont.draw(batch, line1, lx - gl.width * 0.5f, ly + offset + gl.height * 0.5f);
-
         if (line2 != null) {
             gl.setText(bodyFont, line2);
             bodyFont.draw(batch, line2, lx - gl.width * 0.5f, ly - offset + gl.height * 0.5f);
@@ -364,9 +339,7 @@ public class SeedWheelOverlay {
         };
         Color[] cols = { COLOR_COMMON, COLOR_RARE, COLOR_LEGENDARY };
 
-        float dot  = 10f;
-        float gap  = 18f;
-        float totalW = 0f;
+        float dot = 10f, gap = 18f, totalW = 0f;
         for (String l : labels) { gl.setText(hintFont, l); totalW += dot + 5f + gl.width + gap; }
 
         float x = cx - totalW * 0.5f;
@@ -384,6 +357,8 @@ public class SeedWheelOverlay {
             x += gl.width + gap;
         }
     }
+
+    // ── Result modal ─────────────────────────────────────────────────────────
 
     private void renderResultModal(int sw, int sh) {
         boolean rare = (resultType == FarmingConstants.CropType.EPIC
@@ -407,7 +382,6 @@ public class SeedWheelOverlay {
 
         drawPanel(px, py, panelW, panelH, bgR, bgG, bgB, acR, acG, acB);
 
-        // Title
         batch.begin();
         titleFont.setColor(acR, acG, acB, 1f);
         String title = rare ? "УДАЧА!" : "РЕЗУЛЬТАТ";
@@ -415,13 +389,11 @@ public class SeedWheelOverlay {
         titleFont.draw(batch, title, cx - gl.width * 0.5f, py + panelH - panelH * 0.09f);
         batch.end();
 
-        // Divider
         sr.begin(ShapeRenderer.ShapeType.Filled);
         sr.setColor(acR, acG, acB, 0.65f);
         sr.rect(cx - panelW * 0.35f, py + panelH - panelH * 0.24f, panelW * 0.70f, 2f);
         sr.end();
 
-        // Text content
         String sub, body1, body2, rewardText;
         switch (resultType) {
             case EPIC:
@@ -436,7 +408,7 @@ public class SeedWheelOverlay {
                 body2      = "+Кисень " + (int)SeedWheelConstants.LEGENDARY_SEED_OXYGEN_RESTORE + "% після посадки.";
                 rewardText = "Легендарне насіння  ×" + SeedWheelConstants.LEGENDARY_SEED_REWARD;
                 break;
-            default: // DEFAULT / COMMON
+            default:
                 sub        = "Знайдено звичайне насіння";
                 body1      = "Непогана знахідка для початку.";
                 body2      = "Посади та вирости врожай, щоб збільшити кисень.";
@@ -458,34 +430,30 @@ public class SeedWheelOverlay {
         gl.setText(bodyFont, body2);
         bodyFont.draw(batch, body2, cx - gl.width * 0.5f, py + panelH - panelH * 0.495f);
 
-        // Reward text (gold for rare, accent colour for common)
         bodyFont.getData().setScale(1.15f);
-        if (rare) {
-            bodyFont.setColor(1f, 0.85f, 0.25f, 1f);
-        } else {
-            bodyFont.setColor(acR, acG, acB, 1f);
-        }
+        bodyFont.setColor(rare ? new float[]{1f, 0.85f, 0.25f, 1f}[0] : acR,
+                rare ? 0.85f : acG,
+                rare ? 0.25f : acB, 1f);
+        if (rare) bodyFont.setColor(1f, 0.85f, 0.25f, 1f);
+        else      bodyFont.setColor(acR, acG, acB, 1f);
         gl.setText(bodyFont, rewardText);
         bodyFont.draw(batch, rewardText, cx - gl.width * 0.5f, py + panelH * 0.42f);
         bodyFont.getData().setScale(1f);
 
-        // Hint
         hintFont.setColor(acR * 0.40f, acG * 0.40f + 0.05f, acB * 0.40f, 1f);
-        String hint = rare
-                ? "Фермере, планета пишається тобою!"
+        String hint = rare ? "Фермере, планета пишається тобою!"
                 : "Продовжуй досліджувати, щоб знайти більше!";
         gl.setText(hintFont, hint);
         hintFont.draw(batch, hint, cx - gl.width * 0.5f, py + panelH * 0.07f);
         batch.end();
 
-        // Buttons
         float btnW   = panelW * 0.58f;
         float btnH   = panelH * 0.10f;
         float btnGap = panelH * 0.03f;
         float top    = py + panelH * 0.26f + btnH + btnGap * 0.5f;
 
-        claimBtnRect.set(cx - btnW * 0.5f, top - btnH,             btnW, btnH);
-        closeBtnRect.set(cx - btnW * 0.5f, top - 2*btnH - btnGap,  btnW, btnH);
+        claimBtnRect.set(cx - btnW * 0.5f, top - btnH,            btnW, btnH);
+        closeBtnRect.set(cx - btnW * 0.5f, top - 2*btnH - btnGap, btnW, btnH);
 
         drawButton(claimBtnRect,
                 rare ? "ЗАБРАТИ НАГОРОДУ" : "ЗАБРАТИ",
@@ -497,12 +465,9 @@ public class SeedWheelOverlay {
                 acR * 0.55f, acG * 0.55f, acB * 0.55f);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Result determination
-    // ─────────────────────────────────────────────────────────────────────────
+    // ── Result determination ──────────────────────────────────────────────────
 
     private void determineResult() {
-        // Pointer is at 90° (top). Normalise rotation and map to sector.
         float rot   = ((wheelRotation % 360f) + 360f) % 360f;
         float angle = (90f - rot + 360f) % 360f;
 
@@ -514,6 +479,8 @@ public class SeedWheelOverlay {
             resultType = FarmingConstants.CropType.LEGENDARY;
         }
     }
+
+    // ── Drawing helpers ───────────────────────────────────────────────────────
 
     private void drawPanel(float px, float py, float pw, float ph,
                            float bgR, float bgG, float bgB,

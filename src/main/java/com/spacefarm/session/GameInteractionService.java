@@ -28,8 +28,7 @@ public class GameInteractionService {
     public void update(float deltaTime) {
         session.getSeedWheelOverlay().update(deltaTime);
 
-        // Called every frame: if the player dismissed the result modal,
-        // hasResult() becomes true → add items to inventory → hide overlay → game continues
+        // If player dismissed result modal → hasResult() is true → add items → hide overlay
         if (session.getSeedWheelOverlay().hasResult()) {
             FarmingConstants.CropType resultType = session.getSeedWheelOverlay().getResultAndReset();
             handleSeedWheelResult(resultType);
@@ -103,20 +102,17 @@ public class GameInteractionService {
             return true;
         }
 
-        // ── Seed wheel overlay ──────────────────────────────────────────────
+        // ── Seed wheel overlay ─────────────────────────────────────────────────
         if (session.getSeedWheelOverlay().isVisible()) {
             if (button == Buttons.LEFT) {
                 float adjustedY = Gdx.graphics.getHeight() - screenY;
 
-                // 1. Let overlay handle result modal buttons ("ЗАБРАТИ" / "ЗАКРИТИ").
-                //    Returns true when result modal is open — swallows the click.
-                //    After this, showResult becomes false; next update() detects
-                //    hasResult()==true and hides the overlay → game continues.
+                // 1. Result modal buttons ("ЗАБРАТИ" / "ЗАКРИТИ") — swallows the click
                 if (session.getSeedWheelOverlay().handleTouchDown(screenX, adjustedY)) {
                     return true;
                 }
 
-                // 2. Spin button — only reached when wheel is shown (not result modal).
+                // 2. Spin button — only when modal is not shown
                 if (session.getSeedWheelOverlay().isButtonHit(screenX, adjustedY)) {
                     session.getSeedWheelOverlay().startSpin();
                     session.getAudioManager().playWheelSound();
@@ -125,7 +121,7 @@ public class GameInteractionService {
             }
             return false;
         }
-        // ───────────────────────────────────────────────────────────────────
+        // ──────────────────────────────────────────────────────────────────────
 
         if (button == Buttons.RIGHT) {
             showContextMenu(screenX, screenY);
