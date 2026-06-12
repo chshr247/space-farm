@@ -27,7 +27,9 @@ public class GameInteractionService {
 
     public void update(float deltaTime) {
         session.getSeedWheelOverlay().update(deltaTime);
+        session.getTreeBoxUI().update(deltaTime);
 
+        // If player dismissed result modal → hasResult() is true → add items → hide overlay
         if (session.getSeedWheelOverlay().hasResult()) {
             FarmingConstants.CropType resultType = session.getSeedWheelOverlay().getResultAndReset();
             handleSeedWheelResult(resultType);
@@ -35,8 +37,8 @@ public class GameInteractionService {
             if (currentSeedWheelLocation != null) {
                 currentSeedWheelLocation.completeScavenging();
                 currentSeedWheelLocation = null;
-                session.getSeedWheelOverlay().setVisible(false);
             }
+            session.getSeedWheelOverlay().setVisible(false);
         }
 
         if (session.getOxygenManager().isOxygenDepleted() && !session.isGameOver() && !session.isVictory()) {
@@ -62,23 +64,21 @@ public class GameInteractionService {
             int result = session.getTreeBoxUI().handleClick(screenX, screenY, Gdx.graphics.getHeight());
 
             if (result >= 0 && result < 5) {
-                // A confirm button was clicked — verify before accepting
                 boolean canConfirm = session.getTreeBoxUI().isUnlocked(result)
                         && !session.getTreeBoxUI().isConfirmed(result)
                         && session.getInventory().hasTreePhaseItem(result);
 
                 if (canConfirm) {
-                    // 1. Consume the required item from inventory
                     session.getInventory().removeTreePhaseItem(result);
-                    // 2. Confirm the phase in UI
                     session.getTreeBoxUI().confirmPhase(result);
-                    // 3. Green outdoor zone around the corresponding location
                     session.getOutdoorZone().greenLocation(result);
-                    // Phase 5 (index 4) also greens the seed wheel location (index 5)
-                    if (result == 4) {
-                        session.getOutdoorZone().greenLocation(5);
+                    session.getOutdoorZoneRenderer().applyGreenTiles(result);
+                    if (result == 1) {
+                        session.getOutdoorZone().greenLocation(4);
                     }
-                    // 4. Expand the base zone
+                    if (result == 4) {
+                        session.getOutdoorZoneRenderer().applyGreenTiles(5);
+                    }
                     session.getBaseZone().expandZone(4);
                     session.getBaseZone().setTreePhase(session.getTreeBoxUI().getPhase());
                     // 5. Check for victory (all 5 phases complete)
@@ -88,7 +88,7 @@ public class GameInteractionService {
                 }
             }
 
-            return true; // panel always swallows all clicks
+            return true;
         }
 
         if (button == Buttons.LEFT) {
@@ -105,9 +105,17 @@ public class GameInteractionService {
             return true;
         }
 
+        // ── Seed wheel overlay ─────────────────────────────────────────────────
         if (session.getSeedWheelOverlay().isVisible()) {
             if (button == Buttons.LEFT) {
                 float adjustedY = Gdx.graphics.getHeight() - screenY;
+
+                // 1. Result modal buttons ("ЗАБРАТИ" / "ЗАКРИТИ") — swallows the click
+                if (session.getSeedWheelOverlay().handleTouchDown(screenX, adjustedY)) {
+                    return true;
+                }
+
+                // 2. Spin button — only when modal is not shown
                 if (session.getSeedWheelOverlay().isButtonHit(screenX, adjustedY)) {
                     session.getSeedWheelOverlay().startSpin();
                     session.getAudioManager().playWheelSound();
@@ -116,6 +124,7 @@ public class GameInteractionService {
             }
             return false;
         }
+        // ──────────────────────────────────────────────────────────────────────
 
         if (button == Buttons.RIGHT) {
             showContextMenu(screenX, screenY);
@@ -156,8 +165,6 @@ public class GameInteractionService {
                     int prevSelected = session.getInventory().getSelectedSlot();
                     session.getInventory().selectSlot(draggedSlot);
                     handleTileClick(screenX, screenY);
-                    // We check if the item still exists (e.g. seeds could be consumed) before restoring selection,
-                    // though selectSlot is safe even if slot is empty.
                     session.getInventory().selectSlot(prevSelected);
                 }
                 return true;
@@ -214,9 +221,7 @@ public class GameInteractionService {
 
     private void handleTileClick(int screenX, int screenY) {
         TileCoord coord = session.getTilePicker().screenToTile(screenX, screenY);
-        if (coord == null) {
-            return;
-        }
+        if (coord == null) return;
 
         session.getOxygenManager().updatePositionTile(coord);
 
@@ -228,11 +233,9 @@ public class GameInteractionService {
         if (lastSelected != null) {
             session.getSelectionLayer().setCell(lastSelected.x(), lastSelected.y(), null);
         }
-
         session.getSelectionLayer().setCell(coord.x(), coord.y(), session.createHighlightCell());
         lastSelected = coord;
 
-        // Click on tree area — open TreeBoxUI
         if (session.getBaseZone().isTreeArea(coord)) {
             session.getTreeBoxUI().show();
             return;
@@ -258,9 +261,7 @@ public class GameInteractionService {
                 }
             }
         } else if (session.getInventory().isSeedSelected()) {
-            if (!session.getBaseZone().isGardenBed(coord)) {
-                return;
-            }
+            if (!session.getBaseZone().isGardenBed(coord)) return;
 
             Item selectedSeed = session.getInventory().getSelectedItem();
             FarmingConstants.CropType cropType = FarmingConstants.CropType.DEFAULT;
@@ -323,28 +324,22 @@ public class GameInteractionService {
     }
 
     private void removeSelectedStackIfEmpty() {
-        int slot = session.getInventory().getSelectedSlot();
+        int slot     = session.getInventory().getSelectedSlot();
         Item selected = session.getInventory().getSelectedItem();
-        if (selected == null) {
-            return;
-        }
+        if (selected == null) return;
 
         if (selected.getType() == Item.ItemType.SEED) {
-            if (((Seed) selected).getQuantity() == 0) {
+            if (((Seed) selected).getQuantity() == 0)
                 session.getInventory().removeItem(slot);
-            }
         } else if (selected.getType() == Item.ItemType.RARE_SEED) {
-            if (((RareSeed) selected).getQuantity() == 0) {
+            if (((RareSeed) selected).getQuantity() == 0)
                 session.getInventory().removeItem(slot);
-            }
         } else if (selected.getType() == Item.ItemType.LEGENDARY_SEED) {
-            if (((LegendarySeed) selected).getQuantity() == 0) {
+            if (((LegendarySeed) selected).getQuantity() == 0)
                 session.getInventory().removeItem(slot);
-            }
         } else if (selected.getType() == Item.ItemType.PLANT_FOOD) {
-            if (((PlantFood) selected).getQuantity() == 0) {
+            if (((PlantFood) selected).getQuantity() == 0)
                 session.getInventory().removeItem(slot);
-            }
         }
     }
 }

@@ -179,10 +179,8 @@ public class InventoryUI {
             }
         }
 
-        // Draw item name — for selected OR hovered slot
-        Item hoveredItem = (hoveredSlotIndex != -1) ? inventory.getItem(hoveredSlotIndex) : null;
-        Item selectedItem = inventory.getSelectedItem();
-        Item displayItem = (hoveredItem != null) ? hoveredItem : selectedItem;
+        // Draw item name — only when hovering over a slot
+        Item displayItem = (hoveredSlotIndex != -1) ? inventory.getItem(hoveredSlotIndex) : null;
         if (displayItem != null) {
             String displayText = displayItem.getDescription();
             layout.setText(font, displayText);

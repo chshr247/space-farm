@@ -11,9 +11,7 @@ import com.badlogic.gdx.maps.tiled.tiles.StaticTiledMapTile;
 import com.spacefarm.world.BaseZone;
 import com.spacefarm.world.TileCoord;
 
-/**
- * Renders the base zone with green tiles and special structures.
- */
+
 public class BaseZoneRenderer {
     private BaseZone baseZone;
     private TiledMapTileLayer baseLayer;
@@ -113,7 +111,20 @@ public class BaseZoneRenderer {
             }
         }
     }
-
+    public void refreshGardenBedTile(TileCoord coord) {
+        for (int dx = 0; dx < 2; dx++) {
+            for (int dy = 0; dy < 2; dy++) {
+                int x = coord.x() + dx;
+                int y = coord.y() + dy;
+                if (x >= 0 && x < baseLayer.getWidth() && y >= 0 && y < baseLayer.getHeight()) {
+                    StaticTiledMapTile tile = new StaticTiledMapTile(new TextureRegion(gardenTileTexture));
+                    TiledMapTileLayer.Cell cell = new TiledMapTileLayer.Cell();
+                    cell.setTile(tile);
+                    baseLayer.setCell(x, y, cell);
+                }
+            }
+        }
+    }
     private Texture createSolidTexture(int width, int height, int r, int g, int b, int a) {
         Pixmap pixmap = new Pixmap(width, height, Pixmap.Format.RGBA8888);
         pixmap.setColor(r / 255f, g / 255f, b / 255f, a / 255f);

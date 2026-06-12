@@ -1,8 +1,6 @@
 package com.spacefarm.inventory;
 
-/**
- * Sickle tool for harvesting crops.
- */
+
 public class Sickle extends Item {
     private static final Sickle INSTANCE = new Sickle();
 

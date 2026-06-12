@@ -91,7 +91,7 @@
     }
   ],
   "wallet": {
-    "balance": 1000.0
+    "balance": 100.0
   },
   "gameOver": false
 }

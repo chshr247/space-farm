@@ -1,17 +1,15 @@
 package com.spacefarm.inventory;
 
-/**
- * Plant food harvested from mature crops.
- */
+// Плід з вирощеної рослини
 public class PlantFood extends Item {
     private int quantity;
     private static final int MAX_QUANTITY = 64;
-
+    // Конструктор для створення їжі з заданою кількістю
     public PlantFood(int initialQuantity) {
-        super("Урожай", "Помідори для їдження (" + initialQuantity + ")");
+        super("Урожай", "Їжа для споживання (" + initialQuantity + ")");
         this.quantity = Math.min(initialQuantity, MAX_QUANTITY);
     }
-
+    // Це конструктор для створення їжі з 1 одиниці кількості за замовчуванням
     public PlantFood() {
         this(1);
     }
@@ -21,10 +19,6 @@ public class PlantFood extends Item {
         return ItemType.PLANT_FOOD;
     }
 
-    /**
-     * Use one food (decrement quantity).
-     * Returns true if food was consumed, false if quantity is 0.
-     */
     public boolean consumeFood() {
         if (quantity > 0) {
             quantity--;
