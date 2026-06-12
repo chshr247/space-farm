@@ -22,14 +22,17 @@ public class GameSceneRenderer {
 
         TiledMap map = gameSession.getMap();
         TiledMapTileLayer baseLayer = gameSession.getBaseLayer();
+        TiledMapTileLayer zoneLayer = gameSession.getZoneLayer();
         int tileSize = baseLayer.getTileWidth();
+        int worldMinX = gameSession.getWorldMinX();
+        int worldMinY = gameSession.getWorldMinY();
 
         this.mapRenderer = new OrthogonalTiledMapRenderer(map);
         this.gridOverlay = new GridOverlay(baseLayer);
         this.cropRenderer = new CropRenderer(gameSession.getFarmingSystem(), baseLayer);
-        this.outdoorZoneRenderer = new OutdoorZoneRenderer(gameSession.getOutdoorZone(), baseLayer, map, tileSize);
+        this.outdoorZoneRenderer = new OutdoorZoneRenderer(gameSession.getOutdoorZone(), zoneLayer, map, tileSize, worldMinX, worldMinY, gameSession);
         gameSession.setOutdoorZoneRenderer(this.outdoorZoneRenderer);
-        this.baseZoneRenderer = new BaseZoneRenderer(gameSession.getBaseZone(), baseLayer, tileSize);
+        this.baseZoneRenderer = new BaseZoneRenderer(gameSession.getBaseZone(), zoneLayer, tileSize, worldMinX, worldMinY);
         gameSession.setBaseZoneRenderer(this.baseZoneRenderer);
         this.oxygenUI = new OxygenUI(gameSession.getOxygenManager());
         this.treeBoxUI = gameSession.getTreeBoxUI();
@@ -50,10 +53,8 @@ public class GameSceneRenderer {
         gameSession.getContextMenu().render(camera);
 
         if (gameSession.isVictory()) {
-            // Victory: render only the overlay — skip all other UI
             gameSession.getVictoryOverlay().render(screenWidth, screenHeight);
         } else if (gameSession.isGameOver()) {
-            // Game over: render only the overlay — skip all other UI so nothing shows on top
             gameSession.getGameOverOverlay().render(screenWidth, screenHeight);
         } else {
             oxygenUI.render(screenWidth, screenHeight);

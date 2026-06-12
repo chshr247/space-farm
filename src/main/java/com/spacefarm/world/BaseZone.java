@@ -40,12 +40,12 @@ public class BaseZone {
         this.treeHeight = 20;
         this.treeCenter = new TileCoord(centerX - treeWidth / 2, centerY - treeHeight / 2);
 
-        // Garden beds (top-left area)
+        // Garden beds (centered on the left side of the tree)
         this.gardenBeds = new ArrayList<>();
-        int gardenStartX = baseX + 3;
-        int gardenStartY = baseY + baseHeight - 8;
+        int gardenStartX = baseX + 2;
+        int gardenStartY = baseY + baseHeight / 2 + 4; 
         for (int i = 0; i < BaseZoneConstants.STARTING_GARDEN_BEDS; i++) {
-            int bedX = gardenStartX + (i % 2) * 4;
+            int bedX = gardenStartX + (i % 2) * 3;
             int bedY = gardenStartY - (i / 2) * 4;
             gardenBeds.add(new TileCoord(bedX, bedY));
         }
@@ -56,25 +56,25 @@ public class BaseZone {
         int droneY = baseY + 3;
         this.droneZoneCenter = new TileCoord(droneX, droneY);
     }
+
     // Adds one new garden bed (called when player buys upgrade)
-    // Returns true if successful, false if MAX_GARDEN_BEDS limit is reached.
     public boolean addGardenBed() {
         if (gardenBeds.size() >= BaseZoneConstants.MAX_GARDEN_BEDS) {
             return false;
         }
-        int gardenStartX = baseX + 3;
-        int gardenStartY = baseY + baseHeight - 8;
+        int gardenStartX = baseX + 2;
+        int gardenStartY = baseY + baseHeight / 2 + 4;
         int i = gardenBeds.size();
         int bedX, bedY;
         if (i < 12) {
-            // Section 1: 2 columns, 6 rows going up, step 4
-            bedX = gardenStartX + (i % 2) * 4;
+            // Section 1: 2 columns to the left of the tree
+            bedX = gardenStartX + (i % 2) * 3;
             bedY = gardenStartY - (i / 2) * 4;
         } else {
-            // Section 2: identical structure to section 1, shifted right of tree
+            // Section 2: 2 columns to the right of the tree
             int j = i - 12;
             int sec2StartX = treeCenter.x() + treeWidth + 1;
-            bedX = sec2StartX + (j % 2) * 4;
+            bedX = sec2StartX + (j % 2) * 3;
             bedY = gardenStartY - (j / 2) * 4;
         }
         gardenBeds.add(new TileCoord(bedX, bedY));

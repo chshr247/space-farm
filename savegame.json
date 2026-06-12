@@ -17,37 +17,17 @@
         "description": "Інструмент для збору врожаю",
         "itemType": "SICKLE"
       },
-      {
-        "name": "Bio-Compost",
-        "description": "Tree phase 1 item. Shop price: $500",
-        "itemType": "BIO_COMPOST"
-      },
-      {
-        "name": "Living Dew",
-        "description": "Tree phase 2 item. Shop price: $1000",
-        "itemType": "LIVING_DEW"
-      },
-      {
-        "name": "Mycorrhiza Net",
-        "description": "Tree phase 3 item. Shop price: $2000",
-        "itemType": "MYCORRHIZA_NETWORK"
-      },
-      {
-        "name": "Universe Flower",
-        "description": "Tree phase 4 item. Shop price: $4000",
-        "itemType": "UNIVERSE_FLOWER"
-      },
-      {
-        "name": "Eden Core",
-        "description": "Tree phase 5 item. Shop price: $8000",
-        "itemType": "EDEN_CORE"
-      }
+      null,
+      null,
+      null,
+      null,
+      null
     ],
     "selectedSlot": 0
   },
   "oxygen": {
-    "currentOxygen": 94.0,
-    "isAtBase": false
+    "currentOxygen": 100.0,
+    "isAtBase": true
   },
   "farming": {
     "crops": {}
@@ -68,14 +48,14 @@
     {
       "isCleared": false,
       "lastClearedTime": 0,
-      "isScavenging": true,
-      "scavengingStartTime": 1781295042731
+      "isScavenging": false,
+      "scavengingStartTime": 0
     },
     {
       "isCleared": false,
       "lastClearedTime": 0,
-      "isScavenging": true,
-      "scavengingStartTime": 1781295041884
+      "isScavenging": false,
+      "scavengingStartTime": 0
     },
     {
       "isCleared": false,
@@ -91,7 +71,7 @@
     }
   ],
   "wallet": {
-    "balance": 100.0
+    "balance": 1000.0
   },
   "gameOver": false
 }

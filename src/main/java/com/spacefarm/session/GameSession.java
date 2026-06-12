@@ -44,6 +44,7 @@ public class GameSession {
     private TiledMap map;
     private TiledMapTileLayer baseLayer;
     private TiledMapTileLayer selectionLayer;
+    private TiledMapTileLayer zoneLayer;
     private BaseZone baseZone;
     private OutdoorZoneRenderer outdoorZoneRenderer;
     private OutdoorZone outdoorZone;
@@ -66,6 +67,7 @@ public class GameSession {
     private Wallet wallet;
     private DifficultyLevel difficulty = DifficultyLevel.NORMAL;
     private AudioManager audioManager;
+    private int worldMinX, worldMinY, worldWidthTiles, worldHeightTiles;
 
     private BaseZoneRenderer baseZoneRenderer;
 
@@ -92,14 +94,30 @@ public class GameSession {
 
         outdoorZone = new OutdoorZone(baseZone, baseLayer.getWidth(), baseLayer.getHeight());
 
-        selectionLayer = new TiledMapTileLayer(baseLayer.getWidth(), baseLayer.getHeight(),
+        // Calculate expanded world dimensions
+        worldMinX = Math.min(0, outdoorZone.getBorderX());
+        worldMinY = Math.min(0, outdoorZone.getBorderY());
+        int worldMaxX = Math.max(baseLayer.getWidth(), outdoorZone.getBorderX() + outdoorZone.getBorderWidth());
+        int worldMaxY = Math.max(baseLayer.getHeight(), outdoorZone.getBorderY() + outdoorZone.getBorderHeight());
+        worldWidthTiles = worldMaxX - worldMinX;
+        worldHeightTiles = worldMaxY - worldMinY;
+
+        selectionLayer = new TiledMapTileLayer(worldWidthTiles, worldHeightTiles,
                 baseLayer.getTileWidth(), baseLayer.getTileHeight());
+        selectionLayer.setOffsetX(worldMinX * baseLayer.getTileWidth());
+        selectionLayer.setOffsetY(worldMinY * baseLayer.getTileHeight());
         map.getLayers().add(selectionLayer);
 
-        tilePicker = new TilePicker(camera, baseLayer.getTileWidth(), baseLayer.getTileHeight(),
-                baseLayer.getWidth(), baseLayer.getHeight());
+        zoneLayer = new TiledMapTileLayer(worldWidthTiles, worldHeightTiles,
+                baseLayer.getTileWidth(), baseLayer.getTileHeight());
+        zoneLayer.setOffsetX(worldMinX * baseLayer.getTileWidth());
+        zoneLayer.setOffsetY(worldMinY * baseLayer.getTileHeight());
+        map.getLayers().add(zoneLayer);
 
-        farmingSystem = new FarmingSystem(baseLayer.getWidth(), baseLayer.getHeight());
+        tilePicker = new TilePicker(camera, baseLayer.getTileWidth(), baseLayer.getTileHeight(),
+                worldMinX, worldMinY, worldMaxX, worldMaxY);
+
+        farmingSystem = new FarmingSystem(worldMinX, worldMinY, worldMaxX, worldMaxY);
         inventory = new Inventory();
         inventory.addItem(1, new Seed(5));
         inventory.addItem(2, Sickle.getInstance());
@@ -192,6 +210,9 @@ public class GameSession {
     public DroneConsoleOverlay getDroneConsoleOverlay() { return droneConsoleOverlay; }
     public TilePicker getTilePicker() { return tilePicker; }
     public TiledMapTileLayer getSelectionLayer() { return selectionLayer; }
+    public TiledMapTileLayer getZoneLayer() { return zoneLayer; }
+    public int getWorldMinX() { return worldMinX; }
+    public int getWorldMinY() { return worldMinY; }
     public void setGameOver(boolean gameOver) { this.gameOver = gameOver; }
     public boolean isGameOver() { return gameOver; }
     public VictoryOverlay getVictoryOverlay() { return victoryOverlay; }
@@ -199,14 +220,23 @@ public class GameSession {
     public boolean isVictory() { return victory; }
 
     public WorldBounds getWorldBounds() {
-        float worldWidth  = baseLayer.getWidth()  * baseLayer.getTileWidth();
-        float worldHeight = baseLayer.getHeight() * baseLayer.getTileHeight();
-        return new WorldBounds(0f, 0f, worldWidth, worldHeight);
+        int mapW = baseLayer.getWidth();
+        int mapH = baseLayer.getHeight();
+        
+        // Ensure bounds cover at least the outdoor zone
+        int minX = Math.min(0, outdoorZone.getBorderX());
+        int minY = Math.min(0, outdoorZone.getBorderY());
+        int maxX = Math.max(mapW, outdoorZone.getBorderX() + outdoorZone.getBorderWidth());
+        int maxY = Math.max(mapH, outdoorZone.getBorderY() + outdoorZone.getBorderHeight());
+
+        float worldWidth  = maxX * baseLayer.getTileWidth();
+        float worldHeight = maxY * baseLayer.getTileHeight();
+        return new WorldBounds(minX * baseLayer.getTileWidth(), minY * baseLayer.getTileHeight(), worldWidth, worldHeight);
     }
 
     private TiledMap loadMapOrFallback() {
-        FileHandle tmx = Gdx.files.internal("maps/world.tmx");
-        if (tmx.exists()) return new TmxMapLoader().load("maps/world.tmx");
+        FileHandle tmx = Gdx.files.internal("map.tmx");
+        if (tmx.exists()) return new TmxMapLoader().load("map.tmx");
         return new TiledMap();
     }
 

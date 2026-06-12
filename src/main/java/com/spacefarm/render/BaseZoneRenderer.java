@@ -14,7 +14,9 @@ import com.spacefarm.world.TileCoord;
 
 public class BaseZoneRenderer {
     private BaseZone baseZone;
-    private TiledMapTileLayer baseLayer;
+    private TiledMapTileLayer zoneLayer;
+    private int worldMinX;
+    private int worldMinY;
 
     // Textures for different areas
     private Texture greenTileTexture;
@@ -26,9 +28,11 @@ public class BaseZoneRenderer {
 
     private SpriteBatch batch;
 
-    public BaseZoneRenderer(BaseZone baseZone, TiledMapTileLayer baseLayer, int tileSize) {
+    public BaseZoneRenderer(BaseZone baseZone, TiledMapTileLayer zoneLayer, int tileSize, int worldMinX, int worldMinY) {
         this.baseZone = baseZone;
-        this.baseLayer = baseLayer;
+        this.zoneLayer = zoneLayer;
+        this.worldMinX = worldMinX;
+        this.worldMinY = worldMinY;
         this.batch = new SpriteBatch();
 
         // Create textures
@@ -40,10 +44,10 @@ public class BaseZoneRenderer {
 
     private void createTextures(int tileSize) {
         // Green tile for base zone (life and oxygen)
-        greenTileTexture = createSolidTexture(tileSize, tileSize, 34, 139, 34, 255); // Forest green
+        greenTileTexture = createSolidTexture(tileSize, tileSize, 34, 139, 34, 128); // Forest green
 
         // Tree area tile (darker green with pattern)
-        treeTileTexture = createSolidTexture(tileSize, tileSize, 25, 100, 25, 255); // Darker green
+        treeTileTexture = createSolidTexture(tileSize, tileSize, 25, 100, 25, 128); // Darker green
 
         // Garden bed tile (lighter green)
         Pixmap originalPixmap = new Pixmap(Gdx.files.internal("sprite/plants/garden.png"));
@@ -58,7 +62,7 @@ public class BaseZoneRenderer {
         scaledPixmap.dispose();
 
         // Drone zone tile (grayish for metal/tech)
-        droneTileTexture = createSolidTexture(tileSize, tileSize, 70, 70, 80, 255); // Slate gray
+        droneTileTexture = createSolidTexture(tileSize, tileSize, 70, 70, 80, 128); // Slate gray
 
         // Load tree phase textures
         treePhaseTextures = new Texture[5];
@@ -93,38 +97,44 @@ public class BaseZoneRenderer {
     }
 
     private void applyBaseZoneTiles() {
-        int tileSize = baseLayer.getTileWidth();
         for (int x = baseZone.getBaseX(); x < baseZone.getBaseX() + baseZone.getBaseWidth(); x++) {
             for (int y = baseZone.getBaseY(); y < baseZone.getBaseY() + baseZone.getBaseHeight(); y++) {
-                if (x >= 0 && x < baseLayer.getWidth() && y >= 0 && y < baseLayer.getHeight()) {
+                int layerX = x - worldMinX;
+                int layerY = y - worldMinY;
+                if (layerX >= 0 && layerX < zoneLayer.getWidth() && layerY >= 0 && layerY < zoneLayer.getHeight()) {
                     TileCoord coord = new TileCoord(x, y);
-                    Texture tileTexture = greenTileTexture;
-                    if (baseZone.isTreeArea(coord)) tileTexture = treeTileTexture;
-                    else if (baseZone.isGardenBed(coord)) tileTexture = gardenTileTexture;
-                    else if (baseZone.isDroneZone(coord)) tileTexture = droneTileTexture;
-
-                    StaticTiledMapTile tile = new StaticTiledMapTile(new TextureRegion(tileTexture));
-                    TiledMapTileLayer.Cell cell = new TiledMapTileLayer.Cell();
-                    cell.setTile(tile);
-                    baseLayer.setCell(x, y, cell);
+                    
+                    if (baseZone.isGardenBed(coord)) {
+                        StaticTiledMapTile tile = new StaticTiledMapTile(new TextureRegion(gardenTileTexture));
+                        TiledMapTileLayer.Cell cell = new TiledMapTileLayer.Cell();
+                        cell.setTile(tile);
+                        zoneLayer.setCell(layerX, layerY, cell);
+                    } else {
+                        // Clear other tiles to show map underneath
+                        zoneLayer.setCell(layerX, layerY, null);
+                    }
                 }
             }
         }
     }
+
     public void refreshGardenBedTile(TileCoord coord) {
         for (int dx = 0; dx < 2; dx++) {
             for (int dy = 0; dy < 2; dy++) {
                 int x = coord.x() + dx;
                 int y = coord.y() + dy;
-                if (x >= 0 && x < baseLayer.getWidth() && y >= 0 && y < baseLayer.getHeight()) {
+                int layerX = x - worldMinX;
+                int layerY = y - worldMinY;
+                if (layerX >= 0 && layerX < zoneLayer.getWidth() && layerY >= 0 && layerY < zoneLayer.getHeight()) {
                     StaticTiledMapTile tile = new StaticTiledMapTile(new TextureRegion(gardenTileTexture));
                     TiledMapTileLayer.Cell cell = new TiledMapTileLayer.Cell();
                     cell.setTile(tile);
-                    baseLayer.setCell(x, y, cell);
+                    zoneLayer.setCell(layerX, layerY, cell);
                 }
             }
         }
     }
+
     private Texture createSolidTexture(int width, int height, int r, int g, int b, int a) {
         Pixmap pixmap = new Pixmap(width, height, Pixmap.Format.RGBA8888);
         pixmap.setColor(r / 255f, g / 255f, b / 255f, a / 255f);
@@ -147,29 +157,21 @@ public class BaseZoneRenderer {
     }
 
     private void renderTreeOverlay() {
-        int tileSize = baseLayer.getTileWidth();
+        int tileSize = zoneLayer.getTileWidth();
         int phase = baseZone.getTreePhase();
         
         Texture currentTreeTexture;
         float scale = 1.0f;
         
-        // Revised growth logic for smoother progression:
-        // Phase 1 (Initial): tree-1 (Enlarged)
-        // Phase 2 (P1): tree-2 (Enlarged)
-        // Phase 3 (P2): tree-3 (Reduced)
-        // Phase 4 (P3): tree-4 (Standard)
-        // Phase 5 (P4): tree-5 (Standard)
-        // Phase 6 (P5): tree-5 (Maximum)
-        
         if (phase == 1) {
             currentTreeTexture = treePhaseTextures[0];
-            scale = 2.5f; // tree-1 is very small, scale it up significantly
+            scale = 2.5f;
         } else if (phase == 2) {
             currentTreeTexture = treePhaseTextures[1];
-            scale = 2.2f; // tree-2 is also small
+            scale = 2.2f;
         } else if (phase == 3) {
             currentTreeTexture = treePhaseTextures[2];
-            scale = 0.85f; // Reduce tree-3 for better transition
+            scale = 0.85f;
         } else if (phase == 4) {
             currentTreeTexture = treePhaseTextures[3];
             scale = 1.0f;
@@ -178,17 +180,15 @@ public class BaseZoneRenderer {
             scale = 1.1f;
         } else {
             currentTreeTexture = treePhaseTextures[4];
-            scale = 1.4f; // Final stage of tree-5
+            scale = 1.4f;
         }
         
         float treeWidth = currentTreeTexture.getWidth() * scale;
         float treeHeight = currentTreeTexture.getHeight() * scale;
 
-        // Calculate center of the 10x20 tile area
         TileCoord treeBaseArea = baseZone.getTreeCenter();
         float areaWidth = baseZone.getTreeWidth() * tileSize;
 
-        // Position the sprite centered horizontally at the bottom of the base area
         float treeStartX = treeBaseArea.x() * tileSize + (areaWidth - treeWidth) / 2f;
         float treeStartY = treeBaseArea.y() * tileSize;
 
@@ -197,7 +197,7 @@ public class BaseZoneRenderer {
     }
 
     private void renderDroneOverlay() {
-        int tileSize = baseLayer.getTileWidth();
+        int tileSize = zoneLayer.getTileWidth();
         TileCoord dronePos = baseZone.getDroneZoneCenter();
         float droneStartX = dronePos.x() * tileSize + baseZone.getDroneOffsetX();
         float droneStartY = dronePos.y() * tileSize + baseZone.getDroneOffsetY();

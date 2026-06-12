@@ -10,13 +10,17 @@ import java.util.Map;
  */
 public class FarmingSystem {
     private final Map<String, Crop> crops;
-    private final int mapWidth;
-    private final int mapHeight;
+    private final int minX;
+    private final int minY;
+    private final int maxX;
+    private final int maxY;
 
-    public FarmingSystem(int mapWidth, int mapHeight) {
+    public FarmingSystem(int minX, int minY, int maxX, int maxY) {
         this.crops = new HashMap<>();
-        this.mapWidth = mapWidth;
-        this.mapHeight = mapHeight;
+        this.minX = minX;
+        this.minY = minY;
+        this.maxX = maxX;
+        this.maxY = maxY;
     }
 
     public void update(float deltaTime) {
@@ -129,15 +133,20 @@ public class FarmingSystem {
     }
 
     private boolean isValidCoord(TileCoord coord) {
-        return coord != null && coord.x() >= 0 && coord.x() < mapWidth &&
-                coord.y() >= 0 && coord.y() < mapHeight;
+        return coord != null && coord.x() >= minX && coord.x() < maxX &&
+                coord.y() >= minY && coord.y() < maxY;
     }
 
     public int getMapWidth() {
-        return mapWidth;
+        return maxX - minX;
     }
 
     public int getMapHeight() {
-        return mapHeight;
+        return maxY - minY;
     }
+
+    public int getMinX() { return minX; }
+    public int getMinY() { return minY; }
+    public int getMaxX() { return maxX; }
+    public int getMaxY() { return maxY; }
 }

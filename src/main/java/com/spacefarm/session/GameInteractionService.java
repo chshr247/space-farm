@@ -73,16 +73,19 @@ public class GameInteractionService {
                     session.getTreeBoxUI().confirmPhase(result);
                     session.getOutdoorZone().greenLocation(result);
                     session.getOutdoorZoneRenderer().applyGreenTiles(result);
+                    
+                    // Special cases for greening multiple areas
                     if (result == 1) {
-                        session.getOutdoorZone().greenLocation(4);
-                    }
-                    if (result == 4) {
+                        // When "Жива Роса" is confirmed, green location index 5 (Seed Wheel) as well
+                        session.getOutdoorZone().greenLocation(5);
                         session.getOutdoorZoneRenderer().applyGreenTiles(5);
                     }
+                    
                     session.getBaseZone().expandZone(4);
                     session.getBaseZone().setTreePhase(session.getTreeBoxUI().getPhase());
-                    // 5. Check for victory (all 5 phases complete)
-                    if (session.getTreeBoxUI().isComplete()) {
+
+                    // Victory check: if we just confirmed index 4 (5th phase "Ядро Едему")
+                    if (result == 4) {
                         session.setVictory(true);
                     }
                 }
@@ -231,9 +234,9 @@ public class GameInteractionService {
         }
 
         if (lastSelected != null) {
-            session.getSelectionLayer().setCell(lastSelected.x(), lastSelected.y(), null);
+            session.getSelectionLayer().setCell(lastSelected.x() - session.getWorldMinX(), lastSelected.y() - session.getWorldMinY(), null);
         }
-        session.getSelectionLayer().setCell(coord.x(), coord.y(), session.createHighlightCell());
+        session.getSelectionLayer().setCell(coord.x() - session.getWorldMinX(), coord.y() - session.getWorldMinY(), session.createHighlightCell());
         lastSelected = coord;
 
         if (session.getBaseZone().isTreeArea(coord)) {

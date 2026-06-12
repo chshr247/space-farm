@@ -8,7 +8,8 @@ public class OutdoorConstants {
     public static final int NUM_LOCATIONS = 5;
 
     // Border zone
-    public static final int BORDER_WIDTH = 40;                       // Grey border width in tiles
+    public static final int BORDER_WIDTH_X = 14;                     // Horizontal border: (60-32)/2 = 14
+    public static final int BORDER_WIDTH_Y = 9;                      // Vertical border: (50-32)/2 = 9
     public static final int BORDER_COLOR = 0x4a4a4a;                 // Dark grey color
 
     // Scavenging requirements and costs
@@ -29,4 +30,3 @@ public class OutdoorConstants {
         0x4a7d5a   // Forest green
     };
 }
-

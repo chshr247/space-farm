@@ -2,50 +2,49 @@ package com.spacefarm.world;
 
 import java.util.*;
 
-
 public class OutdoorZone {
     private List<ScavengingLocation> locations;
     private int baseX, baseY, baseWidth, baseHeight;
     private int borderX, borderY, borderWidth, borderHeight;
-    
-    public OutdoorZone(BaseZone baseZone, int mapWidth, int mapHeight) {
-        locations = new ArrayList<>();
-        this.baseX = baseZone.getBaseX();
-        this.baseY = baseZone.getBaseY();
-        this.baseWidth = baseZone.getBaseWidth();
-        this.baseHeight = baseZone.getBaseHeight();
+
+    public OutdoorZone(BaseZone base, int mapWidth, int mapHeight) {
+        this.baseX = base.getBaseX();
+        this.baseY = base.getBaseY();
+        this.baseWidth = base.getBaseWidth();
+        this.baseHeight = base.getBaseHeight();
+        this.locations = new ArrayList<>();
         
         initializeBorder();
         initializeLocations();
     }
-    
+
     // ініціалізація сірого контуру навколо бази (наша зона поза базою)
     private void initializeBorder() {
-        int borderWidth = OutdoorConstants.BORDER_WIDTH;
-        this.borderX = baseX - borderWidth;
-        this.borderY = baseY - borderWidth;
-        this.borderWidth = baseWidth + 2 * borderWidth;
-        this.borderHeight = baseHeight + 2 * borderWidth;
+        int bWidthX = OutdoorConstants.BORDER_WIDTH_X;
+        int bWidthY = OutdoorConstants.BORDER_WIDTH_Y;
+        this.borderX = baseX - bWidthX;
+        this.borderY = baseY - bWidthY;
+        this.borderWidth = baseWidth + 2 * bWidthX;
+        this.borderHeight = baseHeight + 2 * bWidthY;
     }
-    
-    // ініціалізація шести локацій
+
     private void initializeLocations() {
         // звичайні локації
         int width = OutdoorConstants.OUTDOOR_LOCATION_WIDTH;
         int height = OutdoorConstants.OUTDOOR_LOCATION_HEIGHT;
         
-        // 5 їхніх позицій розкиданих по контуру зони
+        // 5 positions tightly packed around the base
         int[][] positions = {
-            // Top edge - center
-            {baseX + baseWidth / 2 - width / 2, borderY + 5},
-            // Bottom edge - center
-            {baseX + baseWidth / 2 - width / 2, borderY + borderHeight - height - 5},
-            // Left edge - center
-            {borderX + 5, baseY + baseHeight / 2 - height / 2},
-            // Right edge - center
-            {borderX + borderWidth - width - 5, baseY + baseHeight / 2 - height / 2},
+            // Top edge
+            {baseX + baseWidth / 2 - width / 2, borderY},
+            // Bottom edge
+            {baseX + baseWidth / 2 - width / 2, borderY + borderHeight - height},
+            // Left edge
+            {borderX, baseY + baseHeight / 2 - height / 2},
+            // Right edge
+            {borderX + borderWidth - width, baseY + baseHeight / 2 - height / 2},
             // Top-left corner
-            {borderX + 10, borderY + 10}
+            {borderX, borderY}
         };
         
         for (int i = 0; i < OutdoorConstants.NUM_LOCATIONS; i++) {
@@ -60,85 +59,67 @@ public class OutdoorZone {
         // Add seed wheel location at bottom-right corner
         int seedWheelWidth = SeedWheelConstants.SEED_WHEEL_WIDTH;
         int seedWheelHeight = SeedWheelConstants.SEED_WHEEL_HEIGHT;
-        int seedWheelX = borderX + borderWidth - seedWheelWidth - 5;
-        int seedWheelY = borderY + borderHeight - seedWheelHeight - 5;
+        int seedWheelX = borderX + borderWidth - seedWheelWidth;
+        int seedWheelY = borderY + borderHeight - seedWheelHeight;
         int seedWheelColor = 0x8b7355;  // Brown color for seed wheel area
         
-        ScavengingLocation seedWheelLocation = new ScavengingLocation(
-            seedWheelX, seedWheelY, seedWheelWidth, seedWheelHeight, 
-            seedWheelColor, ScavengingLocation.LocationType.SEED_WHEEL
-        );
-        locations.add(seedWheelLocation);
+        ScavengingLocation seedWheel = new ScavengingLocation(seedWheelX, seedWheelY, 
+                seedWheelWidth, seedWheelHeight, seedWheelColor, ScavengingLocation.LocationType.SEED_WHEEL);
+        locations.add(seedWheel);
+    }
+
+    public boolean isInBorder(int x, int y) {
+        // перевірка чи тайл в сірій зоні але не на самій базі
+        boolean inOuter = x >= borderX && x < borderX + borderWidth &&
+                         y >= borderY && y < borderY + borderHeight;
+        boolean inInner = x >= baseX && x < baseX + baseWidth &&
+                         y >= baseY && y < baseY + baseHeight;
+        return inOuter && !inInner;
     }
     
-    // перевірка чи координата знаходиться в зоні поза базою
     public boolean isInBorder(TileCoord coord) {
         return isInBorder(coord.x(), coord.y());
     }
-    
-    public boolean isInBorder(int x, int y) {
-        return x >= borderX && x < borderX + borderWidth &&
-               y >= borderY && y < borderY + borderHeight &&
-               !(x >= baseX && x < baseX + baseWidth &&
-                 y >= baseY && y < baseY + baseHeight);  // Exclude base itself
-    }
-    
-    // перевіряє чи координата знаходиться в будь-якій з локацій поза базою
-    public boolean isInOutdoor(TileCoord coord) {
-        return isInOutdoor(coord.x(), coord.y());
-    }
-    
+
     public boolean isInOutdoor(int x, int y) {
-        for (ScavengingLocation location : locations) {
-            if (location.contains(x, y)) {
+        for (ScavengingLocation loc : locations) {
+            if (x >= loc.getTopLeft().x() && x < loc.getTopLeft().x() + loc.getWidth() &&
+                y >= loc.getTopLeft().y() && y < loc.getTopLeft().y() + loc.getHeight()) {
                 return true;
             }
         }
         return false;
     }
 
-    public ScavengingLocation getLocationAt(TileCoord coord) {
-        return getLocationAt(coord.x(), coord.y());
+    public boolean contains(int x, int y) {
+        return x >= borderX && x < borderX + borderWidth &&
+               y >= borderY && y < borderY + borderHeight;
     }
-    
-    public ScavengingLocation getLocationAt(int x, int y) {
-        for (ScavengingLocation location : locations) {
-            if (location.contains(x, y)) {
-                return location;
+
+    public ScavengingLocation getLocationAt(TileCoord coord) {
+        for (ScavengingLocation loc : locations) {
+            if (coord.x() >= loc.getTopLeft().x() && coord.x() < loc.getTopLeft().x() + loc.getWidth() &&
+                coord.y() >= loc.getTopLeft().y() && coord.y() < loc.getTopLeft().y() + loc.getHeight()) {
+                return loc;
             }
         }
         return null;
     }
-    // отримати всі локації які існують
-    public List<ScavengingLocation> getLocations() {
-        return new ArrayList<>(locations);
+
+    public void greenLocation(int index) {
+        if (index >= 0 && index < locations.size()) {
+            locations.get(index).setGreened(true);
+        }
     }
-    // отримати всі локації, які на даний момент зачищаються
+
+    public List<ScavengingLocation> getLocations() { return locations; }
     public List<ScavengingLocation> getScavengingLocations() {
         List<ScavengingLocation> scavenging = new ArrayList<>();
-        for (ScavengingLocation location : locations) {
-            if (location.isScavenging()) {
-                scavenging.add(location);
-            }
+        for (ScavengingLocation loc : locations) {
+            if (loc.isScavenging()) scavenging.add(loc);
         }
         return scavenging;
     }
-     // Позначає локацію як зелену після успішної зачистки
-     // Phase index 0-4 maps to regular locations; index 5 is the seed wheel location.
-    public void greenLocation(int locationIndex) {
-        if (locationIndex >= 0 && locationIndex < locations.size()) {
-            locations.get(locationIndex).setGreened(true);
-        }
-    }
-
-    public int getGreenedLocationCount() {
-        int count = 0;
-        for (ScavengingLocation loc : locations) {
-            if (loc.isGreened()) count++;
-        }
-        return count;
-    }
-
     public int getBorderX() { return borderX; }
     public int getBorderY() { return borderY; }
     public int getBorderWidth() { return borderWidth; }
@@ -146,4 +127,3 @@ public class OutdoorZone {
     public int getBaseWidth() { return baseWidth; }
     public int getBaseHeight() { return baseHeight; }
 }
-
