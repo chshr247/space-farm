@@ -33,6 +33,10 @@ import com.spacefarm.inventory.LivingDew;
 import com.spacefarm.inventory.MycorrhizaNetwork;
 import com.spacefarm.inventory.UniverseFlower;
 import com.spacefarm.inventory.EdenCore;
+import com.spacefarm.inventory.Item;
+import com.spacefarm.inventory.Crystal;
+import com.spacefarm.inventory.RareSeed;
+import com.spacefarm.inventory.LegendarySeed;
 import com.spacefarm.render.OutdoorZoneRenderer;
 import com.spacefarm.render.BaseZoneRenderer;
 
@@ -66,6 +70,7 @@ public class GameSession {
     private Wallet wallet;
     private DifficultyLevel difficulty = DifficultyLevel.NORMAL;
     private AudioManager audioManager;
+
     private BaseZoneRenderer baseZoneRenderer;
 
     /** Call BEFORE create(). Sets all difficulty-dependent constants. */
@@ -103,7 +108,7 @@ public class GameSession {
         inventory.addItem(1, new Seed(5));
         inventory.addItem(2, Sickle.getInstance());
 
-        // TODO: REMOVE BEFORE RELEASE — debug items for tree phase testing
+        // Debug items
         inventory.addItem(new BioCompost());
         inventory.addItem(new LivingDew());
         inventory.addItem(new MycorrhizaNetwork());
@@ -172,6 +177,21 @@ public class GameSession {
         if (audioManager != null) audioManager.dispose();
     }
 
+    public AudioManager getAudioManager() { return audioManager; }
+    public Wallet getWallet() { return wallet; }
+    public TreeBoxUI getTreeBoxUI() { return treeBoxUI; }
+    public DifficultyLevel getDifficulty() { return difficulty; }
+    public TiledMap getMap() { return map; }
+    public TiledMapTileLayer getBaseLayer() { return baseLayer; }
+    public BaseZone getBaseZone() { return baseZone; }
+    public OutdoorZone getOutdoorZone() { return outdoorZone; }
+    public FarmingSystem getFarmingSystem() { return farmingSystem; }
+    public Inventory getInventory() { return inventory; }
+    public OxygenManager getOxygenManager() { return oxygenManager; }
+    public InventoryUI getInventoryUI() { return inventoryUI; }
+    public ContextMenuOverlay getContextMenu() { return contextMenu; }
+    public GameOverOverlay getGameOverOverlay() { return gameOverOverlay; }
+    public SeedWheelOverlay getSeedWheelOverlay() { return seedWheelOverlay; }
     public Wallet getWallet()                           { return wallet; }
     public TreeBoxUI getTreeBoxUI()                     { return treeBoxUI; }
     public DifficultyLevel getDifficulty()              { return difficulty; }
@@ -240,7 +260,7 @@ public class GameSession {
         return layer;
     }
 
-    TiledMapTileLayer.Cell createHighlightCell() {
+    public TiledMapTileLayer.Cell createHighlightCell() {
         if (highlightTexture == null) {
             highlightTexture = createSolidTexture(
                     baseLayer.getTileWidth(), baseLayer.getTileHeight(), 255, 255, 0, 120);
@@ -259,6 +279,7 @@ public class GameSession {
         pixmap.dispose();
         return texture;
     }
+}
 
     public OutdoorZoneRenderer getOutdoorZoneRenderer(){ return outdoorZoneRenderer; }
     public void setOutdoorZoneRenderer(OutdoorZoneRenderer outdoorZoneRenderer){ this.outdoorZoneRenderer = outdoorZoneRenderer; }

@@ -4,12 +4,16 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.spacefarm.inventory.Inventory;
 import com.spacefarm.inventory.Item;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import static com.badlogic.gdx.Gdx.graphics;
 
@@ -24,6 +28,7 @@ public class InventoryUI {
     private final BitmapFont smallFont;
     private final OrthographicCamera screenCamera;
     private final GlyphLayout layout = new GlyphLayout();
+    private final Map<Item.ItemType, Texture> itemTextures;
 
     private static final float SLOT_SIZE = 48f;
     private static final float SLOT_SPACING = 4f;
@@ -63,6 +68,28 @@ public class InventoryUI {
         this.screenCamera = new OrthographicCamera();
         this.screenCamera.setToOrtho(false, screenWidth, screenHeight);
         this.screenCamera.update();
+
+        this.itemTextures = new HashMap<>();
+        loadItemTextures();
+    }
+
+    private void loadItemTextures() {
+        try {
+            itemTextures.put(Item.ItemType.WATERING_CAN, new Texture("sprite/inventory-icons/watering-can.png"));
+            itemTextures.put(Item.ItemType.SICKLE, new Texture("sprite/inventory-icons/scythe.png"));
+            itemTextures.put(Item.ItemType.SEED, new Texture("sprite/inventory-icons/seed/packet-of-seeds-1.png"));
+            itemTextures.put(Item.ItemType.RARE_SEED, new Texture("sprite/inventory-icons/seed/packet-of-seeds-2.png"));
+            itemTextures.put(Item.ItemType.LEGENDARY_SEED, new Texture("sprite/inventory-icons/seed/packet-of-seeds-3.png"));
+            
+            // Tree phase items
+            itemTextures.put(Item.ItemType.BIO_COMPOST, new Texture("sprite/tree-item/item-1.png"));
+            itemTextures.put(Item.ItemType.LIVING_DEW, new Texture("sprite/tree-item/item-2.png"));
+            itemTextures.put(Item.ItemType.MYCORRHIZA_NETWORK, new Texture("sprite/tree-item/item-3.png"));
+            itemTextures.put(Item.ItemType.UNIVERSE_FLOWER, new Texture("sprite/tree-item/item-4.png"));
+            itemTextures.put(Item.ItemType.EDEN_CORE, new Texture("sprite/tree-item/item-5.png"));
+        } catch (Exception e) {
+            Gdx.app.error("InventoryUI", "Error loading item textures: " + e.getMessage());
+        }
     }
 
     /**
@@ -132,15 +159,23 @@ public class InventoryUI {
         if (draggedSlotIndex != -1) {
             Item draggedItem = inventory.getItem(draggedSlotIndex);
             if (draggedItem != null) {
-                Gdx.gl.glEnable(GL20.GL_BLEND);
-                shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-                Color itemColor = getItemColor(draggedItem);
-                shapeRenderer.setColor(itemColor.r, itemColor.g, itemColor.b, itemColor.a);
                 float padding = 8f;
                 float size = SLOT_SIZE - padding * 2;
-                shapeRenderer.rect(dragX - size / 2f, dragY - size / 2f, size, size);
-                shapeRenderer.end();
-                Gdx.gl.glDisable(GL20.GL_BLEND);
+                Texture tex = itemTextures.get(draggedItem.getType());
+                if (tex != null) {
+                    batch.begin();
+                    batch.setColor(1f, 1f, 1f, 0.8f);
+                    batch.draw(tex, dragX - size / 2f, dragY - size / 2f, size, size);
+                    batch.end();
+                } else {
+                    Gdx.gl.glEnable(GL20.GL_BLEND);
+                    shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+                    Color itemColor = getItemColor(draggedItem);
+                    shapeRenderer.setColor(itemColor.r, itemColor.g, itemColor.b, 0.8f);
+                    shapeRenderer.rect(dragX - size / 2f, dragY - size / 2f, size, size);
+                    shapeRenderer.end();
+                    Gdx.gl.glDisable(GL20.GL_BLEND);
+                }
             }
         }
 
@@ -372,15 +407,26 @@ public class InventoryUI {
 
         // Item icon
         if (item != null) {
-            Gdx.gl.glEnable(GL20.GL_BLEND);
-            shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-            Color itemColor = getItemColor(item);
-            float itemAlpha = (slotIndex == draggedSlotIndex) ? 0.3f * alpha : itemColor.a * alpha;
-            shapeRenderer.setColor(itemColor.r, itemColor.g, itemColor.b, itemAlpha);
             float padding = 8f;
-            shapeRenderer.rect(x + padding, y + padding, SLOT_SIZE - padding * 2, SLOT_SIZE - padding * 2);
-            shapeRenderer.end();
-            Gdx.gl.glDisable(GL20.GL_BLEND);
+            float size = SLOT_SIZE - padding * 2;
+            Texture tex = itemTextures.get(item.getType());
+
+            if (tex != null) {
+                batch.begin();
+                float itemAlpha = (slotIndex == draggedSlotIndex) ? 0.3f * alpha : 1.0f * alpha;
+                batch.setColor(1f, 1f, 1f, itemAlpha);
+                batch.draw(tex, x + padding, y + padding, size, size);
+                batch.end();
+            } else {
+                Gdx.gl.glEnable(GL20.GL_BLEND);
+                shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+                Color itemColor = getItemColor(item);
+                float itemAlpha = (slotIndex == draggedSlotIndex) ? 0.3f * alpha : itemColor.a * alpha;
+                shapeRenderer.setColor(itemColor.r, itemColor.g, itemColor.b, itemAlpha);
+                shapeRenderer.rect(x + padding, y + padding, size, size);
+                shapeRenderer.end();
+                Gdx.gl.glDisable(GL20.GL_BLEND);
+            }
         }
 
         // Slot number (bottom-left, teal)
@@ -415,5 +461,8 @@ public class InventoryUI {
         batch.dispose();
         font.dispose();
         smallFont.dispose();
+        for (Texture tex : itemTextures.values()) {
+            tex.dispose();
+        }
     }
 }

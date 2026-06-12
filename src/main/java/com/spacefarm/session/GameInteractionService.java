@@ -80,6 +80,8 @@ public class GameInteractionService {
                         session.getOutdoorZoneRenderer().applyGreenTiles(5);
                     }
                     session.getBaseZone().expandZone(4);
+                    session.getBaseZone().setTreePhase(session.getTreeBoxUI().getPhase());
+                    // 5. Check for victory (all 5 phases complete)
                     if (session.getTreeBoxUI().isComplete()) {
                         session.setVictory(true);
                     }
