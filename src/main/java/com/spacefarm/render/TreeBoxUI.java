@@ -1,6 +1,7 @@
 package com.spacefarm.render;
 
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -35,6 +36,7 @@ public class TreeBoxUI {
     private final BitmapFont    font;
     private final BitmapFont    smallFont;
     private final BitmapFont    tinyFont;
+    private final Texture[]     itemTextures;
 
     private boolean visible = false;
     private int     phase   = 1;
@@ -43,6 +45,8 @@ public class TreeBoxUI {
 
     private final float[]   btnX      = new float[BOX_COUNT];
     private final float[]   btnY      = new float[BOX_COUNT];
+    private final float[]   boxX      = new float[BOX_COUNT];
+    private final float[]   boxY      = new float[BOX_COUNT];
     private final boolean[] confirmed = new boolean[BOX_COUNT];
 
     public TreeBoxUI() {
@@ -60,6 +64,11 @@ public class TreeBoxUI {
         tinyFont = new BitmapFont();
         tinyFont.getData().setScale(1.3f);
         tinyFont.setColor(new Color(0.85f, 0.85f, 0.85f, 1f));
+
+        itemTextures = new Texture[BOX_COUNT];
+        for (int i = 0; i < BOX_COUNT; i++) {
+            itemTextures[i] = new Texture("sprite/tree-item/item-" + (i + 1) + ".png");
+        }
     }
 
     public void setInventory(Inventory inventory) { this.inventory = inventory; }
@@ -144,6 +153,8 @@ public class TreeBoxUI {
             drawBtn(bx, bBtnY, isUnlocked(i), confirmed[i], hasItem);
             btnX[i] = bx;
             btnY[i] = bBtnY;
+            boxX[i] = bx;
+            boxY[i] = row1Y;
         }
         for (int i = 0; i < 2; i++) {
             float bx = row2X + i * (BOX_SIZE + BOX_GAP);
@@ -153,6 +164,8 @@ public class TreeBoxUI {
             drawBtn(bx, bBtnY, isUnlocked(3 + i), confirmed[3 + i], hasItem);
             btnX[3 + i] = bx;
             btnY[3 + i] = bBtnY;
+            boxX[3 + i] = bx;
+            boxY[3 + i] = row2Y;
         }
 
         closeX = px + PANEL_W - CLOSE_SIZE - 8f;
@@ -190,6 +203,17 @@ public class TreeBoxUI {
             float bx = btnX[i];
             float by = btnY[i];
             float boxTopY = by + BTN_H + BTN_BOX_GAP + BOX_SIZE;
+
+            // Draw item sprite - always visible, but dimmed if locked
+            float ix = boxX[i] + (BOX_SIZE - BOX_INNER) / 2f;
+            float iy = boxY[i] + (BOX_SIZE - BOX_INNER) / 2f;
+            if (!isUnlocked(i)) {
+                batch.setColor(1f, 1f, 1f, 0.4f);
+            } else {
+                batch.setColor(1f, 1f, 1f, 1f);
+            }
+            batch.draw(itemTextures[i], ix, iy, BOX_INNER, BOX_INNER);
+            batch.setColor(1f, 1f, 1f, 1f); // Reset batch color
 
             tinyFont.getData().setScale(1.3f);
             tinyFont.setColor(confirmed[i] ? new Color(0.4f, 0.95f, 1f, 1f) : Color.WHITE);
@@ -236,22 +260,12 @@ public class TreeBoxUI {
     private void drawBox(float bx, float by, boolean unlocked, boolean done) {
         if (!unlocked) {
             shapeRenderer.setColor(0.15f, 0.15f, 0.15f, 1f);
-            shapeRenderer.rect(bx, by, BOX_SIZE, BOX_SIZE);
         } else if (done) {
             shapeRenderer.setColor(0.12f, 0.32f, 0.12f, 1f);
-            shapeRenderer.rect(bx, by, BOX_SIZE, BOX_SIZE);
-            float ix = bx + (BOX_SIZE - BOX_INNER) / 2f;
-            float iy = by + (BOX_SIZE - BOX_INNER) / 2f;
-            shapeRenderer.setColor(0.25f, 0.72f, 0.25f, 1f);
-            shapeRenderer.rect(ix, iy, BOX_INNER, BOX_INNER);
         } else {
             shapeRenderer.setColor(0.26f, 0.20f, 0.12f, 1f);
-            shapeRenderer.rect(bx, by, BOX_SIZE, BOX_SIZE);
-            float ix = bx + (BOX_SIZE - BOX_INNER) / 2f;
-            float iy = by + (BOX_SIZE - BOX_INNER) / 2f;
-            shapeRenderer.setColor(0.72f, 0.42f, 0.12f, 1f);
-            shapeRenderer.rect(ix, iy, BOX_INNER, BOX_INNER);
         }
+        shapeRenderer.rect(bx, by, BOX_SIZE, BOX_SIZE);
     }
 
     private void drawBtn(float bx, float by, boolean unlocked, boolean done, boolean hasItem) {
@@ -271,5 +285,8 @@ public class TreeBoxUI {
         font.dispose();
         smallFont.dispose();
         tinyFont.dispose();
+        for (Texture t : itemTextures) {
+            if (t != null) t.dispose();
+        }
     }
 }

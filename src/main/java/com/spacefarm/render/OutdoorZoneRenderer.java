@@ -1,5 +1,6 @@
 package com.spacefarm.render;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
@@ -20,6 +21,7 @@ public class OutdoorZoneRenderer {
     private Texture borderTileTexture;
     private Texture[] locationTextures;
     private Texture[] droneTextures;
+    private Texture wheelTexture;
     private Texture greenOverlayTexture;
     private SpriteBatch batch;
 
@@ -61,6 +63,15 @@ public class OutdoorZoneRenderer {
             locationTextures[i] = createSolidTexture(tileSize,tileSize,lr,lg,lb,255);
             droneTextures[i] = createCrystalDroneTexture(locWidth,locHeight);
         }
+
+        // Load wheel texture
+        try {
+            wheelTexture = new Texture(Gdx.files.internal("sprite/object-map/wheel.png"));
+        } catch (Exception e) {
+            Gdx.app.error("OutdoorZoneRenderer", "Could not load wheel.png: " + e.getMessage());
+            wheelTexture = createSolidTexture(tileSize * 2, tileSize * 2, 139, 115, 85, 255); // Fallback brown
+        }
+
         // Green overlay for tree-phase unlocked locations
         greenOverlayTexture = createSolidTexture(1, 1, 40, 200, 60, 180);
     }
@@ -149,8 +160,26 @@ public class OutdoorZoneRenderer {
             float locStartY = location.getTopLeft().y() * tileSize;
             float locWidth = location.getWidth() * tileSize;
             float locHeight = location.getHeight() * tileSize;
-            batch.setColor(1,1,1,0.8f);
-            batch.draw(droneTextures[i],locStartX,locStartY,locWidth,locHeight);
+
+            if (location.getLocationType() == ScavengingLocation.LocationType.SEED_WHEEL) {
+                batch.setColor(1, 1, 1, 1f);
+                // Scale wheel sprite to cover approx 6 tiles in size (adjusting by tileSize)
+                float targetSize = tileSize * 6f;
+                float spriteW = wheelTexture.getWidth();
+                float spriteH = wheelTexture.getHeight();
+                float aspectRatio = spriteH / spriteW;
+                
+                float drawW = targetSize;
+                float drawH = targetSize * aspectRatio;
+                
+                float drawX = locStartX + (locWidth - drawW) / 2f;
+                float drawY = locStartY + (locHeight - drawH) / 2f;
+                batch.draw(wheelTexture, drawX, drawY, drawW, drawH);
+            } else {
+                batch.setColor(1, 1, 1, 0.8f);
+                batch.draw(droneTextures[i], locStartX, locStartY, locWidth, locHeight);
+            }
+
             if(location.isScavenging()) {
                 renderProgressBar(location,locStartX,locStartY,locWidth,locHeight, scavengeDuration);
             }
@@ -210,6 +239,7 @@ public class OutdoorZoneRenderer {
         if(borderTileTexture != null) borderTileTexture.dispose();
         if(locationTextures != null) for(Texture t : locationTextures) if(t != null) t.dispose();
         if(droneTextures != null) for(Texture t : droneTextures) if(t != null) t.dispose();
+        if(wheelTexture != null) wheelTexture.dispose();
         if(greenOverlayTexture != null) greenOverlayTexture.dispose();
         if(batch != null) batch.dispose();
     }

@@ -7,7 +7,7 @@
         "itemType": "WATERING_CAN"
       },
       {
-        "quantity": 3,
+        "quantity": 5,
         "name": "Насіння",
         "description": "Насіння для посадження (5)",
         "itemType": "SEED"
@@ -17,7 +17,11 @@
         "description": "Інструмент для збору врожаю",
         "itemType": "SICKLE"
       },
-      null,
+      {
+        "name": "Bio-Compost",
+        "description": "Tree phase 1 item. Shop price: $500",
+        "itemType": "BIO_COMPOST"
+      },
       {
         "name": "Living Dew",
         "description": "Tree phase 2 item. Shop price: $1000",
@@ -43,25 +47,10 @@
   },
   "oxygen": {
     "currentOxygen": 100.0,
-    "isAtBase": false
+    "isAtBase": true
   },
   "farming": {
-    "crops": {
-      "51,65": {
-        "type": "DEFAULT",
-        "growthStage": "YOUNG",
-        "growthTimer": 2.062235,
-        "timeSinceWatered": 6.180269,
-        "waterState": "WELL_WATERED"
-      },
-      "52,64": {
-        "type": "DEFAULT",
-        "growthStage": "YOUNG",
-        "growthTimer": 4.5553727,
-        "timeSinceWatered": 7.804952,
-        "waterState": "WELL_WATERED"
-      }
-    }
+    "crops": {}
   },
   "locations": [
     {

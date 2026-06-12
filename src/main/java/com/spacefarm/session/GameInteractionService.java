@@ -80,6 +80,7 @@ public class GameInteractionService {
                     }
                     // 4. Expand the base zone
                     session.getBaseZone().expandZone(4);
+                    session.getBaseZone().setTreePhase(session.getTreeBoxUI().getPhase());
                     // 5. Check for victory (all 5 phases complete)
                     if (session.getTreeBoxUI().isComplete()) {
                         session.setVictory(true);
