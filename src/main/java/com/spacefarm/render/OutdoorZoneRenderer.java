@@ -12,11 +12,9 @@ import com.badlogic.gdx.maps.tiled.tiles.StaticTiledMapTile;
 import com.spacefarm.world.OutdoorZone;
 import com.spacefarm.world.OutdoorConstants;
 import com.spacefarm.world.ScavengingLocation;
+import com.spacefarm.world.TileCoord;
 
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Queue;
-import java.util.Set;
+import java.util.*;
 
 public class OutdoorZoneRenderer {
     private OutdoorZone outdoorZone;
@@ -27,7 +25,6 @@ public class OutdoorZoneRenderer {
     private Texture[] locationTextures;
     private Texture[] droneTextures;
     private Texture wheelTexture;
-    private Texture greenOverlayTexture;
     private Texture greenTileTexture;
     private SpriteBatch batch;
     private Set<Long> greenedTiles = new HashSet<>();
@@ -99,6 +96,61 @@ public class OutdoorZoneRenderer {
                         cell.setTile(tile);
                         borderLayer.setCell(x,y,cell);
                     }
+                }
+            }
+        }
+    }
+
+    public void applyGreenTiles(int locationIndex) {
+        if (locationIndex < 0 || locationIndex >= outdoorZone.getLocations().size()) return;
+        ScavengingLocation loc = outdoorZone.getLocations().get(locationIndex);
+        
+        // Find all border tiles
+        List<TileCoord> borderTiles = new ArrayList<>();
+        for (int x = outdoorZone.getBorderX(); x < outdoorZone.getBorderX() + outdoorZone.getBorderWidth(); x++) {
+            for (int y = outdoorZone.getBorderY(); y < outdoorZone.getBorderY() + outdoorZone.getBorderHeight(); y++) {
+                if (outdoorZone.isInBorder(x, y)) {
+                    borderTiles.add(new TileCoord(x, y));
+                }
+            }
+        }
+        
+        int totalBorderTiles = borderTiles.size();
+        int targetToGreen = totalBorderTiles / 5;
+        if (locationIndex == 4) targetToGreen = totalBorderTiles - greenedTiles.size(); // Green everything on last phase
+        
+        // BFS from location center
+        Queue<TileCoord> queue = new LinkedList<>();
+        TileCoord center = new TileCoord(loc.getTopLeft().x() + loc.getWidth()/2, loc.getTopLeft().y() + loc.getHeight()/2);
+        queue.add(center);
+        
+        int greenedThisTime = 0;
+        Set<Long> visited = new HashSet<>();
+        
+        while (!queue.isEmpty() && greenedThisTime < targetToGreen) {
+            TileCoord curr = queue.poll();
+            long key = (long)curr.y() * baseLayer.getWidth() + curr.x();
+            if (visited.contains(key)) continue;
+            visited.add(key);
+            
+            if (outdoorZone.isInBorder(curr.x(), curr.y()) && !greenedTiles.contains(key)) {
+                // Apply green tile to baseLayer (not borderLayer, as per original logic's implication)
+                StaticTiledMapTile tile = new StaticTiledMapTile(new TextureRegion(greenTileTexture));
+                TiledMapTileLayer.Cell cell = new TiledMapTileLayer.Cell();
+                cell.setTile(tile);
+                baseLayer.setCell(curr.x(), curr.y(), cell);
+                
+                greenedTiles.add(key);
+                greenedThisTime++;
+            }
+            
+            // Add neighbors
+            int[][] dirs = {{0,1},{0,-1},{1,0},{-1,0}};
+            for (int[] d : dirs) {
+                int nx = curr.x() + d[0];
+                int ny = curr.y() + d[1];
+                if (nx >= 0 && nx < baseLayer.getWidth() && ny >= 0 && ny < baseLayer.getHeight()) {
+                    queue.add(new TileCoord(nx, ny));
                 }
             }
         }
@@ -176,10 +228,10 @@ public class OutdoorZoneRenderer {
                 float spriteW = wheelTexture.getWidth();
                 float spriteH = wheelTexture.getHeight();
                 float aspectRatio = spriteH / spriteW;
-                
+
                 float drawW = targetSize;
                 float drawH = targetSize * aspectRatio;
-                
+
                 float drawX = locStartX + (locWidth - drawW) / 2f;
                 float drawY = locStartY + (locHeight - drawH) / 2f;
                 batch.draw(wheelTexture, drawX, drawY, drawW, drawH);
@@ -235,86 +287,7 @@ public class OutdoorZoneRenderer {
         if(locationTextures != null) for(Texture t : locationTextures) if(t != null) t.dispose();
         if(droneTextures != null) for(Texture t : droneTextures) if(t != null) t.dispose();
         if(wheelTexture != null) wheelTexture.dispose();
-        if(greenOverlayTexture != null) greenOverlayTexture.dispose();
         if(greenTileTexture != null) greenTileTexture.dispose();
         if(batch != null) batch.dispose();
-    }
-    /**
-     * Paints exactly 1/5 of the total border area (= 20%) per call.
-     * Seeds BFS from the new location AND the entire existing green frontier,
-     * guaranteeing 100% coverage after 5 calls with no overlap waste.
-     */
-    public void applyGreenTiles(int locationIndex) {
-        if (borderLayer == null) return;
-        if (locationIndex < 0 || locationIndex >= outdoorZone.getLocations().size()) return;
-        ScavengingLocation location = outdoorZone.getLocations().get(locationIndex);
-
-        int borderOnlyTiles = outdoorZone.getBorderWidth() * outdoorZone.getBorderHeight()
-                - outdoorZone.getBaseWidth() * outdoorZone.getBaseHeight();
-        int targetTiles = Math.max(1, borderOnlyTiles / 5);
-
-        TextureRegion greenRegion = new TextureRegion(greenTileTexture);
-
-        int[] dx = {0, 0, 1, -1};
-        int[] dy = {1, -1, 0, 0};
-
-        // visited starts from all already-greened tiles so BFS never re-counts them
-        java.util.Set<Long> visited = new java.util.HashSet<>(greenedTiles);
-        java.util.Queue<int[]> queue = new java.util.LinkedList<>();
-
-        // Seed 1: tiles of the new location
-        int startX = location.getTopLeft().x();
-        int startY = location.getTopLeft().y();
-        for (int x = startX; x < startX + location.getWidth(); x++) {
-            for (int y = startY; y < startY + location.getHeight(); y++) {
-                long key = ((long) x << 32) | (y & 0xFFFFFFFFL);
-                if (visited.add(key)) {
-                    queue.add(new int[]{x, y});
-                }
-            }
-        }
-
-        // Seed 2: neighbours of all already-greened tiles (the green frontier)
-        for (long gk : greenedTiles) {
-            int gx = (int)(gk >> 32);
-            int gy = (int)(gk & 0xFFFFFFFFL);
-            for (int d = 0; d < 4; d++) {
-                int nx = gx + dx[d];
-                int ny = gy + dy[d];
-                long nk = ((long) nx << 32) | (ny & 0xFFFFFFFFL);
-                if (visited.add(nk)) {
-                    queue.add(new int[]{nx, ny});
-                }
-            }
-        }
-
-        int painted = 0;
-        while (!queue.isEmpty() && painted < targetTiles) {
-            int[] curr = queue.poll();
-            int x = curr[0], y = curr[1];
-
-            if (x >= 0 && x < borderLayer.getWidth()
-                    && y >= 0 && y < borderLayer.getHeight()
-                    && (outdoorZone.isInBorder(x, y) || outdoorZone.isInOutdoor(x, y))) {
-
-                long tileKey = ((long) x << 32) | (y & 0xFFFFFFFFL);
-                if (!greenedTiles.contains(tileKey)) {
-                    TiledMapTileLayer.Cell cell = new TiledMapTileLayer.Cell();
-                    cell.setTile(new StaticTiledMapTile(greenRegion));
-                    borderLayer.setCell(x, y, cell);
-                    greenedTiles.add(tileKey);
-                    painted++;
-                }
-
-                for (int d = 0; d < 4; d++) {
-                    int nx = x + dx[d];
-                    int ny = y + dy[d];
-                    long nkey = ((long) nx << 32) | (ny & 0xFFFFFFFFL);
-                    if (visited.add(nkey)) {
-                        queue.add(new int[]{nx, ny});
-                    }
-                }
-            }
-        }
     }
 }

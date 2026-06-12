@@ -15,7 +15,7 @@ import com.spacefarm.inventory.Inventory;
  * panel borders with corner squares.
  *
  * Layout: central modal, 5 phase rows stacked vertically.
- * Each row: phase dot → name → required item → status badge → confirm button.
+ * Each row: phase dot → item icon → name → status badge → confirm button.
  */
 public class TreeBoxUI {
 
@@ -47,9 +47,9 @@ public class TreeBoxUI {
     private static final int BOX_COUNT  = 5;
 
     // ── Panel geometry ────────────────────────────────────────────────────────
-    private static final float PANEL_W   = 680f;
+    private static final float PANEL_W   = 720f;
     private static final float PANEL_H   = 580f;
-    private static final float ROW_H     = 74f;
+    private static final float ROW_H     = 82f;
     private static final float ROW_GAP   = 8f;
     private static final float BTN_W     = 136f;
     private static final float BTN_H     = 38f;
@@ -64,9 +64,8 @@ public class TreeBoxUI {
     private final BitmapFont    titleFont;
     private final BitmapFont    bodyFont;
     private final BitmapFont    smallFont;
-    private final BitmapFont    tinyFont;
-    private final Texture[]     itemTextures;
     private final BitmapFont    hintFont;
+    private final Texture[]     itemTextures;
     private final GlyphLayout   gl = new GlyphLayout();
 
     // ── State ─────────────────────────────────────────────────────────────────
@@ -74,12 +73,7 @@ public class TreeBoxUI {
     private int       phase    = 1;
     private Inventory inventory;
 
-    private final float[]   btnX      = new float[BOX_COUNT];
-    private final float[]   btnY      = new float[BOX_COUNT];
-    private final float[]   boxX      = new float[BOX_COUNT];
-    private final float[]   boxY      = new float[BOX_COUNT];
     private final boolean[] confirmed = new boolean[BOX_COUNT];
-    private final boolean[] confirmed    = new boolean[BOX_COUNT];
     private final float[]   flashTimer   = new float[BOX_COUNT]; // completion flash
 
     // Hit-boxes (set during render)
@@ -92,10 +86,6 @@ public class TreeBoxUI {
     public TreeBoxUI() {
         sr    = new ShapeRenderer();
         batch = new SpriteBatch();
-
-        tinyFont = new BitmapFont();
-        tinyFont.getData().setScale(1.3f);
-        tinyFont.setColor(new Color(0.85f, 0.85f, 0.85f, 1f));
 
         itemTextures = new Texture[BOX_COUNT];
         for (int i = 0; i < BOX_COUNT; i++) {
@@ -128,7 +118,7 @@ public class TreeBoxUI {
     }
 
     public void confirmPhase(int i) {
-        if (i >= 0 && i < BOX_COUNT && !confirmed[i]) {
+        if (i >= 0 && i < BOX_COUNT && !confirmed[i] && isUnlocked(i)) {
             confirmed[i]  = true;
             flashTimer[i] = 0.4f; // flash animation
             phase++;
@@ -267,7 +257,7 @@ public class TreeBoxUI {
         // Phase counter top-right of title
         batch.begin();
         smallFont.setColor(GR_R, GR_G, GR_B, 1f);
-        String phaseStr = "Фаза " + phase + " / 5";
+        String phaseStr = "Фаза " + Math.min(5, phase) + " / 5";
         gl.setText(smallFont, phaseStr);
         smallFont.draw(batch, phaseStr,
                 px + 18f,
@@ -275,27 +265,6 @@ public class TreeBoxUI {
         batch.end();
     }
 
-        for (int i = 0; i < 3; i++) {
-            float bx = row1X + i * (BOX_SIZE + BOX_GAP);
-            boolean hasItem = inventory != null && inventory.hasTreePhaseItem(i);
-            drawBox(bx, row1Y, isUnlocked(i), confirmed[i]);
-            float bBtnY = row1Y - BTN_BOX_GAP - BTN_H;
-            drawBtn(bx, bBtnY, isUnlocked(i), confirmed[i], hasItem);
-            btnX[i] = bx;
-            btnY[i] = bBtnY;
-            boxX[i] = bx;
-            boxY[i] = row1Y;
-        }
-        for (int i = 0; i < 2; i++) {
-            float bx = row2X + i * (BOX_SIZE + BOX_GAP);
-            boolean hasItem = inventory != null && inventory.hasTreePhaseItem(3 + i);
-            drawBox(bx, row2Y, isUnlocked(3 + i), confirmed[3 + i]);
-            float bBtnY = row2Y - BTN_BOX_GAP - BTN_H;
-            drawBtn(bx, bBtnY, isUnlocked(3 + i), confirmed[3 + i], hasItem);
-            btnX[3 + i] = bx;
-            btnY[3 + i] = bBtnY;
-            boxX[3 + i] = bx;
-            boxY[3 + i] = row2Y;
     private void drawProgressBar(float px, float py) {
         float barY  = py + PANEL_H - 62f;
         float barX  = px + PANEL_W * 0.08f;
@@ -326,11 +295,7 @@ public class TreeBoxUI {
     }
 
     private void drawPhaseRows(float px, float py) {
-        // 5 rows stacked, starting from below header
-        float totalRowH = BOX_COUNT * ROW_H + (BOX_COUNT - 1) * ROW_GAP;
-        float startY    = py + (PANEL_H - 72f - totalRowH) / 2f + totalRowH - ROW_H;
-        // Adjust: rows sit below progress bar area
-        startY = py + PANEL_H - 80f - ROW_H;
+        float startY = py + PANEL_H - 80f - ROW_H;
 
         for (int i = 0; i < BOX_COUNT; i++) {
             float rowY   = startY - i * (ROW_H + ROW_GAP);
@@ -379,23 +344,19 @@ public class TreeBoxUI {
         } else if (!unlocked) {
             sr.setColor(0.20f, 0.20f, 0.25f, 0.50f);
         } else {
-            sr.setColor(0.70f, 0.25f, 0.10f, 0.55f); // orange — unlocked but missing item
+            sr.setColor(0.70f, 0.25f, 0.10f, 0.55f);
         }
         sr.rect(rowX, rowY, rowW, ROW_H);
         sr.end();
 
         // ── Phase number dot ──
-        float dotX = rowX + 20f;
+        float dotX = rowX + 22f;
         float dotY = rowY + ROW_H / 2f;
         float dotR = 16f;
         sr.begin(ShapeRenderer.ShapeType.Filled);
-        if (done) {
-            sr.setColor(GR_R * 0.4f, GR_G * 0.4f, GR_B * 0.4f, 1f);
-        } else if (unlocked) {
-            sr.setColor(AC_R * 0.2f, AC_G * 0.2f, AC_B * 0.2f, 1f);
-        } else {
-            sr.setColor(0.08f, 0.08f, 0.10f, 1f);
-        }
+        if (done)       sr.setColor(GR_R * 0.4f, GR_G * 0.4f, GR_B * 0.4f, 1f);
+        else if (unlocked) sr.setColor(AC_R * 0.2f, AC_G * 0.2f, AC_B * 0.2f, 1f);
+        else               sr.setColor(0.08f, 0.08f, 0.10f, 1f);
         fillCircle(dotX, dotY, dotR, 24);
         sr.end();
         sr.begin(ShapeRenderer.ShapeType.Line);
@@ -405,110 +366,60 @@ public class TreeBoxUI {
         drawCircleLines(dotX, dotY, dotR, 24);
         sr.end();
 
-        // Phase number text
         batch.begin();
         bodyFont.getData().setScale(1.1f);
         if (done)        bodyFont.setColor(GR_R, GR_G, GR_B, 1f);
         else if (unlocked) bodyFont.setColor(AC_R, AC_G, AC_B, 1f);
         else               bodyFont.setColor(0.35f, 0.35f, 0.40f, 1f);
-        String numStr = String.valueOf(i + 1);
-        gl.setText(bodyFont, numStr);
-        bodyFont.draw(batch, numStr,
-                dotX - gl.width / 2f,
-                dotY + gl.height / 2f);
+        gl.setText(bodyFont, String.valueOf(i + 1));
+        bodyFont.draw(batch, String.valueOf(i + 1), dotX - gl.width / 2f, dotY + gl.height / 2f);
         bodyFont.getData().setScale(1f);
         batch.end();
 
-        // ── Phase name + description ──
-        float textX = rowX + 52f;
+        // ── Item Icon ──
+        float iconSz = ROW_H - 24f;
+        float iconX  = dotX + dotR + 15f;
+        float iconY  = rowY + (ROW_H - iconSz) / 2f;
+        
         batch.begin();
+        if (!unlocked) batch.setColor(1, 1, 1, 0.25f);
+        else if (done) batch.setColor(1, 1, 1, 0.85f);
+        else           batch.setColor(1, 1, 1, 1.0f);
+        batch.draw(itemTextures[i], iconX, iconY, iconSz, iconSz);
+        batch.setColor(1, 1, 1, 1);
+        batch.end();
 
+        // ── Texts ──
+        float textX = iconX + iconSz + 18f;
+        batch.begin();
         bodyFont.getData().setScale(1.05f);
         if (done)         bodyFont.setColor(GR_R * 0.8f + 0.2f, GR_G * 0.8f + 0.2f, GR_B * 0.8f + 0.2f, 1f);
         else if (unlocked) bodyFont.setColor(0.90f, 0.90f, 0.95f, 1f);
         else               bodyFont.setColor(0.35f, 0.35f, 0.40f, 1f);
-        bodyFont.draw(batch, PHASE_NAMES[i], textX, rowY + ROW_H - 10f);
+        bodyFont.draw(batch, PHASE_NAMES[i], textX, rowY + ROW_H - 12f);
         bodyFont.getData().setScale(1f);
 
-        hintFont.getData().setScale(1.0f);
         hintFont.setColor(0.40f, 0.55f, 0.60f, 1f);
-        hintFont.draw(batch, PHASE_DESC[i], textX, rowY + ROW_H - 32f);
-        hintFont.getData().setScale(1f);
-
-        // ── Required item ──
-        String itemLabel = "Потрібно: " + PHASE_ITEMS[i];
-        hintFont.getData().setScale(0.95f);
-        if (done) {
-            hintFont.setColor(GR_R * 0.6f, GR_G * 0.6f, GR_B * 0.6f, 1f);
-        } else if (!unlocked) {
-            hintFont.setColor(0.25f, 0.25f, 0.30f, 1f);
-        } else if (hasItem) {
-            hintFont.setColor(GR_R, GR_G, GR_B, 0.90f);
-        } else {
-            hintFont.setColor(0.90f, 0.35f, 0.20f, 1f);
-        }
-        hintFont.draw(batch, itemLabel, textX, rowY + 16f);
-        hintFont.getData().setScale(1f);
-
-        for (int i = 0; i < BOX_COUNT; i++) {
-            float bx = btnX[i];
-            float by = btnY[i];
-            float boxTopY = by + BTN_H + BTN_BOX_GAP + BOX_SIZE;
-
-            // Draw item sprite - always visible, but dimmed if locked
-            float ix = boxX[i] + (BOX_SIZE - BOX_INNER) / 2f;
-            float iy = boxY[i] + (BOX_SIZE - BOX_INNER) / 2f;
-            if (!isUnlocked(i)) {
-                batch.setColor(1f, 1f, 1f, 0.4f);
-            } else {
-                batch.setColor(1f, 1f, 1f, 1f);
-            }
-            batch.draw(itemTextures[i], ix, iy, BOX_INNER, BOX_INNER);
-            batch.setColor(1f, 1f, 1f, 1f); // Reset batch color
-
-            tinyFont.getData().setScale(1.3f);
-            tinyFont.setColor(confirmed[i] ? new Color(0.4f, 0.95f, 1f, 1f) : Color.WHITE);
-            String name = PHASE_NAMES[i];
-            layout.setText(tinyFont, name);
-            float nameScale = Math.min(1.3f, (BOX_SIZE - 8f) / layout.width);
-            tinyFont.getData().setScale(nameScale);
-            layout.setText(tinyFont, name);
-            tinyFont.draw(batch, name, bx + (BOX_SIZE - layout.width) / 2f, boxTopY - 8f);
-
-            tinyFont.getData().setScale(1.2f);
-            tinyFont.setColor(new Color(1f, 0.96f, 0.55f, 1f));
-            layout.setText(tinyFont, PHASE_PRICES[i]);
-            tinyFont.draw(batch, PHASE_PRICES[i],
-                    bx + (BOX_SIZE - layout.width) / 2f,
-                    boxTopY - 8f - layout.height - 6f);
-
-            if (isUnlocked(i) && !confirmed[i]) {
-                boolean has = inventory != null && inventory.hasTreePhaseItem(i);
-                tinyFont.getData().setScale(1.1f);
-                tinyFont.setColor(has ? new Color(0.3f, 0.95f, 0.95f, 1f) : new Color(1f, 0.35f, 0.35f, 1f));
-                String status = has ? "[Have it]" : "[Missing]";
-                layout.setText(tinyFont, status);
-                tinyFont.draw(batch, status,
-                        bx + (BOX_SIZE - layout.width) / 2f,
-                        by + BTN_H + BTN_BOX_GAP + 18f);
-            }
+        hintFont.draw(batch, PHASE_DESC[i], textX, rowY + ROW_H - 34f);
+        
+        if (done) hintFont.setColor(GR_R * 0.6f, GR_G * 0.6f, GR_B * 0.6f, 1f);
+        else if (!unlocked) hintFont.setColor(0.25f, 0.25f, 0.30f, 1f);
+        else if (hasItem)   hintFont.setColor(GR_R, GR_G, GR_B, 0.90f);
+        else                hintFont.setColor(0.90f, 0.35f, 0.20f, 1f);
+        hintFont.draw(batch, "Потрібно: " + PHASE_ITEMS[i], textX, rowY + 18f);
         batch.end();
 
         // ── Status badge ──
         float badgeX = rowX + rowW - BTN_W - 110f;
         float badgeCY = rowY + ROW_H / 2f;
         if (done) {
-            drawBadge(badgeX, badgeCY - 13f, 90f, 26f,
-                    0.04f, 0.16f, 0.07f, GR_R, GR_G, GR_B, "✓ ВИКОНАНО");
+            drawBadge(badgeX, badgeCY - 13f, 90f, 26f, 0.04f, 0.16f, 0.07f, GR_R, GR_G, GR_B, "✓ ГОТОВО");
         } else if (!unlocked) {
-            drawBadge(badgeX, badgeCY - 13f, 90f, 26f,
-                    0.08f, 0.08f, 0.10f, 0.30f, 0.30f, 0.35f, "ЗАБЛОКОВАНО");
+            drawBadge(badgeX, badgeCY - 13f, 90f, 26f, 0.08f, 0.08f, 0.10f, 0.30f, 0.30f, 0.35f, "ЗАБЛОКОВАНО");
         } else if (hasItem) {
-            drawBadge(badgeX, badgeCY - 13f, 90f, 26f,
-                    0.04f, 0.14f, 0.06f, GR_R * 0.8f, GR_G * 0.8f, GR_B * 0.8f, "Є В НАЯВНОСТІ");
+            drawBadge(badgeX, badgeCY - 13f, 90f, 26f, 0.04f, 0.14f, 0.06f, GR_R * 0.8f, GR_G * 0.8f, GR_B * 0.8f, "В НАЯВНОСТІ");
         } else {
-            drawBadge(badgeX, badgeCY - 13f, 90f, 26f,
-                    0.14f, 0.06f, 0.03f, 0.85f, 0.30f, 0.10f, "ВІДСУТНІЙ");
+            drawBadge(badgeX, badgeCY - 13f, 90f, 26f, 0.14f, 0.06f, 0.03f, 0.85f, 0.30f, 0.10f, "ВІДСУТНІЙ");
         }
 
         // ── Confirm button ──
@@ -518,7 +429,7 @@ public class TreeBoxUI {
         btnY[i] = by;
 
         if (done) {
-            drawRowButton(bx, by, 0.05f, 0.13f, 0.06f, GR_R * 0.5f, GR_G * 0.5f, GR_B * 0.5f, "ВИКОНАНО");
+            drawRowButton(bx, by, 0.05f, 0.13f, 0.06f, GR_R * 0.5f, GR_G * 0.5f, GR_B * 0.5f, "ГОТОВО");
         } else if (!unlocked || !hasItem) {
             drawRowButton(bx, by, 0.06f, 0.06f, 0.08f, 0.25f, 0.25f, 0.30f, "ПІДТВЕРДИТИ");
         } else {
@@ -526,12 +437,10 @@ public class TreeBoxUI {
         }
     }
 
-    // ── Helper drawers ─────────────────────────────────────────────────────────
-
     private void drawBadge(float x, float y, float w, float h,
-                           float bgR, float bgG, float bgB,
-                           float fgR, float fgG, float fgB,
-                           String text) {
+                            float bgR, float bgG, float bgB,
+                            float fgR, float fgG, float fgB,
+                            String text) {
         sr.begin(ShapeRenderer.ShapeType.Filled);
         sr.setColor(bgR, bgG, bgB, 0.90f);
         sr.rect(x, y, w, h);
@@ -548,20 +457,11 @@ public class TreeBoxUI {
         float sx = Math.min(1f, (w - 6f) / gl.width);
         hintFont.getData().setScale(0.85f * sx, 0.85f);
         gl.setText(hintFont, text);
-        hintFont.draw(batch, text,
-                x + (w - gl.width) / 2f,
-                y + (h + gl.height) / 2f);
+        hintFont.draw(batch, text, x + (w - gl.width) / 2f, y + (h + gl.height) / 2f);
         hintFont.getData().setScale(1f, 1f);
         batch.end();
     }
 
-    private void drawBox(float bx, float by, boolean unlocked, boolean done) {
-        if (!unlocked) {
-            shapeRenderer.setColor(0.15f, 0.15f, 0.15f, 1f);
-        } else if (done) {
-            shapeRenderer.setColor(0.12f, 0.32f, 0.12f, 1f);
-        } else {
-            shapeRenderer.setColor(0.26f, 0.20f, 0.12f, 1f);
     private void drawRowButton(float bx, float by,
                                float bgR, float bgG, float bgB,
                                float fgR, float fgG, float fgB,
@@ -581,9 +481,7 @@ public class TreeBoxUI {
         float sx = Math.min(1f, (BTN_W - 10f) / gl.width);
         smallFont.getData().setScale(sx, 1f);
         gl.setText(smallFont, label);
-        smallFont.draw(batch, label,
-                bx + (BTN_W - gl.width) / 2f,
-                by + (BTN_H + gl.height) / 2f);
+        smallFont.draw(batch, label, bx + (BTN_W - gl.width) / 2f, by + (BTN_H + gl.height) / 2f);
         smallFont.getData().setScale(1f, 1f);
         batch.end();
     }
@@ -596,7 +494,6 @@ public class TreeBoxUI {
                     cx + r * (float)Math.cos(a1), cy + r * (float)Math.sin(a1),
                     cx + r * (float)Math.cos(a2), cy + r * (float)Math.sin(a2));
         }
-        shapeRenderer.rect(bx, by, BOX_SIZE, BOX_SIZE);
     }
 
     private void drawCircleLines(float cx, float cy, float r, int segs) {
@@ -614,10 +511,7 @@ public class TreeBoxUI {
         titleFont.dispose();
         bodyFont.dispose();
         smallFont.dispose();
-        tinyFont.dispose();
-        for (Texture t : itemTextures) {
-            if (t != null) t.dispose();
-        }
         hintFont.dispose();
+        for (Texture t : itemTextures) if (t != null) t.dispose();
     }
 }

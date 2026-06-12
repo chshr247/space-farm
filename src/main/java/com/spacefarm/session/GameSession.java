@@ -33,10 +33,6 @@ import com.spacefarm.inventory.LivingDew;
 import com.spacefarm.inventory.MycorrhizaNetwork;
 import com.spacefarm.inventory.UniverseFlower;
 import com.spacefarm.inventory.EdenCore;
-import com.spacefarm.inventory.Item;
-import com.spacefarm.inventory.Crystal;
-import com.spacefarm.inventory.RareSeed;
-import com.spacefarm.inventory.LegendarySeed;
 import com.spacefarm.render.OutdoorZoneRenderer;
 import com.spacefarm.render.BaseZoneRenderer;
 
@@ -141,6 +137,7 @@ public class GameSession {
         inventoryUI.update(deltaTime);
         droneConsoleOverlay.update(deltaTime);
         interactionService.update(deltaTime);
+        if (treeBoxUI != null) treeBoxUI.update(deltaTime);
     }
 
     public boolean handleTouchDown(int screenX, int screenY, int button) {
@@ -192,29 +189,14 @@ public class GameSession {
     public ContextMenuOverlay getContextMenu() { return contextMenu; }
     public GameOverOverlay getGameOverOverlay() { return gameOverOverlay; }
     public SeedWheelOverlay getSeedWheelOverlay() { return seedWheelOverlay; }
-    public Wallet getWallet()                           { return wallet; }
-    public TreeBoxUI getTreeBoxUI()                     { return treeBoxUI; }
-    public DifficultyLevel getDifficulty()              { return difficulty; }
-    public TiledMap getMap()                            { return map; }
-    public TiledMapTileLayer getBaseLayer()             { return baseLayer; }
-    public BaseZone getBaseZone()                       { return baseZone; }
-    public OutdoorZone getOutdoorZone()                 { return outdoorZone; }
-    public FarmingSystem getFarmingSystem()             { return farmingSystem; }
-    public Inventory getInventory()                     { return inventory; }
-    public OxygenManager getOxygenManager()             { return oxygenManager; }
-    public InventoryUI getInventoryUI()                 { return inventoryUI; }
-    public ContextMenuOverlay getContextMenu()          { return contextMenu; }
-    public GameOverOverlay getGameOverOverlay()         { return gameOverOverlay; }
-    public SeedWheelOverlay getSeedWheelOverlay()       { return seedWheelOverlay; }
     public DroneConsoleOverlay getDroneConsoleOverlay() { return droneConsoleOverlay; }
-    public TilePicker getTilePicker()                   { return tilePicker; }
-    public TiledMapTileLayer getSelectionLayer()        { return selectionLayer; }
-    public AudioManager getAudioManager()               { return audioManager; }
-    public void setGameOver(boolean gameOver)           { this.gameOver = gameOver; }
-    public boolean isGameOver()                         { return gameOver; }
-    public VictoryOverlay getVictoryOverlay()           { return victoryOverlay; }
-    public void setVictory(boolean victory)             { this.victory = victory; }
-    public boolean isVictory()                          { return victory; }
+    public TilePicker getTilePicker() { return tilePicker; }
+    public TiledMapTileLayer getSelectionLayer() { return selectionLayer; }
+    public void setGameOver(boolean gameOver) { this.gameOver = gameOver; }
+    public boolean isGameOver() { return gameOver; }
+    public VictoryOverlay getVictoryOverlay() { return victoryOverlay; }
+    public void setVictory(boolean victory) { this.victory = victory; }
+    public boolean isVictory() { return victory; }
 
     public WorldBounds getWorldBounds() {
         float worldWidth  = baseLayer.getWidth()  * baseLayer.getTileWidth();
@@ -279,7 +261,6 @@ public class GameSession {
         pixmap.dispose();
         return texture;
     }
-}
 
     public OutdoorZoneRenderer getOutdoorZoneRenderer(){ return outdoorZoneRenderer; }
     public void setOutdoorZoneRenderer(OutdoorZoneRenderer outdoorZoneRenderer){ this.outdoorZoneRenderer = outdoorZoneRenderer; }

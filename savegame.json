@@ -46,8 +46,8 @@
     "selectedSlot": 0
   },
   "oxygen": {
-    "currentOxygen": 100.0,
-    "isAtBase": true
+    "currentOxygen": 94.0,
+    "isAtBase": false
   },
   "farming": {
     "crops": {}
@@ -68,14 +68,14 @@
     {
       "isCleared": false,
       "lastClearedTime": 0,
-      "isScavenging": false,
-      "scavengingStartTime": 0
+      "isScavenging": true,
+      "scavengingStartTime": 1781295042731
     },
     {
       "isCleared": false,
       "lastClearedTime": 0,
-      "isScavenging": false,
-      "scavengingStartTime": 0
+      "isScavenging": true,
+      "scavengingStartTime": 1781295041884
     },
     {
       "isCleared": false,
