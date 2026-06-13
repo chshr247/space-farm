@@ -137,7 +137,9 @@ public class SeedWheelOverlay {
 
     public boolean isVisible()            { return isVisible; }
     public boolean isSpinning()           { return isSpinning; }
-    public void    setVisible(boolean v)  { isVisible = v; }
+    public void    setVisible(boolean v)  { 
+        isVisible = v; 
+    }
 
     /**
      * Called from GameInteractionService.handleTouchDown().

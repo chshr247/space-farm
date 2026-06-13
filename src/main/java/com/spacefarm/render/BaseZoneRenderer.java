@@ -67,8 +67,8 @@ public class BaseZoneRenderer {
         originalPixmap.dispose();
         scaledPixmap.dispose();
 
-        // Drone zone tile (grayish for metal/tech)
-        droneTileTexture = createSolidTexture(tileSize, tileSize, 70, 70, 80, 128); // Slate gray
+        // Drone zone tile (green for territory)
+        droneTileTexture = createSolidTexture(tileSize, tileSize, 34, 139, 34, 200); // Forest green
 
         // Load tree phase textures
         treePhaseTextures = new Texture[5];
@@ -78,7 +78,19 @@ public class BaseZoneRenderer {
         treePhaseTextures[3] = new Texture(Gdx.files.internal("sprite/tree/tree-4.png"));
         treePhaseTextures[4] = new Texture(Gdx.files.internal("sprite/tree/tree-5.png"));
 
-        droneTextureOverlay = createDroneSpriteTexture(tileSize * 5, tileSize * 5);
+        // Load drone sprite texture
+        try {
+            if (Gdx.files.internal("sprite/object-map/drone.png").exists()) {
+                droneTextureOverlay = new Texture(Gdx.files.internal("sprite/object-map/drone.png"));
+                Gdx.app.log("BaseZoneRenderer", "Successfully loaded drone sprite: sprite/object-map/drone.png");
+            } else {
+                Gdx.app.error("BaseZoneRenderer", "Drone sprite not found: sprite/object-map/drone.png. Using fallback.");
+                droneTextureOverlay = createDroneSpriteTexture(tileSize * 5, tileSize * 5);
+            }
+        } catch (Exception e) {
+            Gdx.app.error("BaseZoneRenderer", "Error loading drone sprite: " + e.getMessage());
+            droneTextureOverlay = createDroneSpriteTexture(tileSize * 5, tileSize * 5);
+        }
     }
 
     private Texture createDroneSpriteTexture(int width, int height) {
@@ -135,8 +147,6 @@ public class BaseZoneRenderer {
                     Texture overlayTexture = null;
                     if (baseZone.isGardenBed(coord)) {
                         overlayTexture = gardenTileTexture;
-                    } else if (baseZone.isDroneZone(coord)) {
-                        overlayTexture = droneTileTexture;
                     }
 
                     if (overlayTexture != null) {

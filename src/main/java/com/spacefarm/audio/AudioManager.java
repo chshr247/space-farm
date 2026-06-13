@@ -72,6 +72,18 @@ public class AudioManager {
         }
     }
 
+    public void pauseMusic() {
+        if (soundtrack != null && soundtrack.isPlaying()) {
+            soundtrack.pause();
+        }
+    }
+
+    public void resumeMusic() {
+        if (soundtrack != null && !soundtrack.isPlaying()) {
+            soundtrack.play();
+        }
+    }
+
     public void stopMusic() {
         if (soundtrack != null && soundtrack.isPlaying()) {
             soundtrack.stop();

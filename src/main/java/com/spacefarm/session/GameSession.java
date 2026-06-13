@@ -109,14 +109,45 @@ public class GameSession {
         worldWidthTiles = worldMaxX - worldMinX;
         worldHeightTiles = worldMaxY - worldMinY;
 
+        // 1. PRE-INITIALIZE ALL LAYERS FROM map.tmx
+        // This ensures the layer order is correct and fixed from the start.
+        if (referenceMap != null) {
+            for (com.badlogic.gdx.maps.MapLayer refLayer : referenceMap.getLayers()) {
+                if (refLayer instanceof TiledMapTileLayer) {
+                    TiledMapTileLayer rtl = (TiledMapTileLayer) refLayer;
+                    String layerName = rtl.getName();
+                    
+                    // Check if map already has this layer (except for our baseLayer)
+                    boolean exists = false;
+                    for (com.badlogic.gdx.maps.MapLayer ml : map.getLayers()) {
+                        if (ml.getName().equals(layerName)) {
+                            exists = true;
+                            break;
+                        }
+                    }
+                    
+                    if (!exists) {
+                        TiledMapTileLayer newLayer = new TiledMapTileLayer(worldWidthTiles, worldHeightTiles,
+                                rtl.getTileWidth(), rtl.getTileHeight());
+                        newLayer.setName(layerName);
+                        newLayer.setOffsetX(worldMinX * rtl.getTileWidth());
+                        newLayer.setOffsetY(worldMinY * rtl.getTileHeight());
+                        map.getLayers().add(newLayer);
+                    }
+                }
+            }
+        }
+
         selectionLayer = new TiledMapTileLayer(worldWidthTiles, worldHeightTiles,
                 baseLayer.getTileWidth(), baseLayer.getTileHeight());
+        selectionLayer.setName("SelectionLayer");
         selectionLayer.setOffsetX(worldMinX * baseLayer.getTileWidth());
         selectionLayer.setOffsetY(worldMinY * baseLayer.getTileHeight());
         map.getLayers().add(selectionLayer);
 
         zoneLayer = new TiledMapTileLayer(worldWidthTiles, worldHeightTiles,
                 baseLayer.getTileWidth(), baseLayer.getTileHeight());
+        zoneLayer.setName("ZoneLayer");
         zoneLayer.setOffsetX(worldMinX * baseLayer.getTileWidth());
         zoneLayer.setOffsetY(worldMinY * baseLayer.getTileHeight());
         map.getLayers().add(zoneLayer);

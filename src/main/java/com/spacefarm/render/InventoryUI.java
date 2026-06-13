@@ -81,6 +81,10 @@ public class InventoryUI {
             itemTextures.put(Item.ItemType.RARE_SEED, new Texture("sprite/inventory-icons/seed/packet-of-seeds-2.png"));
             itemTextures.put(Item.ItemType.LEGENDARY_SEED, new Texture("sprite/inventory-icons/seed/packet-of-seeds-3.png"));
             
+            // New icons for crystal and harvest
+            itemTextures.put(Item.ItemType.CRYSTAL, new Texture("sprite/inventory-icons/crystal.png"));
+            itemTextures.put(Item.ItemType.PLANT_FOOD, new Texture("sprite/inventory-icons/harvest.png"));
+
             // Tree phase items
             itemTextures.put(Item.ItemType.BIO_COMPOST, new Texture("sprite/tree-item/item-1.png"));
             itemTextures.put(Item.ItemType.LIVING_DEW, new Texture("sprite/tree-item/item-2.png"));

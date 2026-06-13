@@ -33,6 +33,7 @@ public class GameInteractionService {
         if (session.getSeedWheelOverlay().hasResult()) {
             FarmingConstants.CropType resultType = session.getSeedWheelOverlay().getResultAndReset();
             handleSeedWheelResult(resultType);
+            session.getAudioManager().resumeMusic();
 
             if (currentSeedWheelLocation != null) {
                 currentSeedWheelLocation.completeScavenging();
@@ -82,6 +83,7 @@ public class GameInteractionService {
                     }
                     
                     session.getBaseZone().expandZone(4);
+                    session.getOutdoorZoneRenderer().reapplyAllGreenTiles();
                     session.getBaseZone().setTreePhase(session.getTreeBoxUI().getPhase());
 
                     // Victory check: if we just confirmed index 4 (5th phase "Ядро Едему")
@@ -121,6 +123,7 @@ public class GameInteractionService {
                 // 2. Spin button — only when modal is not shown
                 if (session.getSeedWheelOverlay().isButtonHit(screenX, adjustedY)) {
                     session.getSeedWheelOverlay().startSpin();
+                    session.getAudioManager().pauseMusic();
                     session.getAudioManager().playWheelSound();
                     return true;
                 }

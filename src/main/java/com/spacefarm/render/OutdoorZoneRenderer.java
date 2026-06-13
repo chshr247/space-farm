@@ -133,69 +133,89 @@ public class OutdoorZoneRenderer {
         }
     }
 
+    public void reapplyAllGreenTiles() {
+        if (outdoorZone == null) return;
+        List<ScavengingLocation> locations = outdoorZone.getLocations();
+        for (int i = 0; i < locations.size(); i++) {
+            if (locations.get(i).isGreened()) {
+                applyGreenTiles(i);
+            }
+        }
+    }
+
     public void applyGreenTiles(int locationIndex) {
-        if (borderLayer == null) return;
-        if (locationIndex < 0 || locationIndex >= outdoorZone.getLocations().size()) return;
-        ScavengingLocation location = outdoorZone.getLocations().get(locationIndex);
+        if (map == null || referenceMap == null) return;
 
-        int borderOnlyTiles = outdoorZone.getBorderWidth() * outdoorZone.getBorderHeight()
-                - outdoorZone.getBaseWidth() * outdoorZone.getBaseHeight();
-        int targetTiles = Math.max(1, borderOnlyTiles / 5);
+        // 1. Calculate the TOTAL area that SHOULD be greened at this stage.
+        // There are 5 phases in the tree upgrade system.
+        // confirmedCount represents how many upgrades have been completed.
+        int confirmedCount = 0;
+        if (session != null && session.getTreeBoxUI() != null) {
+            for (int i = 0; i < 5; i++) {
+                if (session.getTreeBoxUI().isConfirmed(i)) {
+                    confirmedCount++;
+                }
+            }
+        }
 
-        TiledMapTileLayer refLayer = null;
+        if (confirmedCount == 0) return;
+
+        // 2. Determine all tiles that are part of the "Outdoor" zone (Border + Locations)
+        List<int[]> outdoorTiles = new ArrayList<>();
+        int minX = outdoorZone.getBorderX();
+        int minY = outdoorZone.getBorderY();
+        int maxX = minX + outdoorZone.getBorderWidth();
+        int maxY = minY + outdoorZone.getBorderHeight();
+
+        for (int x = minX; x < maxX; x++) {
+            for (int y = minY; y < maxY; y++) {
+                if (outdoorZone.isInBorder(x, y) || outdoorZone.isInOutdoor(x, y)) {
+                    outdoorTiles.add(new int[]{x, y});
+                }
+            }
+        }
+
+        // 3. Sort tiles by distance from the base center to make expansion feel natural (radial)
+        final int centerX = minX + (maxX - minX) / 2;
+        final int centerY = minY + (maxY - minY) / 2;
+        outdoorTiles.sort((a, b) -> {
+            double distA = Math.sqrt(Math.pow(a[0] - centerX, 2) + Math.pow(a[1] - centerY, 2));
+            double distB = Math.sqrt(Math.pow(b[0] - centerX, 2) + Math.pow(b[1] - centerY, 2));
+            return Double.compare(distA, distB);
+        });
+
+        // 4. Calculate target number of tiles for CURRENT phase (1/5th per phase)
+        int totalOutdoorTiles = outdoorTiles.size();
+        int targetTotalGreened = (int) (totalOutdoorTiles * (confirmedCount / 5.0f));
+
+        // Ensure at least some progress if target is zero but confirmedCount > 0
+        if (targetTotalGreened == 0 && confirmedCount > 0) targetTotalGreened = 1;
+        // Cap at total available
+        if (targetTotalGreened > totalOutdoorTiles) targetTotalGreened = totalOutdoorTiles;
+
+        // 5. Transfer tiles from referenceMap to map
+        int painted = 0;
+        TiledMapTileLayer refBaseLayer = null;
         if (referenceMap != null) {
             for (com.badlogic.gdx.maps.MapLayer layer : referenceMap.getLayers()) {
                 if (layer instanceof TiledMapTileLayer) {
-                    refLayer = (TiledMapTileLayer) layer;
-                    break;
+                    refBaseLayer = (TiledMapTileLayer) layer;
+                    break; // Use the first layer as the terrain source
                 }
             }
         }
 
-        int[] dx = {0, 0, 1, -1};
-        int[] dy = {1, -1, 0, 0};
+        for (int i = 0; i < targetTotalGreened; i++) {
+            int[] pos = outdoorTiles.get(i);
+            int x = pos[0];
+            int y = pos[1];
+            long tileKey = ((long) x << 32) | (y & 0xFFFFFFFFL);
 
-        java.util.Set<Long> visited = new java.util.HashSet<>(greenedTiles);
-        java.util.Queue<int[]> queue = new java.util.LinkedList<>();
-
-        int startX = location.getTopLeft().x();
-        int startY = location.getTopLeft().y();
-        for (int x = startX; x < startX + location.getWidth(); x++) {
-            for (int y = startY; y < startY + location.getHeight(); y++) {
-                long key = ((long) x << 32) | (y & 0xFFFFFFFFL);
-                if (visited.add(key)) {
-                    queue.add(new int[]{x, y});
-                }
-            }
-        }
-
-        for (long gk : greenedTiles) {
-            int gx = (int)(gk >> 32);
-            int gy = (int)(gk & 0xFFFFFFFFL);
-            for (int d = 0; d < 4; d++) {
-                int nx = gx + dx[d];
-                int ny = gy + dy[d];
-                long nk = ((long) nx << 32) | (ny & 0xFFFFFFFFL);
-                if (visited.add(nk)) {
-                    queue.add(new int[]{nx, ny});
-                }
-            }
-        }
-
-        int painted = 0;
-        while (!queue.isEmpty() && painted < targetTiles) {
-            int[] curr = queue.poll();
-            int x = curr[0], y = curr[1];
-
-            if (x >= 0 && x < borderLayer.getWidth()
-                    && y >= 0 && y < borderLayer.getHeight()
-                    && (outdoorZone.isInBorder(x, y) || outdoorZone.isInOutdoor(x, y))) {
-
-                long tileKey = ((long) x << 32) | (y & 0xFFFFFFFFL);
-                if (!greenedTiles.contains(tileKey)) {
+            if (!greenedTiles.contains(tileKey)) {
+                if (x >= 0 && x < borderLayer.getWidth() && y >= 0 && y < borderLayer.getHeight()) {
                     TiledMapTileLayer.Cell cell = null;
-                    if (refLayer != null && x < refLayer.getWidth() && y < refLayer.getHeight()) {
-                        TiledMapTileLayer.Cell refCell = refLayer.getCell(x, y);
+                    if (refBaseLayer != null && x < refBaseLayer.getWidth() && y < refBaseLayer.getHeight()) {
+                        TiledMapTileLayer.Cell refCell = refBaseLayer.getCell(x, y);
                         if (refCell != null) {
                             cell = new TiledMapTileLayer.Cell();
                             cell.setTile(refCell.getTile());
@@ -204,26 +224,39 @@ public class OutdoorZoneRenderer {
                             cell.setRotation(refCell.getRotation());
                         }
                     }
-                    
+
                     if (cell == null) {
                         cell = new TiledMapTileLayer.Cell();
                         cell.setTile(new com.badlogic.gdx.maps.tiled.tiles.StaticTiledMapTile(new TextureRegion(greenTileTexture)));
                     }
-
                     borderLayer.setCell(x, y, cell);
-                    greenedTiles.add(tileKey);
-                    painted++;
                 }
-
-                for (int d = 0; d < 4; d++) {
-                    int nx = x + dx[d];
-                    int ny = y + dy[d];
-                    long nkey = ((long) nx << 32) | (ny & 0xFFFFFFFFL);
-                    if (visited.add(nkey)) {
-                        queue.add(new int[]{nx, ny});
-                    }
-                }
+                greenedTiles.add(tileKey);
+                painted++;
             }
+        }
+    }
+
+    private void moveUILayersToTop() {
+        if (session == null) return;
+        TiledMapTileLayer selectionLayer = session.getSelectionLayer();
+        if (selectionLayer != null) {
+            int idx = -1;
+            for (int k = 0; k < map.getLayers().getCount(); k++) {
+                if (map.getLayers().get(k) == selectionLayer) { idx = k; break; }
+            }
+            if (idx != -1) {
+                map.getLayers().remove(idx);
+                map.getLayers().add(selectionLayer);
+            }
+        }
+        int zIdx = -1;
+        for (int k = 0; k < map.getLayers().getCount(); k++) {
+            if (map.getLayers().get(k) == zoneLayer) { zIdx = k; break; }
+        }
+        if (zIdx != -1) {
+            map.getLayers().remove(zIdx);
+            map.getLayers().add(zoneLayer);
         }
     }
 
