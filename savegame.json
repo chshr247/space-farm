@@ -18,15 +18,11 @@
         "itemType": "SICKLE"
       },
       {
-        "name": "Bio-Compost",
-        "description": "Tree phase 1 item. Shop price: $500",
-        "itemType": "BIO_COMPOST"
+        "name": "Crystal",
+        "description": "A valuable space crystal obtained from scavenging",
+        "itemType": "CRYSTAL"
       },
-      {
-        "name": "Living Dew",
-        "description": "Tree phase 2 item. Shop price: $1000",
-        "itemType": "LIVING_DEW"
-      },
+      null,
       {
         "name": "Mycorrhiza Net",
         "description": "Tree phase 3 item. Shop price: $2000",
@@ -43,21 +39,21 @@
         "itemType": "EDEN_CORE"
       }
     ],
-    "selectedSlot": 0
+    "selectedSlot": 4
   },
   "oxygen": {
-    "currentOxygen": 100.0,
-    "isAtBase": false
+    "currentOxygen": 94.0,
+    "isAtBase": true
   },
   "farming": {
     "crops": {}
   },
   "locations": [
     {
-      "isCleared": false,
-      "lastClearedTime": 0,
+      "isCleared": true,
+      "lastClearedTime": 1781360606172,
       "isScavenging": false,
-      "scavengingStartTime": 0
+      "scavengingStartTime": 1781360596168
     },
     {
       "isCleared": false,
@@ -66,22 +62,22 @@
       "scavengingStartTime": 0
     },
     {
-      "isCleared": false,
-      "lastClearedTime": 0,
+      "isCleared": true,
+      "lastClearedTime": 1781360599334,
       "isScavenging": false,
-      "scavengingStartTime": 0
+      "scavengingStartTime": 1781360589329
     },
     {
-      "isCleared": false,
-      "lastClearedTime": 0,
+      "isCleared": true,
+      "lastClearedTime": 1781360602111,
       "isScavenging": false,
-      "scavengingStartTime": 0
+      "scavengingStartTime": 1781360592106
     },
     {
-      "isCleared": false,
-      "lastClearedTime": 0,
+      "isCleared": true,
+      "lastClearedTime": 1781360605395,
       "isScavenging": false,
-      "scavengingStartTime": 0
+      "scavengingStartTime": 1781360595390
     },
     {
       "isCleared": false,
@@ -91,7 +87,7 @@
     }
   ],
   "wallet": {
-    "balance": 1000.0
+    "balance": 5600.0
   },
   "gameOver": false
 }

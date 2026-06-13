@@ -3,6 +3,7 @@ package com.spacefarm.render;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -47,6 +48,7 @@ public class DroneConsoleOverlay {
     private final BitmapFont    bodyFont;
     private final BitmapFont    smallFont;
     private final BitmapFont    hintFont;
+    private final Texture crystalIcon;
     private final OrthographicCamera camera;
     private final GlyphLayout   gl = new GlyphLayout();
 
@@ -88,6 +90,7 @@ public class DroneConsoleOverlay {
         bodyFont  = FontUtils.createFont("fonts/ArialBold.ttf", 18);
         smallFont = FontUtils.createFont("fonts/ArialBold.ttf", 16);
         hintFont  = FontUtils.createFont("fonts/ArialBold.ttf", 14);
+        crystalIcon = new Texture(Gdx.files.internal("sprite/inventory-icons/crystal.png"));
         camera    = new OrthographicCamera();
 
         tree.add(new Upg("tree_growth","Розширення коріння","Швидший ріст рослин",200,1));
@@ -179,6 +182,7 @@ public class DroneConsoleOverlay {
                 session.getBaseZone().setDroneOffsets(0,0);
                 session.getWallet().earn(pendingBal);
                 pendingBal = 0;
+                session.getAudioManager().stopDroneSound();
             }
         }
     }
@@ -307,8 +311,15 @@ public class DroneConsoleOverlay {
 
             sr.begin(ShapeRenderer.ShapeType.Filled);
             sr.setColor(0.04f,0.08f,0.14f,1f); sr.rect(slotX,slotY,SLOT_SZ,SLOT_SZ);
-            if (crystals>0) { sr.setColor(0.25f,0.65f,0.90f,0.85f); sr.rect(slotX+10f,slotY+10f,SLOT_SZ-20f,SLOT_SZ-20f); }
             sr.end();
+
+            if (crystals > 0 && crystalIcon != null) {
+                batch.begin();
+                float pad = 6f;
+                batch.draw(crystalIcon, slotX + pad, slotY + pad, SLOT_SZ - pad * 2, SLOT_SZ - pad * 2);
+                batch.end();
+            }
+
             sr.begin(ShapeRenderer.ShapeType.Line);
             sr.setColor(crystals>0?AC_R:0.25f, crystals>0?AC_G:0.35f, crystals>0?AC_B:0.40f, 1f);
             sr.rect(slotX,slotY,SLOT_SZ,SLOT_SZ);
@@ -547,10 +558,12 @@ public class DroneConsoleOverlay {
         crystals = 0;
         droneState = DS.FLYING_AWAY;
         animTimer = 0;
+        session.getAudioManager().playDroneSound();
     }
 
     public void dispose() {
         sr.dispose(); batch.dispose();
         titleFont.dispose(); bodyFont.dispose(); smallFont.dispose(); hintFont.dispose();
+        if (crystalIcon != null) crystalIcon.dispose();
     }
 }

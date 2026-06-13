@@ -234,6 +234,7 @@ public class GameInteractionService {
         session.getOxygenManager().updatePositionTile(coord);
 
         if (session.getBaseZone().isDroneZone(coord)) {
+            session.getAudioManager().playDroneSound();
             session.getDroneConsoleOverlay().setVisible(true);
             return;
         }
