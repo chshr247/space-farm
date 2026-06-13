@@ -84,10 +84,10 @@ public class DroneConsoleOverlay {
         this.session = session;
         sr    = new ShapeRenderer();
         batch = new SpriteBatch();
-        titleFont = FontUtils.createFont("fonts/ArialBold.ttf", 26);
-        bodyFont  = FontUtils.createFont("fonts/ArialBold.ttf", 15);
-        smallFont = FontUtils.createFont("fonts/ArialBold.ttf", 13);
-        hintFont  = FontUtils.createFont("fonts/ArialBold.ttf", 11);
+        titleFont = FontUtils.createFont("fonts/ArialBold.ttf", 30);
+        bodyFont  = FontUtils.createFont("fonts/ArialBold.ttf", 18);
+        smallFont = FontUtils.createFont("fonts/ArialBold.ttf", 16);
+        hintFont  = FontUtils.createFont("fonts/ArialBold.ttf", 14);
         camera    = new OrthographicCamera();
 
         tree.add(new Upg("tree_growth","Розширення коріння","Швидший ріст рослин",200,1));
@@ -259,11 +259,14 @@ public class DroneConsoleOverlay {
 
     private void drawTabs() {
         float tabY = PY+PANEL_H-HEADER_H-TAB_H;
-        float tabW = PANEL_W/2f;
+        float border = 4f;
+        float tabAreaX = PX + border;
+        float tabAreaW = PANEL_W - border * 2f;
+        float tabW = tabAreaW / 2f;
         String[] labels = {"ПРОДАЖ","МОДУЛІ"};
         sr.begin(ShapeRenderer.ShapeType.Filled);
         for (int i=0;i<2;i++) {
-            float tx=PX+i*tabW;
+            float tx=tabAreaX+i*tabW;
             sr.setColor(i==activeTab?AC_R*0.13f:0.03f,
                     i==activeTab?AC_G*0.13f:0.04f,
                     i==activeTab?AC_B*0.13f:0.07f,1f);
@@ -272,7 +275,7 @@ public class DroneConsoleOverlay {
         sr.end();
         sr.begin(ShapeRenderer.ShapeType.Line);
         for (int i=0;i<2;i++) {
-            float tx=PX+i*tabW;
+            float tx=tabAreaX+i*tabW;
             sr.setColor(i==activeTab?AC_R:AC_R*0.3f, i==activeTab?AC_G:AC_G*0.3f,
                     i==activeTab?AC_B:AC_B*0.3f, i==activeTab?1f:0.5f);
             sr.rect(tx,tabY,tabW,TAB_H);
@@ -280,7 +283,7 @@ public class DroneConsoleOverlay {
         sr.end();
         batch.begin();
         for (int i=0;i<2;i++) {
-            float tx=PX+i*tabW;
+            float tx=tabAreaX+i*tabW;
             smallFont.setColor(i==activeTab?AC_R:0.45f, i==activeTab?AC_G:0.55f,
                     i==activeTab?AC_B:0.60f,1f);
             gl.setText(smallFont,labels[i]);
@@ -371,7 +374,6 @@ public class DroneConsoleOverlay {
     // ── Upgrades tab ──────────────────────────────────────────────────────────
 
     private void drawUpgradesTab() {
-        // No glScissor — manually skip rows outside the viewport
         float curY = contentTop - 4f + scrollY;
 
         curY = drawSectionLabel(curY, "── МОДУЛІ ДЕРЕВА ──", GR_R,GR_G,GR_B);
@@ -403,8 +405,8 @@ public class DroneConsoleOverlay {
 
     private void drawRow(float rowTop, Upg u) {
         float ry = rowTop - ROW_H;
-        // skip if fully outside viewport
-        if (rowTop < contentBot || ry > contentTop) return;
+        // skip if row bottom bleeds below the content area, or row top is above viewport
+        if (ry < contentBot || rowTop > contentTop) return;
 
         boolean can = !u.maxed() && session.getWallet().getBalance() >= u.cost;
         float rx = PX+8f, rw = PANEL_W-20f;
@@ -424,20 +426,16 @@ public class DroneConsoleOverlay {
 
         float tx = rx+10f;
         batch.begin();
-        bodyFont.getData().setScale(0.95f);
         if (u.maxed()) bodyFont.setColor(GR_R*0.8f+0.2f,GR_G*0.8f+0.2f,GR_B*0.8f+0.2f,1f);
         else           bodyFont.setColor(can?0.90f:0.50f, can?0.90f:0.40f, can?0.95f:0.50f,1f);
         bodyFont.draw(batch, u.name, tx, ry+ROW_H-8f);
-        bodyFont.getData().setScale(1f);
 
-        hintFont.getData().setScale(0.9f);
         hintFont.setColor(0.40f,0.55f,0.60f,1f);
-        hintFont.draw(batch, u.desc, tx+3f, ry+ROW_H-24f);
+        hintFont.draw(batch, u.desc, tx+3f, ry+ROW_H-26f);
         if (!u.maxed()) {
             hintFont.setColor(can?WN_R:0.55f, can?WN_G*0.7f:0.25f, 0.10f, 1f);
-            hintFont.draw(batch, "$"+(int)u.cost, tx+3f, ry+12f);
+            hintFont.draw(batch, "$"+(int)u.cost, tx+3f, ry+14f);
         }
-        hintFont.getData().setScale(1f);
         batch.end();
 
         // level dots
@@ -459,7 +457,7 @@ public class DroneConsoleOverlay {
         }
 
         // buy button
-        float bw=82f,bh=28f, bx=rx+rw-bw-6f, by=ry+(ROW_H-bh)/2f;
+        float bw=100f,bh=30f, bx=rx+rw-bw-6f, by=ry+(ROW_H-bh)/2f;
         sr.begin(ShapeRenderer.ShapeType.Filled);
         if (u.maxed())  sr.setColor(0.05f,0.14f,0.07f,0.90f);
         else if (can)   sr.setColor(0.05f,0.20f,0.26f,0.92f);
@@ -477,10 +475,7 @@ public class DroneConsoleOverlay {
         smallFont.setColor(u.maxed()?GR_R:can?AC_R:0.40f, u.maxed()?GR_G:can?AC_G:0.28f,
                 u.maxed()?GR_B:can?AC_B:0.22f,1f);
         gl.setText(smallFont,lbl);
-        float sx=Math.min(1f,(bw-6f)/gl.width);
-        smallFont.getData().setScale(sx,1f); gl.setText(smallFont,lbl);
         smallFont.draw(batch,lbl, bx+(bw-gl.width)/2f, by+(bh+gl.height)/2f);
-        smallFont.getData().setScale(1f,1f);
         batch.end();
     }
 
@@ -504,7 +499,8 @@ public class DroneConsoleOverlay {
 
         float tabY=PY+PANEL_H-HEADER_H-TAB_H;
         if (wy>=tabY && wy<=tabY+TAB_H) {
-            activeTab = (screenX<PX+PANEL_W/2f)?0:1; return true;
+            float tabMid = PX + PANEL_W/2f;
+            activeTab = (screenX < tabMid) ? 0 : 1; return true;
         }
         if (activeTab==0 && droneState==DS.IDLE) {
             if (sellBtn.contains(screenX,wy) && crystals>0) { sell(); return true; }
