@@ -1,7 +1,7 @@
 package com.spacefarm;
 
 public enum DifficultyLevel {
-    EASY   (2f,               10,                   1500f),
+    EASY   (2f,               10,                   5500f),
     NORMAL (4f,               5,                    1000f),
     HARD   (6f,               2,                    100f);
 

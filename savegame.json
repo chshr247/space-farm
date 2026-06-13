@@ -7,27 +7,46 @@
         "itemType": "WATERING_CAN"
       },
       {
-        "quantity": 5,
-        "name": "Насіння",
-        "description": "Насіння для посадження (5)",
-        "itemType": "SEED"
+        "name": "Crystal",
+        "description": "A valuable space crystal obtained from scavenging",
+        "itemType": "CRYSTAL"
       },
       {
         "name": "Коса",
         "description": "Інструмент для збору врожаю",
         "itemType": "SICKLE"
       },
-      null,
-      null,
-      null,
-      null,
-      null
+      {
+        "name": "Bio-Compost",
+        "description": "Tree phase 1 item. Shop price: $500",
+        "itemType": "BIO_COMPOST"
+      },
+      {
+        "name": "Living Dew",
+        "description": "Tree phase 2 item. Shop price: $1000",
+        "itemType": "LIVING_DEW"
+      },
+      {
+        "name": "Mycorrhiza Net",
+        "description": "Tree phase 3 item. Shop price: $2000",
+        "itemType": "MYCORRHIZA_NETWORK"
+      },
+      {
+        "name": "Universe Flower",
+        "description": "Tree phase 4 item. Shop price: $4000",
+        "itemType": "UNIVERSE_FLOWER"
+      },
+      {
+        "name": "Eden Core",
+        "description": "Tree phase 5 item. Shop price: $8000",
+        "itemType": "EDEN_CORE"
+      }
     ],
-    "selectedSlot": 0
+    "selectedSlot": 1
   },
   "oxygen": {
-    "currentOxygen": 100.0,
-    "isAtBase": true
+    "currentOxygen": 96.0,
+    "isAtBase": false
   },
   "farming": {
     "crops": {}
@@ -47,9 +66,9 @@
     },
     {
       "isCleared": false,
-      "lastClearedTime": 0,
-      "isScavenging": false,
-      "scavengingStartTime": 0
+      "lastClearedTime": 1781350240346,
+      "isScavenging": true,
+      "scavengingStartTime": 1781350267328
     },
     {
       "isCleared": false,
@@ -71,7 +90,7 @@
     }
   ],
   "wallet": {
-    "balance": 1000.0
+    "balance": 5500.0
   },
   "gameOver": false
 }

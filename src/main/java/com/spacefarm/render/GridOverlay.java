@@ -8,9 +8,13 @@ import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 
 public class GridOverlay {
     private final ShapeRenderer renderer = new ShapeRenderer();
-    private final TiledMapTileLayer layer;
+    private TiledMapTileLayer layer;
 
     public GridOverlay(TiledMapTileLayer layer) {
+        this.layer = layer;
+    }
+
+    public void setLayer(TiledMapTileLayer layer) {
         this.layer = layer;
     }
 

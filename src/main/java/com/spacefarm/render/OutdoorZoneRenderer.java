@@ -13,6 +13,7 @@ import com.spacefarm.world.OutdoorZone;
 import com.spacefarm.world.OutdoorConstants;
 import com.spacefarm.world.ScavengingLocation;
 import com.spacefarm.world.TileCoord;
+import com.spacefarm.world.SeedWheelConstants;
 
 import java.util.*;
 
@@ -31,10 +32,17 @@ public class OutdoorZoneRenderer {
     private int worldMinX;
     private int worldMinY;
     private com.spacefarm.session.GameSession session;
+    private TiledMap referenceMap;
 
     public OutdoorZoneRenderer(OutdoorZone outdoorZone, TiledMapTileLayer zoneLayer, int tileSize, int worldMinX, int worldMinY, com.spacefarm.session.GameSession session) {
         this(outdoorZone, zoneLayer, null, tileSize, worldMinX, worldMinY, session);
     }
+
+    public void setReferenceMap(TiledMap referenceMap) {
+        this.referenceMap = referenceMap;
+    }
+
+    private Texture whitePixel;
 
     public OutdoorZoneRenderer(OutdoorZone outdoorZone, TiledMapTileLayer zoneLayer, TiledMap map, int tileSize, int worldMinX, int worldMinY, com.spacefarm.session.GameSession session) {
         this.outdoorZone = outdoorZone;
@@ -44,6 +52,7 @@ public class OutdoorZoneRenderer {
         this.worldMinY = worldMinY;
         this.session = session;
         this.batch = new SpriteBatch();
+        this.whitePixel = createSolidTexture(1, 1, 255, 255, 255, 255);
         createTextures(tileSize);
         if(map != null) {
             borderLayer = new TiledMapTileLayer(zoneLayer.getWidth(), zoneLayer.getHeight(),
@@ -51,9 +60,7 @@ public class OutdoorZoneRenderer {
             borderLayer.setOffsetX(worldMinX * zoneLayer.getTileWidth());
             borderLayer.setOffsetY(worldMinY * zoneLayer.getTileHeight());
             map.getLayers().add(borderLayer);
-            // applyBorderTiles(); // Solid colors removed to show TMX map
         }
-        // applyOutdoorZoneTiles(); // Solid colors removed to show TMX map
     }
 
     private void createTextures(int tileSize) {
@@ -67,20 +74,38 @@ public class OutdoorZoneRenderer {
         droneTextures = new Texture[locationCount];
         int locWidth = OutdoorConstants.OUTDOOR_LOCATION_WIDTH * tileSize;
         int locHeight = OutdoorConstants.OUTDOOR_LOCATION_HEIGHT * tileSize;
+
         for(int i = 0; i < locationCount; i++) {
             int color = outdoorZone.getLocations().get(i).getColor();
             int lr = (color >> 16) & 0xFF;
             int lg = (color >> 8) & 0xFF;
             int lb = color & 0xFF;
             locationTextures[i] = createSolidTexture(tileSize, tileSize, lr, lg, lb, 128);
-            droneTextures[i] = createCrystalDroneTexture(locWidth, locHeight);
+            
+            // Try to load crystal textures (crystal-1 to crystal-4)
+            int crystalNum = (i % 4) + 1;
+            String path = "sprite/object-map/crystal-" + crystalNum + ".png";
+            try {
+                if (Gdx.files.internal(path).exists()) {
+                    droneTextures[i] = new Texture(Gdx.files.internal(path));
+                } else {
+                    Gdx.app.error("OutdoorZoneRenderer", "File not found: " + path);
+                    droneTextures[i] = createCrystalDroneTexture(locWidth, locHeight);
+                }
+            } catch (Exception e) {
+                Gdx.app.error("OutdoorZoneRenderer", "Error loading " + path + ": " + e.getMessage());
+                droneTextures[i] = createCrystalDroneTexture(locWidth, locHeight);
+            }
         }
 
         try {
-            wheelTexture = new Texture(Gdx.files.internal("sprite/object-map/wheel.png"));
+            if (Gdx.files.internal("sprite/object-map/wheel.png").exists()) {
+                wheelTexture = new Texture(Gdx.files.internal("sprite/object-map/wheel.png"));
+            } else {
+                wheelTexture = createSolidTexture(tileSize * 2, tileSize * 2, 139, 115, 85, 255);
+            }
         } catch (Exception e) {
-            Gdx.app.error("OutdoorZoneRenderer", "Could not load wheel.png: " + e.getMessage());
-            wheelTexture = createSolidTexture(tileSize * 2, tileSize * 2, 139, 115, 85, 128);
+            wheelTexture = createSolidTexture(tileSize * 2, tileSize * 2, 139, 115, 85, 255);
         }
 
         greenTileTexture = createSolidTexture(tileSize, tileSize, 34, 139, 34, 255);
@@ -117,16 +142,22 @@ public class OutdoorZoneRenderer {
                 - outdoorZone.getBaseWidth() * outdoorZone.getBaseHeight();
         int targetTiles = Math.max(1, borderOnlyTiles / 5);
 
-        TextureRegion greenRegion = new TextureRegion(greenTileTexture);
+        TiledMapTileLayer refLayer = null;
+        if (referenceMap != null) {
+            for (com.badlogic.gdx.maps.MapLayer layer : referenceMap.getLayers()) {
+                if (layer instanceof TiledMapTileLayer) {
+                    refLayer = (TiledMapTileLayer) layer;
+                    break;
+                }
+            }
+        }
 
         int[] dx = {0, 0, 1, -1};
         int[] dy = {1, -1, 0, 0};
 
-        // visited starts from all already-greened tiles so BFS never re-counts them
         java.util.Set<Long> visited = new java.util.HashSet<>(greenedTiles);
         java.util.Queue<int[]> queue = new java.util.LinkedList<>();
 
-        // Seed 1: tiles of the new location
         int startX = location.getTopLeft().x();
         int startY = location.getTopLeft().y();
         for (int x = startX; x < startX + location.getWidth(); x++) {
@@ -138,7 +169,6 @@ public class OutdoorZoneRenderer {
             }
         }
 
-        // Seed 2: neighbours of all already-greened tiles (the green frontier)
         for (long gk : greenedTiles) {
             int gx = (int)(gk >> 32);
             int gy = (int)(gk & 0xFFFFFFFFL);
@@ -163,8 +193,23 @@ public class OutdoorZoneRenderer {
 
                 long tileKey = ((long) x << 32) | (y & 0xFFFFFFFFL);
                 if (!greenedTiles.contains(tileKey)) {
-                    TiledMapTileLayer.Cell cell = new TiledMapTileLayer.Cell();
-                    cell.setTile(new StaticTiledMapTile(greenRegion));
+                    TiledMapTileLayer.Cell cell = null;
+                    if (refLayer != null && x < refLayer.getWidth() && y < refLayer.getHeight()) {
+                        TiledMapTileLayer.Cell refCell = refLayer.getCell(x, y);
+                        if (refCell != null) {
+                            cell = new TiledMapTileLayer.Cell();
+                            cell.setTile(refCell.getTile());
+                            cell.setFlipHorizontally(refCell.getFlipHorizontally());
+                            cell.setFlipVertically(refCell.getFlipVertically());
+                            cell.setRotation(refCell.getRotation());
+                        }
+                    }
+                    
+                    if (cell == null) {
+                        cell = new TiledMapTileLayer.Cell();
+                        cell.setTile(new com.badlogic.gdx.maps.tiled.tiles.StaticTiledMapTile(new TextureRegion(greenTileTexture)));
+                    }
+
                     borderLayer.setCell(x, y, cell);
                     greenedTiles.add(tileKey);
                     painted++;
@@ -182,22 +227,20 @@ public class OutdoorZoneRenderer {
         }
     }
 
+    public void clearGreenedTiles() {
+        if (borderLayer == null) return;
+        for (int x = 0; x < borderLayer.getWidth(); x++) {
+            for (int y = 0; y < borderLayer.getHeight(); y++) {
+                borderLayer.setCell(x, y, null);
+            }
+        }
+        greenedTiles.clear();
+    }
 
     private Texture createCrystalDroneTexture(int width, int height) {
         Pixmap pixmap = new Pixmap(width, height, Pixmap.Format.RGBA8888);
-        pixmap.setColor(0, 0, 0, 0);
+        pixmap.setColor(255/255f, 0/255f, 255/255f, 1f); // Magenta fallback
         pixmap.fill();
-        pixmap.setColor(100/255f, 180/255f, 255/255f, 1f);
-        int crystalSize = Math.min(width, height) / 4;
-        pixmap.fillRectangle((width-crystalSize)/2, (height-crystalSize)/2, crystalSize, crystalSize);
-        pixmap.setColor(200/255f, 220/255f, 255/255f, 0.8f);
-        pixmap.fillRectangle((width-crystalSize/2)/2, (height-crystalSize/2)/2, crystalSize/2, crystalSize/2);
-        pixmap.setColor(150/255f, 200/255f, 255/255f, 0.6f);
-        int indicatorSize = crystalSize / 6;
-        pixmap.fillCircle(width/2-crystalSize, height/2, indicatorSize);
-        pixmap.fillCircle(width/2+crystalSize, height/2, indicatorSize);
-        pixmap.fillCircle(width/2, height/2-crystalSize, indicatorSize);
-        pixmap.fillCircle(width/2, height/2+crystalSize, indicatorSize);
         Texture texture = new Texture(pixmap);
         pixmap.dispose();
         return texture;
@@ -251,17 +294,17 @@ public class OutdoorZoneRenderer {
             if (location.getLocationType() == ScavengingLocation.LocationType.SEED_WHEEL) {
                 batch.setColor(1, 1, 1, 1f);
                 float targetSize = tileSize * 6f;
-                float spriteW = wheelTexture.getWidth();
-                float spriteH = wheelTexture.getHeight();
-                float aspectRatio = spriteH / spriteW;
-                float drawW = targetSize;
-                float drawH = targetSize * aspectRatio;
+                float drawX = locStartX + (locWidth - targetSize) / 2f;
+                float drawY = locStartY + (locHeight - targetSize) / 2f;
+                batch.draw(wheelTexture, drawX, drawY, targetSize, targetSize);
+            } else {
+                batch.setColor(1, 1, 1, 1.0f);
+                float crystalScale = 0.5f;
+                float drawW = locWidth * crystalScale;
+                float drawH = locHeight * crystalScale;
                 float drawX = locStartX + (locWidth - drawW) / 2f;
                 float drawY = locStartY + (locHeight - drawH) / 2f;
-                batch.draw(wheelTexture, drawX, drawY, drawW, drawH);
-            } else {
-                batch.setColor(1, 1, 1, 0.8f);
-                batch.draw(droneTextures[i], locStartX, locStartY, locWidth, locHeight);
+                batch.draw(droneTextures[i], drawX, drawY, drawW, drawH);
             }
 
             if(location.isScavenging()) renderProgressBar(location, locStartX, locStartY, locWidth, locHeight, scavengeDuration);
@@ -271,13 +314,37 @@ public class OutdoorZoneRenderer {
     }
 
     private void renderProgressBar(ScavengingLocation location, float x, float y, float width, float height, long scavengeDuration) {
-        float progress = location.getScavengingProgress(scavengeDuration);
-        float barHeight = 5;
-        batch.setColor(1, 0, 0, 0.5f);
+        float progress = location.getScavengingProgress(scavengeDuration) / 100f;
+        float barHeight = 8;
+        float barY = y + height + 5;
+        
+        // Background (gray)
+        batch.setColor(0.2f, 0.2f, 0.2f, 0.8f);
+        batch.draw(whitePixel, x, barY, width, barHeight);
+        
+        // Progress (green)
+        batch.setColor(0, 1, 0, 1);
+        batch.draw(whitePixel, x, barY, width * progress, barHeight);
     }
 
     private void renderCooldownIndicator(ScavengingLocation location, float x, float y, float width, float height) {
+        float progress = location.getCooldownProgress() / 100f;
+        if (progress <= 0) return;
+        
+        float barHeight = 6;
+        float barY = y + height + 5;
+        
+        // Background (dark red/gray)
+        batch.setColor(0.3f, 0, 0, 0.5f);
+        batch.draw(whitePixel, x, barY, width, barHeight);
+        
+        // Cooldown remaining (bright red)
+        batch.setColor(1, 0, 0, 0.8f);
+        batch.draw(whitePixel, x, barY, width * progress, barHeight);
     }
+
+    public TiledMapTileLayer getBorderLayer() { return borderLayer; }
+    public void setMap(TiledMap map) { this.map = map; }
 
     public void dispose() {
         if(borderTileTexture != null) borderTileTexture.dispose();

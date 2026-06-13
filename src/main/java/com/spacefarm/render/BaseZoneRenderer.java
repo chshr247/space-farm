@@ -27,6 +27,7 @@ public class BaseZoneRenderer {
     private Texture droneTextureOverlay;
 
     private SpriteBatch batch;
+    private com.badlogic.gdx.maps.tiled.TiledMap referenceMap;
 
     public BaseZoneRenderer(BaseZone baseZone, TiledMapTileLayer zoneLayer, int tileSize, int worldMinX, int worldMinY) {
         this.baseZone = baseZone;
@@ -42,12 +43,17 @@ public class BaseZoneRenderer {
         applyBaseZoneTiles();
     }
 
+    public void setReferenceMap(com.badlogic.gdx.maps.tiled.TiledMap referenceMap) {
+        this.referenceMap = referenceMap;
+        applyBaseZoneTiles();
+    }
+
     private void createTextures(int tileSize) {
         // Green tile for base zone (life and oxygen)
-        greenTileTexture = createSolidTexture(tileSize, tileSize, 34, 139, 34, 128); // Forest green
+        greenTileTexture = createSolidTexture(tileSize, tileSize, 34, 139, 34, 200); // Forest green
 
         // Tree area tile (darker green with pattern)
-        treeTileTexture = createSolidTexture(tileSize, tileSize, 25, 100, 25, 128); // Darker green
+        treeTileTexture = createSolidTexture(tileSize, tileSize, 25, 100, 25, 200); // Darker green
 
         // Garden bed tile (lighter green)
         Pixmap originalPixmap = new Pixmap(Gdx.files.internal("sprite/plants/garden.png"));
@@ -97,6 +103,16 @@ public class BaseZoneRenderer {
     }
 
     private void applyBaseZoneTiles() {
+        TiledMapTileLayer refLayer = null;
+        if (referenceMap != null) {
+            for (com.badlogic.gdx.maps.MapLayer layer : referenceMap.getLayers()) {
+                if (layer instanceof TiledMapTileLayer) {
+                    refLayer = (TiledMapTileLayer) layer;
+                    break;
+                }
+            }
+        }
+
         for (int x = baseZone.getBaseX(); x < baseZone.getBaseX() + baseZone.getBaseWidth(); x++) {
             for (int y = baseZone.getBaseY(); y < baseZone.getBaseY() + baseZone.getBaseHeight(); y++) {
                 int layerX = x - worldMinX;
@@ -104,13 +120,35 @@ public class BaseZoneRenderer {
                 if (layerX >= 0 && layerX < zoneLayer.getWidth() && layerY >= 0 && layerY < zoneLayer.getHeight()) {
                     TileCoord coord = new TileCoord(x, y);
                     
+                    TiledMapTileLayer.Cell cell = null;
+                    if (refLayer != null && x < refLayer.getWidth() && y < refLayer.getHeight()) {
+                        TiledMapTileLayer.Cell refCell = refLayer.getCell(x, y);
+                        if (refCell != null) {
+                            cell = new TiledMapTileLayer.Cell();
+                            cell.setTile(refCell.getTile());
+                            cell.setFlipHorizontally(refCell.getFlipHorizontally());
+                            cell.setFlipVertically(refCell.getFlipVertically());
+                            cell.setRotation(refCell.getRotation());
+                        }
+                    }
+
+                    Texture overlayTexture = null;
                     if (baseZone.isGardenBed(coord)) {
-                        StaticTiledMapTile tile = new StaticTiledMapTile(new TextureRegion(gardenTileTexture));
-                        TiledMapTileLayer.Cell cell = new TiledMapTileLayer.Cell();
+                        overlayTexture = gardenTileTexture;
+                    } else if (baseZone.isDroneZone(coord)) {
+                        overlayTexture = droneTileTexture;
+                    }
+
+                    if (overlayTexture != null) {
+                        StaticTiledMapTile tile = new StaticTiledMapTile(new TextureRegion(overlayTexture));
+                        if (cell == null) cell = new TiledMapTileLayer.Cell();
                         cell.setTile(tile);
+                    }
+
+                    if (cell != null) {
                         zoneLayer.setCell(layerX, layerY, cell);
                     } else {
-                        // Clear other tiles to show map underneath
+                        // Ensure it's empty if no map tile and no overlay
                         zoneLayer.setCell(layerX, layerY, null);
                     }
                 }

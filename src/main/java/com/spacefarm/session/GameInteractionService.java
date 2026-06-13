@@ -225,6 +225,8 @@ public class GameInteractionService {
     private void handleTileClick(int screenX, int screenY) {
         TileCoord coord = session.getTilePicker().screenToTile(screenX, screenY);
         if (coord == null) return;
+        
+        Gdx.app.log("GameInteraction", "Clicked tile: " + coord.x() + ", " + coord.y());
 
         session.getOxygenManager().updatePositionTile(coord);
 
@@ -312,8 +314,8 @@ public class GameInteractionService {
     }
 
     private void updateScavenging(float deltaTime) {
-        int upgradeLevel = session.getDroneConsoleOverlay().getScavengeUpgradeLevel();
-        long durationMillis = Math.max(30000L, OutdoorConstants.SCAVENGING_DURATION_MILLIS - upgradeLevel * 30000L);
+        // Use the constant duration for scavenging
+        long durationMillis = OutdoorConstants.SCAVENGING_DURATION_MILLIS;
 
         for (ScavengingLocation location : session.getOutdoorZone().getScavengingLocations()) {
             if (location.isScavenging()) {
@@ -321,6 +323,7 @@ public class GameInteractionService {
                 if (location.isScavengingComplete(durationMillis)) {
                     location.completeScavenging();
                     session.getInventory().addItem(new Crystal());
+                    Gdx.app.log("GameInteraction", "Scavenging complete! Crystal added.");
                 }
             }
         }

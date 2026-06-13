@@ -17,8 +17,12 @@ import java.util.Map;
 
 public class CropRenderer {
     private final FarmingSystem farmingSystem;
-    private final TiledMapTileLayer baseLayer;
+    private TiledMapTileLayer baseLayer;
     private final SpriteBatch batch;
+
+    public void setLayer(TiledMapTileLayer layer) {
+        this.baseLayer = layer;
+    }
     private final Map<FarmingConstants.CropType, Texture[]> cropTexturesMap;
     private final Texture waterIndicatorTexture;
 

@@ -59,6 +59,14 @@ public class ScavengingLocation {
         long remaining = cooldownMillis - elapsedTime;
         return Math.max(0, remaining);
     }
+
+    public float getCooldownProgress() {
+        if (lastClearedTime == 0) return 0f;
+        long elapsedTime = System.currentTimeMillis() - lastClearedTime;
+        long cooldownMillis = (locationType == LocationType.SEED_WHEEL) ? SeedWheelConstants.SPIN_COOLDOWN_MILLIS : OutdoorConstants.SCAVENGING_COOLDOWN_MILLIS;
+        if (elapsedTime >= cooldownMillis) return 0f;
+        return ((float) (cooldownMillis - elapsedTime) / (float) cooldownMillis) * 100f;
+    }
     
     // початок зачистки локації
     public void startScavenging() {

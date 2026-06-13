@@ -4,14 +4,11 @@ import java.util.*;
 
 public class OutdoorZone {
     private List<ScavengingLocation> locations;
-    private int baseX, baseY, baseWidth, baseHeight;
+    private BaseZone baseZone;
     private int borderX, borderY, borderWidth, borderHeight;
 
     public OutdoorZone(BaseZone base, int mapWidth, int mapHeight) {
-        this.baseX = base.getBaseX();
-        this.baseY = base.getBaseY();
-        this.baseWidth = base.getBaseWidth();
-        this.baseHeight = base.getBaseHeight();
+        this.baseZone = base;
         this.locations = new ArrayList<>();
         
         initializeBorder();
@@ -22,13 +19,18 @@ public class OutdoorZone {
     private void initializeBorder() {
         int bWidthX = OutdoorConstants.BORDER_WIDTH_X;
         int bWidthY = OutdoorConstants.BORDER_WIDTH_Y;
-        this.borderX = baseX - bWidthX;
-        this.borderY = baseY - bWidthY;
-        this.borderWidth = baseWidth + 2 * bWidthX;
-        this.borderHeight = baseHeight + 2 * bWidthY;
+        this.borderX = baseZone.getBaseX() - bWidthX;
+        this.borderY = baseZone.getBaseY() - bWidthY;
+        this.borderWidth = baseZone.getBaseWidth() + 2 * bWidthX;
+        this.borderHeight = baseZone.getBaseHeight() + 2 * bWidthY;
     }
 
     private void initializeLocations() {
+        int baseX = baseZone.getBaseX();
+        int baseY = baseZone.getBaseY();
+        int baseWidth = baseZone.getBaseWidth();
+        int baseHeight = baseZone.getBaseHeight();
+
         // звичайні локації
         int width = OutdoorConstants.OUTDOOR_LOCATION_WIDTH;
         int height = OutdoorConstants.OUTDOOR_LOCATION_HEIGHT;
@@ -48,8 +50,8 @@ public class OutdoorZone {
         };
         
         for (int i = 0; i < OutdoorConstants.NUM_LOCATIONS; i++) {
-            int x = positions[i][0]; // x координата локації, де 0 це індекс масиву позицій
-            int y = positions[i][1]; // y координата локації, де 1 це індекс масиву позицій
+            int x = positions[i][0];
+            int y = positions[i][1];
             int color = OutdoorConstants.LOCATION_COLORS[i];
             
             ScavengingLocation location = new ScavengingLocation(x, y, width, height, color);
@@ -72,8 +74,7 @@ public class OutdoorZone {
         // перевірка чи тайл в сірій зоні але не на самій базі
         boolean inOuter = x >= borderX && x < borderX + borderWidth &&
                          y >= borderY && y < borderY + borderHeight;
-        boolean inInner = x >= baseX && x < baseX + baseWidth &&
-                         y >= baseY && y < baseY + baseHeight;
+        boolean inInner = baseZone.isInBaseZone(x, y);
         return inOuter && !inInner;
     }
     
@@ -124,6 +125,6 @@ public class OutdoorZone {
     public int getBorderY() { return borderY; }
     public int getBorderWidth() { return borderWidth; }
     public int getBorderHeight() { return borderHeight; }
-    public int getBaseWidth() { return baseWidth; }
-    public int getBaseHeight() { return baseHeight; }
+    public int getBaseWidth() { return baseZone.getBaseWidth(); }
+    public int getBaseHeight() { return baseZone.getBaseHeight(); }
 }

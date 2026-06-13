@@ -42,6 +42,7 @@ public class GameSession {
     private static final int DEFAULT_MAP_HEIGHT = 128;
 
     private TiledMap map;
+    private TiledMap referenceMap;
     private TiledMapTileLayer baseLayer;
     private TiledMapTileLayer selectionLayer;
     private TiledMapTileLayer zoneLayer;
@@ -70,6 +71,7 @@ public class GameSession {
     private int worldMinX, worldMinY, worldWidthTiles, worldHeightTiles;
 
     private BaseZoneRenderer baseZoneRenderer;
+    private GameSceneRenderer sceneRenderer;
 
     /** Call BEFORE create(). Sets all difficulty-dependent constants. */
     public void applyDifficulty(DifficultyLevel difficultyLevel) {
@@ -79,8 +81,13 @@ public class GameSession {
         BaseZoneConstants.STARTING_GARDEN_BEDS  = difficultyLevel.startingGardenBeds;
     }
 
+    public void setSceneRenderer(GameSceneRenderer renderer) {
+        this.sceneRenderer = renderer;
+    }
+
     public void create(OrthographicCamera camera) {
         map = loadMapOrFallback();
+        referenceMap = loadReferenceMap();
 
         baseLayer = findFirstTileLayer(map);
         if (baseLayer == null) {
@@ -180,6 +187,7 @@ public class GameSession {
 
     public void dispose() {
         if (map != null) map.dispose();
+        if (referenceMap != null) referenceMap.dispose();
         if (baseTileTexture != null) baseTileTexture.dispose();
         if (highlightTexture != null) highlightTexture.dispose();
         if (inventoryUI != null) inventoryUI.dispose();
@@ -235,8 +243,8 @@ public class GameSession {
     }
 
     private TiledMap loadMapOrFallback() {
-        FileHandle tmx = Gdx.files.internal("map.tmx");
-        if (tmx.exists()) return new TmxMapLoader().load("map.tmx");
+        FileHandle tmx = Gdx.files.internal("map-2.tmx");
+        if (tmx.exists()) return new TmxMapLoader().load("map-2.tmx");
         return new TiledMap();
     }
 
@@ -291,6 +299,14 @@ public class GameSession {
         pixmap.dispose();
         return texture;
     }
+
+    private TiledMap loadReferenceMap() {
+        FileHandle tmx = Gdx.files.internal("map.tmx");
+        if (tmx.exists()) return new TmxMapLoader().load("map.tmx");
+        return null;
+    }
+
+    public TiledMap getReferenceMap() { return referenceMap; }
 
     public OutdoorZoneRenderer getOutdoorZoneRenderer(){ return outdoorZoneRenderer; }
     public void setOutdoorZoneRenderer(OutdoorZoneRenderer outdoorZoneRenderer){ this.outdoorZoneRenderer = outdoorZoneRenderer; }

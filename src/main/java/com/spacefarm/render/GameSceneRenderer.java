@@ -30,12 +30,30 @@ public class GameSceneRenderer {
         this.mapRenderer = new OrthogonalTiledMapRenderer(map);
         this.gridOverlay = new GridOverlay(baseLayer);
         this.cropRenderer = new CropRenderer(gameSession.getFarmingSystem(), baseLayer);
+        
+        // Initialize BaseZoneRenderer AFTER OutdoorZoneRenderer potentially clearing the layer
         this.outdoorZoneRenderer = new OutdoorZoneRenderer(gameSession.getOutdoorZone(), zoneLayer, map, tileSize, worldMinX, worldMinY, gameSession);
+        this.outdoorZoneRenderer.setReferenceMap(gameSession.getReferenceMap());
         gameSession.setOutdoorZoneRenderer(this.outdoorZoneRenderer);
+        
+        // Ensure zoneLayer (base structures) is on top of borderLayer (outdoor greening)
+        map.getLayers().remove(zoneLayer);
+        map.getLayers().add(zoneLayer);
+        
         this.baseZoneRenderer = new BaseZoneRenderer(gameSession.getBaseZone(), zoneLayer, tileSize, worldMinX, worldMinY);
+        this.baseZoneRenderer.setReferenceMap(gameSession.getReferenceMap());
         gameSession.setBaseZoneRenderer(this.baseZoneRenderer);
+        
+        gameSession.setSceneRenderer(this);
         this.oxygenUI = new OxygenUI(gameSession.getOxygenManager());
         this.treeBoxUI = gameSession.getTreeBoxUI();
+    }
+
+    public void onMapChanged(TiledMap newMap) {
+        mapRenderer.setMap(newMap);
+        TiledMapTileLayer newBaseLayer = gameSession.getBaseLayer();
+        gridOverlay.setLayer(newBaseLayer);
+        cropRenderer.setLayer(newBaseLayer);
     }
 
     public void render(OrthographicCamera camera, int screenWidth, int screenHeight) {
@@ -43,8 +61,8 @@ public class GameSceneRenderer {
         mapRenderer.render();
 
         gridOverlay.render(camera);
-        cropRenderer.render(camera);
         baseZoneRenderer.render(camera);
+        cropRenderer.render(camera);
 
         int upgradeLevel = gameSession.getDroneConsoleOverlay().getScavengeUpgradeLevel();
         long durationMillis = Math.max(30000L, com.spacefarm.world.OutdoorConstants.SCAVENGING_DURATION_MILLIS - upgradeLevel * 30000L);

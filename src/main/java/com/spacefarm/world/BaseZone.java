@@ -33,28 +33,50 @@ public class BaseZone {
     }
 
     private void initializeStructures() {
-        // Magical tree in the center (20x10 tiles)
-        int centerX = baseX + baseWidth / 2;
-        int centerY = baseY + baseHeight / 2;
+        // Anchor point: the absolute center of the initial base
+        int initialCenterX = baseX + baseWidth / 2;
+        int initialCenterY = baseY + baseHeight / 2;
+
+        // Magical tree shifted 2 tiles left for harmony
+        int treeCenterX = initialCenterX - 2;
         this.treeWidth = 10;
         this.treeHeight = 20;
-        this.treeCenter = new TileCoord(centerX - treeWidth / 2, centerY - treeHeight / 2);
+        this.treeCenter = new TileCoord(treeCenterX - treeWidth / 2, initialCenterY - treeHeight / 2);
 
-        // Garden beds (centered on the left side of the tree)
+        // Garden beds
         this.gardenBeds = new ArrayList<>();
-        int gardenStartX = baseX + 2;
-        int gardenStartY = baseY + baseHeight / 2 + 4; 
         for (int i = 0; i < BaseZoneConstants.STARTING_GARDEN_BEDS; i++) {
-            int bedX = gardenStartX + (i % 2) * 3;
-            int bedY = gardenStartY - (i / 2) * 4;
-            gardenBeds.add(new TileCoord(bedX, bedY));
+            internalAddGardenBed();
         }
 
-        // Space drone (bottom-right area)
+        // Space drone anchored relative to the tree
         this.droneZoneSize = 5;
-        int droneX = baseX + baseWidth - droneZoneSize - 3;
-        int droneY = baseY + 3;
+        int droneX = treeCenter.x() + treeWidth + 7;
+        int droneY = treeCenter.y();
         this.droneZoneCenter = new TileCoord(droneX, droneY);
+    }
+
+    private void internalAddGardenBed() {
+        int i = gardenBeds.size();
+        int bedX, bedY;
+        
+        // We use treeCenter as the absolute anchor so positions don't shift when base expands
+        int treeLeft = treeCenter.x();
+        int treeTop  = treeCenter.y() + treeHeight;
+
+        if (i < 10) {
+            // Section 1: Left side of the tree - moved one more tile to the right
+            int gardenStartX = treeLeft - 8; 
+            bedX = gardenStartX + (i % 2) * 3;
+            bedY = treeTop - 2 - (i / 2) * 4;
+        } else {
+            // Section 2: Right side of the tree - moved further right
+            int j = i - 10;
+            int sec2StartX = treeLeft + treeWidth + 4;
+            bedX = sec2StartX + (j % 2) * 3;
+            bedY = treeTop - 2 - (j / 2) * 4;
+        }
+        gardenBeds.add(new TileCoord(bedX, bedY));
     }
 
     // Adds one new garden bed (called when player buys upgrade)
@@ -62,22 +84,8 @@ public class BaseZone {
         if (gardenBeds.size() >= BaseZoneConstants.MAX_GARDEN_BEDS) {
             return false;
         }
-        int gardenStartX = baseX + 2;
-        int gardenStartY = baseY + baseHeight / 2 + 4;
-        int i = gardenBeds.size();
-        int bedX, bedY;
-        if (i < 12) {
-            // Section 1: 2 columns to the left of the tree
-            bedX = gardenStartX + (i % 2) * 3;
-            bedY = gardenStartY - (i / 2) * 4;
-        } else {
-            // Section 2: 2 columns to the right of the tree
-            int j = i - 12;
-            int sec2StartX = treeCenter.x() + treeWidth + 1;
-            bedX = sec2StartX + (j % 2) * 3;
-            bedY = gardenStartY - (j / 2) * 4;
-        }
-        gardenBeds.add(new TileCoord(bedX, bedY));
+        internalAddGardenBed();
+        dirty = true;
         return true;
     }
 
