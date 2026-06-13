@@ -2,6 +2,7 @@ package com.spacefarm.render;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 
@@ -22,7 +23,9 @@ public class FontUtils {
         parameter.size = size;
         parameter.characters = CYRILLIC_CHARACTERS;
         parameter.color = Color.WHITE;
-        
+        parameter.minFilter = Texture.TextureFilter.Linear;
+        parameter.magFilter = Texture.TextureFilter.Linear;
+
         BitmapFont font = generator.generateFont(parameter);
         generator.dispose();
         return font;
