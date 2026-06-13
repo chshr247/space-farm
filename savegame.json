@@ -7,9 +7,10 @@
         "itemType": "WATERING_CAN"
       },
       {
-        "name": "Crystal",
-        "description": "A valuable space crystal obtained from scavenging",
-        "itemType": "CRYSTAL"
+        "quantity": 5,
+        "name": "Насіння",
+        "description": "Насіння для посадження (5)",
+        "itemType": "SEED"
       },
       {
         "name": "Коса",
@@ -42,11 +43,11 @@
         "itemType": "EDEN_CORE"
       }
     ],
-    "selectedSlot": 1
+    "selectedSlot": 0
   },
   "oxygen": {
-    "currentOxygen": 96.0,
-    "isAtBase": false
+    "currentOxygen": 100.0,
+    "isAtBase": true
   },
   "farming": {
     "crops": {}
@@ -66,9 +67,9 @@
     },
     {
       "isCleared": false,
-      "lastClearedTime": 1781350240346,
-      "isScavenging": true,
-      "scavengingStartTime": 1781350267328
+      "lastClearedTime": 0,
+      "isScavenging": false,
+      "scavengingStartTime": 0
     },
     {
       "isCleared": false,

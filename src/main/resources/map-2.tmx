@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <map version="1.10" tiledversion="1.12.2" orientation="orthogonal" renderorder="right-down" width="60" height="50" tilewidth="32" tileheight="32" infinite="0" nextlayerid="2" nextobjectid="1">
  <tileset firstgid="1" name="j,htp" tilewidth="32" tileheight="32" spacing="1" margin="1" tilecount="450" columns="30">
-  <image source="C:/Users/anqwe/OneDrive/Desktop/j,htp.png" width="1017" height="510"/>
+  <image source="j,htp.png" width="1017" height="510"/>
  </tileset>
  <layer id="1" name="Прошарок плиток 1" width="60" height="50">
   <data encoding="csv">

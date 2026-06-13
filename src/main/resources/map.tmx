@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <map version="1.10" tiledversion="1.12.2" orientation="orthogonal" renderorder="right-down" width="60" height="50" tilewidth="32" tileheight="32" infinite="0" nextlayerid="4" nextobjectid="1">
  <tileset firstgid="1" name="spritesheet(1)" tilewidth="32" tileheight="32" tilecount="12" columns="4">
-  <image source="C:/Users/anqwe/Downloads/spritesheet(1).png" width="128" height="96"/>
+  <image source="spritesheet(1).png" width="128" height="96"/>
   <tile id="1" probability="2"/>
   <tile id="2" probability="2"/>
   <tile id="5" probability="0.4"/>
@@ -9,7 +9,7 @@
   <tile id="7" probability="0.07"/>
  </tileset>
  <tileset firstgid="13" name="spritesheet(3)" tilewidth="32" tileheight="32" tilecount="72" columns="12">
-  <image source="C:/Users/anqwe/Downloads/spritesheet(3).png" width="412" height="206"/>
+  <image source="spritesheet(3).png" width="412" height="206"/>
  </tileset>
  <layer id="1" name="background" width="60" height="50">
   <data encoding="csv">
